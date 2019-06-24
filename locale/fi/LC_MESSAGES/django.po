@@ -1,0 +1,1191 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2018-11-09 16:45+0200\n"
+"PO-Revision-Date: 2018-09-27 12:10+0300\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "No permission to modify this reservation's catering orders."
+msgstr "Ei oikeutta muokata tämän varauksen tarjoilutilauksia."
+
+msgid "The order contains products from several providers."
+msgstr "Tilaus sisältää tuotteita useammalta tarjoajalta."
+
+msgid "time of creation"
+msgstr "Lisäysaika"
+
+msgid "time of modification"
+msgstr "Muokkausaika"
+
+msgid "Name"
+msgstr "Nimi"
+
+msgid "Price list URL"
+msgstr "Hintalistan URL"
+
+msgid "Units"
+msgstr "Toimipisteet"
+
+msgid "Notification email"
+msgstr "Herätesähköposti"
+
+msgid "Catering provider"
+msgstr "Tarjoaja"
+
+msgid "Catering providers"
+msgstr "Tarjoajat"
+
+msgid "Catering product category"
+msgstr "Tuotekategoria"
+
+msgid "Catering product categories"
+msgstr "Tuotekategoriat"
+
+msgctxt "catering"
+msgid "Category"
+msgstr "Kategoria"
+
+msgid "Description"
+msgstr "Kuvaus"
+
+msgid "Catering product"
+msgstr "Tuote"
+
+msgid "Catering products"
+msgstr "Tuotteet"
+
+msgid "Reservation"
+msgstr "Varaus"
+
+msgid "Invoicing data"
+msgstr "Laskutusnumero"
+
+msgid "Message"
+msgstr "Viesti"
+
+msgid "Serving time"
+msgstr "Tarjoiluaika"
+
+msgid "Catering order"
+msgstr "Tarjoilutilaus"
+
+msgid "Catering orders"
+msgstr "Tarjoilutilaukset"
+
+msgid "Product"
+msgstr "Tuote"
+
+msgid "Quantity"
+msgstr "Lukumäärä"
+
+msgid "Order"
+msgstr "Tilaus"
+
+msgid "Catering order line"
+msgstr "Tilausrivi"
+
+msgid "Catering order lines"
+msgstr "Tilausrivit"
+
+msgid "Illegal type."
+msgstr "Kielletty tyyppi."
+
+msgid "You cannot comment this object."
+msgstr "Et voi kommentoida tätä objektia."
+
+msgid "Time of creation"
+msgstr "Lisäysaika"
+
+msgid "Created by"
+msgstr "Lisääjä"
+
+msgid "Text"
+msgstr "Teksti"
+
+msgid "Comment"
+msgstr "Kommentti"
+
+msgid "Comments"
+msgstr "Kommentit"
+
+msgid "Notifications"
+msgstr "Herätteet"
+
+msgid "Reservation requested"
+msgstr "Alustava varaus tehty"
+
+msgid "Reservation requested official"
+msgstr "Alustava varaus tehty virkailija"
+
+msgid "Reservation cancelled"
+msgstr "Varaus peruttu"
+
+msgid "Reservation confirmed"
+msgstr "Varaus vahvistettu"
+
+msgid "Reservation created"
+msgstr "Varaus luotu"
+
+msgid "Reservation denied"
+msgstr "Varaus hylätty"
+
+msgid "Reservation created with access code"
+msgstr "Varaus pääsykoodin kanssa tehty"
+
+msgid "Catering order created"
+msgstr "Tarjoilutilaus luotu"
+
+msgid "Catering order modified"
+msgstr "Tarjoilutilausta muokattu"
+
+msgid "Catering order deleted"
+msgstr "Tarjoilutilaus poistettu"
+
+msgid "Reservation comment created"
+msgstr "Varauskommentti luotu"
+
+msgid "Catering order comment created"
+msgstr "Tarjoilutilauskommentti luotu"
+
+msgid "Type"
+msgstr "Tyyppi"
+
+msgid "Short message"
+msgstr "Lyhyt viesti"
+
+msgid "Short notification text for e.g. SMS messages"
+msgstr "Lyhyt viesti esimerkiksi SMS-viesteihin"
+
+msgid "Subject"
+msgstr "Otsikko"
+
+msgid "Subject for email notifications"
+msgstr "Otsikko sähköpostiviesteihin"
+
+msgid "Body"
+msgstr "Sisältö"
+
+msgid "Text body for email notifications"
+msgstr "Tekstisisältö sähköpostiviesteihin"
+
+msgid "HTML body"
+msgstr "HTML-sisältö"
+
+msgid "HTML body for email notifications"
+msgstr "HTML-sisältö sähköpostiviesteihin"
+
+msgid "Notification template"
+msgstr "Herätemalli"
+
+msgid "Notification templates"
+msgstr "Herätemallit"
+
+msgid "No reservations."
+msgstr "Ei varauksia."
+
+msgid "No information available"
+msgstr "Ei tietoja saatavilla"
+
+msgid "No reservations"
+msgstr "Ei varauksia"
+
+#, python-brace-format
+msgid "Unit \"{pk_value}\" does not exist."
+msgstr ""
+
+msgid "Either unit or a valid resource id is required."
+msgstr "Joko unit tai resource on pakollinen."
+
+msgid "No resources found"
+msgstr "Resurssia ei löytynyt"
+
+msgid "day-report"
+msgstr "päiväraportti"
+
+msgctxt "report"
+msgid "Catering order"
+msgstr "Tarjoilutilaus"
+
+msgid "pcs."
+msgstr "kpl"
+
+msgid "Too many (> 1000) reservations to return"
+msgstr "Liian monta (> 1000) varausta palautettavaksi"
+
+msgid "reservation-details"
+msgstr "varauksen-tiedot"
+
+msgid "Resource group"
+msgstr "Resurssiryhmä"
+
+msgid "Resource groups"
+msgstr "Resurssiryhmät"
+
+msgid "Import Service Map"
+msgstr "Tuo Service Map"
+
+msgid "Import Kirkanta"
+msgstr "Tuo Kirkanta"
+
+msgid "Required fields must be a subset of supported fields"
+msgstr "Jokaisen pakollisen kentän täytyy olla myös tuettu kenttä"
+
+msgid "Import municipalities"
+msgstr "Tuo kunnat"
+
+msgid "Import divisions"
+msgstr "Tuo alueet"
+
+msgid "HH:mm"
+msgstr "TT:mm"
+
+msgid "Illegal state change"
+msgstr "Kielletty tilan vaihto"
+
+msgid "You are not allowed to make reservations in this resource."
+msgstr "Varauksen teko tähän resurssiin ei ole sallittua."
+
+msgid "You cannot make a reservation in the past"
+msgstr "Varauksen teko menneisyyteen ei ole sallittua"
+
+#, python-format
+msgid "The resource is reservable only before %(datetime)s"
+msgstr "Tila on varattavissa vain ennen %(datetime)s"
+
+# python-format
+#, python-format
+msgid "The resource is reservable only after %(datetime)s"
+msgstr "Tila on varattavissa vain %(datetime)s jälkeen"
+
+msgid "Only allowed to be set by staff members"
+msgstr "Ainoastaan virkailijat saavat asettaa"
+
+msgid "This field cannot have a value with this resource"
+msgstr "Tällä kentällä ei voi olla arvoa tällä resurssilla"
+
+msgid "This field cannot be changed"
+msgstr "Tätä arvoa ei voi muuttaa"
+
+#, python-brace-format
+msgid "Invalid pk \"{pk_value}\" - object does not exist."
+msgstr ""
+
+#, python-format
+msgid "Invalid value in filter %(filter)s"
+msgstr "Virheellinen arvo filtterissä %(filter)s"
+
+msgid "reservations"
+msgstr "varaukset"
+
+msgid "reservation"
+msgstr "varaus"
+
+msgid "Resource app"
+msgstr "Resurssisovellus"
+
+msgid "unit group administrator"
+msgstr "toimipisteryhmän ylläpitäjä"
+
+msgid "unit administrator"
+msgstr "toimipisteen ylläpitäjä"
+
+msgid "unit manager"
+msgstr "toimipisteen hoitaja"
+
+msgid "open"
+msgstr "auki"
+
+msgid "closed"
+msgstr "kiinni"
+
+msgid "-"
+msgstr "-"
+
+msgid "Resource"
+msgstr "Resurssi"
+
+msgid "Unit"
+msgstr "Toimipiste"
+
+msgid "Start date"
+msgstr "Alkupäivä"
+
+msgid "End date"
+msgstr "Loppupäivä"
+
+msgid "Closed"
+msgstr "Suljettu"
+
+msgid "period"
+msgstr "aikaväli"
+
+msgid "periods"
+msgstr "aikavälit"
+
+msgid "You must set 'resource' or 'unit'"
+msgstr "Aseta 'resource' tai 'unit'"
+
+msgid "You must set either 'resource' or 'unit', but not both"
+msgstr "Aseta 'resource' tai 'unit', älä molempia"
+
+msgid "You must set 'start' and 'end' fields."
+msgstr "Aseta 'resource' tai 'unit'"
+
+msgid "Monday"
+msgstr "maanantai"
+
+msgid "Tuesday"
+msgstr "tiistai"
+
+msgid "Wednesday"
+msgstr "keskiviikko"
+
+msgid "Thursday"
+msgstr "torstai"
+
+msgid "Friday"
+msgstr "perjantai"
+
+msgid "Saturday"
+msgstr "lauantai"
+
+msgid "Sunday"
+msgstr "sunnuntai"
+
+msgid "Period"
+msgstr "Aikaväli"
+
+msgid "Weekday"
+msgstr "Viikonpäivä"
+
+msgid "Time when opens"
+msgstr "Aukeamisaika"
+
+msgid "Time when closes"
+msgstr "Sulkemisaika"
+
+msgid "Range between opens and closes"
+msgstr "Aukioloajan pituus"
+
+msgid "description"
+msgstr "kuvaus"
+
+msgid "day"
+msgstr "päivä"
+
+msgid "days"
+msgstr "päivät"
+
+msgid "Time of modification"
+msgstr "Muokkausaika"
+
+msgid "Modified by"
+msgstr "Muokkaaja"
+
+msgid "equipment category"
+msgstr "varusteluokka"
+
+msgid "equipment categories"
+msgstr "varusteluokat"
+
+msgid "Category"
+msgstr "Luokka"
+
+msgctxt "singular"
+msgid "equipment"
+msgstr "varuste"
+
+msgctxt "plural"
+msgid "equipment"
+msgstr "varusteet"
+
+msgid "equipment alias"
+msgstr "varusteen toinen nimi"
+
+msgid "equipment aliases"
+msgstr "varusteen toiset nimet"
+
+msgid "Can approve reservation"
+msgstr "Voi hyväksyä varauksen"
+
+msgid "Can make reservations"
+msgstr "Voi tehdä varauksia"
+
+msgid "Can modify reservations"
+msgstr "Voi muokata varauksia"
+
+msgid "Can make reservations outside opening hours"
+msgstr "Voi tehdä varauksia aukioloaikojen ulkopuolella"
+
+msgid "Can view reservation access code"
+msgstr "Voi nähdä varauksen pääsykoodin"
+
+msgid "Can view reservation extra fields"
+msgstr "Voi nähdä varauksen lisäkentät"
+
+msgid "Can access reservation comments"
+msgstr "Pääsy varauksen kommentteihin"
+
+msgid "Can view reservation catering orders"
+msgstr "Voi nähdä varauksen cateringtilaukset"
+
+msgid "Can modify reservation catering orders"
+msgstr "Voi muokata varauksen tarjoilutilauksia"
+
+msgid "created"
+msgstr "luoja"
+
+msgid "cancelled"
+msgstr "peruttu"
+
+msgid "confirmed"
+msgstr "hyväksytty"
+
+msgid "denied"
+msgstr "hylätty"
+
+msgid "requested"
+msgstr "käsiteltävänä"
+
+msgid "Begin time"
+msgstr "Alkuaika"
+
+msgid "End time"
+msgstr "Loppuaika"
+
+msgid "Length of reservation"
+msgstr "Varauksen kesto"
+
+msgid "User"
+msgstr "Käyttäjä"
+
+msgid "State"
+msgstr "Tila"
+
+msgid "Approver"
+msgstr "Hyväksyjä"
+
+msgid "Is staff event"
+msgstr "Viraston oma tapahtuma"
+
+msgid "Access code"
+msgstr "Pääsykoodi"
+
+msgid "Event subject"
+msgstr "Tapahtuman nimi"
+
+msgid "Event description"
+msgstr "Tapahtuman kuvaus"
+
+msgid "Number of participants"
+msgstr "Osallistujamäärä"
+
+msgid "Participants"
+msgstr "Osallistujat"
+
+msgid "Host name"
+msgstr "Isäntä"
+
+msgid "Reserver name"
+msgstr "Varaajan nimi"
+
+msgid "Reserver ID (business or person)"
+msgstr "Varaajan tunniste (yritys tai henkilö)"
+
+msgid "Reserver email address"
+msgstr "Varaajan sähköpostiosoite"
+
+msgid "Reserver phone number"
+msgstr "Varaajan puhelinnumero"
+
+msgid "Reserver address street"
+msgstr "Varaajan katuosoite"
+
+msgid "Reserver address zip"
+msgstr "Varaajan postinumero"
+
+msgid "Reserver address city"
+msgstr "Varaajan kaupunki"
+
+msgid "Company"
+msgstr "Yhdistys"
+
+msgid "Billing address street"
+msgstr "Laskutusosoite katuosoite"
+
+msgid "Billing address zip"
+msgstr "Laskutusosoite postinumero"
+
+msgid "Billing address city"
+msgstr "Laskutusosoite kaupunki"
+
+msgid "Original ID"
+msgstr "Alkuperäinen tunniste"
+
+msgid "You must end the reservation after it has begun"
+msgstr "Varauksen loppuaika ei voi olla ennen alkuaikaa"
+
+msgid "Begin and end time must match time slots"
+msgstr "Alku- ja loppuajan täytyy osua aikaikkunoihin"
+
+msgid "The resource is already reserved for some of the period"
+msgstr "Tila on jo varattu ainakin osan ajanjaksosta"
+
+#, python-format
+msgid "The minimum reservation length is %(min_period)s"
+msgstr "Varauksen minimikesto on %(min_period)s"
+
+msgid "Field name"
+msgstr "Kentän nimi"
+
+msgid "Reservation metadata field"
+msgstr "Varauksen metatietokenttä"
+
+msgid "Reservation metadata fields"
+msgstr "Varauksen metatietokentät"
+
+msgid "Supported fields"
+msgstr "Tuetut kentät"
+
+msgid "Required fields"
+msgstr "Pakolliset kentät"
+
+msgid "Reservation metadata set"
+msgstr "Varauksen metatietojoukko"
+
+msgid "Reservation metadata sets"
+msgstr "Varauksen metatietojoukot"
+
+msgid "Invalid value"
+msgstr "Epäkelpo arvo"
+
+msgid "Space"
+msgstr "Tila"
+
+msgid "Person"
+msgstr "Henkilö"
+
+msgid "Item"
+msgstr "Esine"
+
+msgid "Main type"
+msgstr "Päätyyppi"
+
+msgid "resource type"
+msgstr "resurssityyppi"
+
+msgid "resource types"
+msgstr "resurssityypit"
+
+msgid "Parent"
+msgstr "Vanhempi"
+
+msgid "Public"
+msgstr "Julkinen"
+
+msgid "purpose"
+msgstr "käyttötarkoitus"
+
+msgid "purposes"
+msgstr "käyttötarkoitukset"
+
+msgctxt "singular"
+msgid "terms of use"
+msgstr "käyttöehdot"
+
+msgctxt "plural"
+msgid "terms of use"
+msgstr "käyttöehdot"
+
+msgid "None"
+msgstr "Ei mitään"
+
+msgid "Weak"
+msgstr "Heikko"
+
+msgid "Strong"
+msgstr "Vahva"
+
+msgid "6-digit pin code"
+msgstr "6-numeroinen pin-koodi"
+
+msgid "Resource type"
+msgstr "Resurssityyppi"
+
+msgid "Purposes"
+msgstr "Käyttötarkoitukset"
+
+msgid "Need manual confirmation"
+msgstr "Tarvitsee virkailijan vahvistuksen"
+
+msgid "Authentication"
+msgstr "Tunnistautuminen"
+
+msgid "People capacity"
+msgstr "Henkilömäärä"
+
+msgid "Area (m2)"
+msgstr "Pinta-ala (m2)"
+
+msgid "Location"
+msgstr "Sijainti"
+
+msgid "Minimum reservation time"
+msgstr "Lyhin varausaika"
+
+msgid "Maximum reservation time"
+msgstr "Pisin varausaika"
+
+msgid "Slot size for reservation time"
+msgstr "Varausajan välin koko"
+
+msgid "Equipment"
+msgstr "Varustelut"
+
+msgid "Maximum number of active reservations per user"
+msgstr "Varauksia enintään per käyttäjä (voimassa olevia)"
+
+msgid "Reservable"
+msgstr "Varattavissa"
+
+msgid "Reservation info"
+msgstr "Varausinfo"
+
+msgid "Responsible contact info"
+msgstr "Vastuuhenkilön yhteystiedot"
+
+msgid "Generic terms"
+msgstr "Yleiset ehdot"
+
+msgid "Specific terms"
+msgstr "Resurssikohtaiset ehdot"
+
+msgid "Extra content to \"reservation requested\" notification"
+msgstr "Lisäsisältö \"alustava varaus\"-ilmoitukseen"
+
+msgid "Extra content to \"reservation confirmed\" notification"
+msgstr "Lisäsisältö \"varaus vahvistettu\"-ilmoitukseen"
+
+msgid "Min price per hour"
+msgstr "Minimituntihinta"
+
+msgid "Max price per hour"
+msgstr "Maksimituntihinta"
+
+msgid "Access code type"
+msgstr "Pääsykoodityyppi"
+
+msgid "Reservable max. days in advance"
+msgstr "Varattavissa enintään näin monta päivää etukäteen"
+
+msgid "Reservable min. days in advance"
+msgstr "Varattavissa vähintään näin monta päivää etukäteen"
+
+msgid "External reservation URL"
+msgstr "Ulkoisen varauskalenterin URL"
+
+msgid ""
+"A link to an external reservation system if this resource is managed "
+"elsewhere"
+msgstr ""
+"Ulkoisen varausjärjestelmän osoite jos tätä resurssia hallitaan muualla"
+
+msgid "Reservation extra questions"
+msgstr "Varauksen lisäkysymykset"
+
+msgid "resource"
+msgstr "resurssi"
+
+msgid "resources"
+msgstr "resurssit"
+
+msgid "You cannot make a multi day reservation"
+msgstr "Varaus ei saa ulottua useammalle päivälle"
+
+msgid "You must start and end the reservation during opening hours"
+msgstr "Varauksen täytyy alkaa ja päättyä aukioloaikojen sisällä"
+
+#, python-format
+msgid "The maximum reservation length is %(max_period)s"
+msgstr "Varauksen maksimikesto on %(max_period)s"
+
+msgid "Maximum number of active reservations for this resource exceeded."
+msgstr "Liikaa voimassa olevia varauksia tähän tilaan."
+
+msgid "This value cannot be greater than max price per hour"
+msgstr "Tämä arvo ei voi olla suurempi kuin maksimituntihinta"
+
+msgid "This value must be a multiple of slot_size"
+msgstr "Tämän arvon täytyy olla slot_size arvon moninkerta"
+
+msgid "Main photo"
+msgstr "Päävalokuva"
+
+msgid "Ground plan"
+msgstr "Pohjapiirros"
+
+msgid "Map"
+msgstr "Kartta"
+
+msgid "Other"
+msgstr "Toinen"
+
+msgid "Caption"
+msgstr "Kuvateksti"
+
+msgid "Image"
+msgstr "Kuva"
+
+msgid "Cropping"
+msgstr "Rajaus"
+
+msgid "Sort order"
+msgstr "Järjestysnumero"
+
+msgid "resource image"
+msgstr "resurssin kuva"
+
+msgid "resource images"
+msgstr "resurssin kuvat"
+
+msgctxt "singular"
+msgid "resource equipment"
+msgstr "resurssin varuste"
+
+msgctxt "plural"
+msgid "resource equipment"
+msgstr "resurssin varusteet"
+
+msgid "Identifier"
+msgstr "Tunniste"
+
+msgid "Resources"
+msgstr "Resurssit"
+
+msgid "Overlapping opening hours"
+msgstr "Päällekkäiset aukioloajat"
+
+msgid "Time zone"
+msgstr "Aikavyöhyke"
+
+msgid "Manager email"
+msgstr "Vahtimestarin sähköpostiosoite"
+
+msgid "Street address"
+msgstr "Katuosoite"
+
+msgid "Postal code"
+msgstr "Postinumero"
+
+msgid "Phone number"
+msgstr "Puhelinnumero"
+
+msgid "Email"
+msgstr "Sähköpostiosoite"
+
+msgid "WWW link"
+msgstr "Www-osoite"
+
+msgid "Full postal address"
+msgstr "Täysi postiosoite"
+
+msgid "Municipality"
+msgstr "Kunta"
+
+msgid "Picture URL"
+msgstr "Valokuvan osoite"
+
+msgid "Picture caption"
+msgstr "Valokuvan kuvateksti"
+
+msgid "unit"
+msgstr "toimipiste"
+
+msgid "units"
+msgstr "toimipisteet"
+
+msgid "subject of the authorization"
+msgstr "valtuutuksen kohde"
+
+msgid "authorization level"
+msgstr "valtuutustaso"
+
+msgid "authorized user"
+msgstr "valtuutettu käyttäjä"
+
+msgid "unit authorization"
+msgstr "toimipisteen valtuutus"
+
+msgid "unit authorizations"
+msgstr "toimipisteiden valtuutukset"
+
+msgid "Namespace"
+msgstr "Tunnisteavaruus"
+
+msgid "Value"
+msgstr "Arvo"
+
+msgid "unit identifier"
+msgstr "toimipisteen tunniste"
+
+msgid "unit identifiers"
+msgstr "toimipisteen tunnisteet"
+
+msgid "unit group"
+msgstr "toimipisteryhmä"
+
+msgid "unit groups"
+msgstr "toimipisteryhmät"
+
+msgid "unit group authorization"
+msgstr "toimipisteryhmän valtuutus"
+
+msgid "unit group authorizations"
+msgstr "toimipisteryhmien valtuutukset"
+
+#, python-format
+msgid "%(count)d hour"
+msgid_plural "%(count)d hours"
+msgstr[0] "%(count)d tunti"
+msgstr[1] "%(count)d tuntia"
+
+#, python-format
+msgid "%(count)d minute"
+msgid_plural "%(count)d minutes"
+msgstr[0] "%(count)d minuutti"
+msgstr[1] "%(count)d minuuttia"
+
+msgid "Add Another"
+msgstr "Lisää toinen"
+
+msgid "Delete Item"
+msgstr "Poista"
+
+msgid "Finnish"
+msgstr "Suomi"
+
+msgid "English"
+msgstr "Englanti"
+
+msgid "Swedish"
+msgstr "Ruotsi"
+
+msgid "yyyy-mm-dd"
+msgstr "dd.mm.yyyy"
+
+msgid "Yes"
+msgstr "Kyllä"
+
+msgid "No"
+msgstr "Ei"
+
+msgid "Hidden"
+msgstr "Piilotettu"
+
+msgid "Published"
+msgstr "Julkaistu"
+
+msgid "Can not be reserved"
+msgstr "Ei varattavissa"
+
+msgid "Bookable"
+msgstr "Varattavissa"
+
+msgid "Please check the opening hours."
+msgstr "Tarkista aukioloajat."
+
+msgid "Instructions"
+msgstr "Ohjeet"
+
+msgid "Log out"
+msgstr "Kirjaudu ulos"
+
+msgid "Contact us"
+msgstr "Ota yhteyttä"
+
+msgid "Copy time period"
+msgstr "Kopioi aikajakso"
+
+msgid "Edit time period"
+msgstr "Muokkaa ajanjaksoa"
+
+msgid "Time interval"
+msgstr "Aikaväli"
+
+msgid "Remove time period"
+msgstr "Poista ajanjakso"
+
+msgid "Tarkista seuraavat virheet"
+msgstr "Check the following errors"
+
+msgid "Choose image"
+msgstr "Valitse kuva"
+
+msgid "Remove image"
+msgstr "Poista kuva"
+
+msgid "Log in"
+msgstr "Kirjaudu sisään"
+
+msgid "You are not allowed to use Respa Admin."
+msgstr "Sinulla ei ole oikeutta Respa Adminiin."
+
+#, python-format
+msgid ""
+"\n"
+"                Sorry, but \"%(user)s\" is not allowed to use Respa Admin.\n"
+"                Please log in with a different account.\n"
+"                "
+msgstr ""
+"\n"
+"                Valitettavasti käyttäjällä \"%(user)s\" ei ole oikeutta "
+"kirjautua Respa Adminiin.\n"
+"                Ole hyvä ja kirjaudu toisella tunnuksella.\n"
+"                "
+
+msgid "Login failed"
+msgstr "Kirjautuminen epäonnistui"
+
+msgid "Log in with Helsinki account"
+msgstr "Kirjaudu Helsinki-tunnuksella"
+
+msgid "Username"
+msgstr "Käyttäjätunnus"
+
+msgid "Password"
+msgstr "Salasana"
+
+msgid "All resources I manage"
+msgstr "Kaikki hallitsemani resurssit"
+
+msgid "Add a new resource"
+msgstr "Luo uusi resurssi"
+
+msgid "Search"
+msgstr "Hae"
+
+msgid "All resources"
+msgstr "Kaikki resurssit"
+
+msgid "Filter"
+msgstr "Suodata"
+
+msgid "Filter by type"
+msgstr "Tyyppi"
+
+msgid "Filter by unit"
+msgstr "Toimipaikka"
+
+msgid "Availability"
+msgstr "Saatavuus"
+
+msgid "Visibility"
+msgstr "Näkyvyys"
+
+msgid "Edit"
+msgstr "Muokkaa"
+
+msgid "Accessibility"
+msgstr "Esteettömyys"
+
+msgid "Accessibility data is entered in the Accessibility Application."
+msgstr "Tilan esteettömyystiedot täytetään Esteettömyyssovelluksessa."
+
+msgid "Enter accessibility data"
+msgstr "Täytä esteettömyystiedot"
+
+msgid "Booking information"
+msgstr "Varauksen tiedot"
+
+msgid "*Mandatory fields"
+msgstr "*Pakolliset kentät"
+
+msgid "Additional information before calendar."
+msgstr "Lisätiedot ennen kalenteria."
+
+msgid "E-mail notifications"
+msgstr "Sähköposti-ilmoitukset"
+
+msgid "A notification will be sent when a space is booked."
+msgstr "Ilmoitus lähetetään, kun tilaa varataan."
+
+msgid "Extra questions"
+msgstr "Lisäkysymykset"
+
+msgid "Extra questions for reservation"
+msgstr "Varauksen lisäkysymykset"
+
+msgid "Choose from the list below"
+msgstr "Valitse allaolevasta listasta"
+
+msgid "General information"
+msgstr "Yleiset tiedot"
+
+msgid "*Mandatory Fields"
+msgstr "*Pakolliset kentät"
+
+msgid "Name and description"
+msgstr "Nimi ja kuvaus"
+
+msgid "Contact person"
+msgstr "Yhteyshenkilö"
+
+msgid "Contact person information is only for internal use."
+msgstr "Yhteyshenkilön tiedot ovat vain sisäiseen käyttöön."
+
+msgid "External calendar"
+msgstr "Ulkoinen kalenterijärjestelmä"
+
+msgid "Images"
+msgstr "Kuva"
+
+msgid "You can only choose one main image."
+msgstr "Voit valita vain yhden pääkuvan."
+
+msgid "Add image"
+msgstr "Lisää kuva"
+
+msgid "Translations"
+msgstr "Käännökset"
+
+msgid "Authentication, terms and price"
+msgstr "Tunnistautuminen, ehdot ja hinta"
+
+msgid "Opening hours"
+msgstr "Aukioloajat"
+
+msgid "Add new time period"
+msgstr "Lisää uusi aikajakso"
+
+msgid "Add general time period"
+msgstr "Lisää yleinen kausi"
+
+msgid "Pricing"
+msgstr "Hinnoittelu"
+
+msgid "The space is free of charge"
+msgstr "Tila on ilmainen"
+
+msgid "Functions"
+msgstr "Toiminnot"
+
+msgid "Save"
+msgstr "Tallenna"
+
+msgid "View resource"
+msgstr "Tarkastele resurssia"
+
+msgid "Edit resource"
+msgstr "Muokkaa resurssia"
+
+msgid "Create new resource"
+msgstr "Luo uusi resurssi"
+
+msgid "name"
+msgstr "nimi"
+
+msgid "a descriptive name for this Exchange configuration"
+msgstr "kuvaava nimi tälle Exchange-kokoonpanolle"
+
+msgid "EWS URL"
+msgstr "EWS URL"
+
+msgid ""
+"the URL to the Exchange Web Service (e.g. https://contoso.com/EWS/Exchange."
+"asmx)"
+msgstr "URL Exchange Web Serviceen (esim. https://contoso.com/EWS/Exchange."
+"asmx)"
+
+msgid "username"
+msgstr "käyttäjätunnus"
+
+msgid "the service user to authenticate as, in domain\\username format"
+msgstr "palveluun autentikoituva käyttäjä, muotoa domain\\käyttäjänimi"
+
+msgid "password"
+msgstr "salasana"
+
+msgid "the user's password (stored as plain-text)"
+msgstr "käyttäjän salasana (säilytetään selkokielisenä)"
+
+msgid "enabled"
+msgstr "käytössä"
+
+msgid ""
+"whether synchronization is enabled at all against this Exchange instance"
+msgstr "määrittää onko synkronointi käytössä tässä Exchange instanssissa"
+
+msgid "Exchange configuration"
+msgstr "Exchange konfiguraatio"
+
+msgid "Exchange configurations"
+msgstr "Exchange konfiguraatiot"
+
+msgid "sync Exchange to Respa"
+msgstr "synkronoi Exchange Respaan"
+
+msgid ""
+"if disabled, events will not be synced from the Exchange calendar to Respa"
+msgstr "mikäli ei käytössä, tapahtumia ei synkronoida Exchange-kalenterista Respaan"
+
+msgid "sync Respa to Exchange"
+msgstr "synkronoi Respa Exchangeen"
+
+msgid ""
+"if disabled, new events will not be synced from Respa to the Exchange "
+"calendar; pre-existing events continue to be updated"
+msgstr "mikäli ei käytössä, uusia tapahtumia ei synkronoida Respasta Exchange-"
+"kalenteriin; ennestään olleet tapahtumat päivittyvät"
+
+msgid "principal email"
+msgstr "pääasiallinen sähköpostiosoite"
+
+msgid "the email address for this resource in Exchange"
+msgstr "sähköpostiosoite tähän resurssiin Exchangessa"
+
+msgid "Exchange resource"
+msgstr "Exchange resurssi"
+
+msgid "Exchange resources"
+msgstr "Exchange resurssit"
+
+msgid "Exchange reservation"
+msgstr "Exchange varaus"
+
+msgid "Exchange reservations"
+msgstr "Exchange varaukset"
+
+msgid "Favorite resources"
+msgstr "Suosikkiresurssit"
+
+msgid "staff status"
+msgstr "henkilökuntaa"
+
+msgid ""
+"Designates whether the user can log into Django Admin or Respa Admin sites."
+msgstr ""
+"Määrää pystyykö käyttäjä kirjautumaan Django Admin tai Respa Admin -"
+"käyttöliittymiin."
+
+msgid "general administrator status"
+msgstr "yleinen ylläpitäjä"
+
+msgid ""
+"Designates whether the user is a General Administrator with special "
+"permissions to many objects within Respa. This is almost as powerful as "
+"superuser."
+msgstr ""
+"Määrää onko käyttäjä yleinen ylläpitäjä, jolla on erityisoikeuksia moniin "
+"Respan kohteisiin. Tämä on lähes yhtä vaikutusvaltainen kuin pääkäyttäjä."
