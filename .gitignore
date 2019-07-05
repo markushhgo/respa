@@ -19,3 +19,7 @@ perf*csv
 /src
 .env
 /.vscode
+env/
+Lib/
+scripts/
+pyvenv*

@@ -8,11 +8,11 @@
     overflow: hidden;
   }
 
-  a.hel-icon {
+  .ra-icon {
     padding-top: 13px;
     padding-bottom: 13px;
-        
-    svg {
+    
+    img {
       height: 36px;
     }
   }
@@ -32,7 +32,7 @@
 
   .respa-nav {
     border: $panel-default-border;
-        
+
     ul.navbar-nav {
       margin-top: 0;
       margin-bottom: 0;
