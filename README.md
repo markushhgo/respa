@@ -1,5 +1,5 @@
-[![Build Status](https://api.travis-ci.org/City-of-Helsinki/respa.svg?branch=master)](https://travis-ci.org/City-of-Helsinki/respa)
-[![codecov](https://codecov.io/gh/City-of-Helsinki/respa/branch/master/graph/badge.svg)](https://codecov.io/gh/City-of-Helsinki/respa)
+[![Build Status](https://travis-ci.com/digipointtku/respaTku.svg?branch=master)](https://travis-ci.com/digipointtku/respaTku)
+[![codecov](https://codecov.io/gh/digipointtku/respaTku/branch/master/graph/badge.svg)](https://codecov.io/gh/digipointtku/respaTku)
 
 Respa – Resource reservation and management service
 ===================
