@@ -29,7 +29,7 @@ addons:
       - postgresql-9.6-postgis-2.4
 
 before_install:
-  - chmod -r +x .
+  - chmod -R +x .
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
   - pip install codecov -r requirements.txt
