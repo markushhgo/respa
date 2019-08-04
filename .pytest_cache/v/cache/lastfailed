@@ -1,0 +1,16 @@
+{
+  "caterings/tests/test_catering_order_api.py": true,
+  "caterings/tests/test_catering_product_api.py": true,
+  "caterings/tests/test_catering_product_category_api.py": true,
+  "caterings/tests/test_catering_provider_api.py": true,
+  "comments/tests/test_comment_api.py": true,
+  "payments/tests/test_bambora_payform.py": true,
+  "payments/tests/test_order_api.py": true,
+  "payments/tests/test_reservation_api.py": true,
+  "payments/tests/test_resource_api.py": true,
+  "resources/tests/test_api_router.py": true,
+  "resources/tests/test_typeahead_api.py": true,
+  "respa_admin/tests/test_login_views.py": true,
+  "respa_admin/tests/test_queryset.py": true,
+  "respa_admin/tests/test_resource_forms.py": true
+}

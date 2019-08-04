@@ -30,7 +30,8 @@ from resources.models.utils import generate_reservation_xlsx, get_object_or_none
 
 from ..auth import is_general_admin, is_underage, is_overage, is_authenticated_user
 from .base import (
-    NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget
+    NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget,
+    ExtraDataMixin
 )
 
 User = get_user_model()
@@ -67,7 +68,7 @@ class UserSerializer(TranslatedModelSerializer):
         fields = ('id', 'display_name', 'email')
 
 
-class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSerializer):
+class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoModelSerializer):
     begin = NullableDateTimeField()
     end = NullableDateTimeField()
     user = UserSerializer(required=False)

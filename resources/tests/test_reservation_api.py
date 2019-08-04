@@ -2027,3 +2027,10 @@ def test_reservation_cannot_add_bogus_type(resource_in_unit, reservation_data, a
     reservation_data['type'] = 'foobar'
     response = api_client.post(list_url, data=reservation_data)
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_include_resource_detail(api_client, resource_in_unit, reservation, list_url):
+    response = api_client.get(list_url + '?include=resource_detail')
+    assert response.status_code == 200
+    assert response.json()['results'][0]['resource']['name']['fi'] == resource_in_unit.name

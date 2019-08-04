@@ -732,7 +732,7 @@ paths:
           type: boolean
       - name: include
         in: query
-        description: Include extra data to queryset. Currently accepts values `resource_detail` and `order_detail` (available only when the payment support is enabled).
+        description: Include extra data to queryset. Currently accepts value `resource_detail`.
         schema:
           type: string
         example: resource_detail
