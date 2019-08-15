@@ -96,4 +96,4 @@ def _logout_locally_and_in_tunnistamo(request, redirect_uri=None):
     next_param = urlencode({
         'next': request.build_absolute_uri(redirect_uri)
     })
-    return HttpResponseRedirect(tunnistamo_url + '/logout/?' + next_param)
+    return HttpResponseRedirect('https://turku.fi/') #+'/logout/?'+next_param)

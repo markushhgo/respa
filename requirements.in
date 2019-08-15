@@ -19,6 +19,7 @@ django-image-cropping
 easy_thumbnails
 django-helusers
 django-allauth
+django-environ
 djangorestframework-jwt
 pyjwt
 django-hstore
