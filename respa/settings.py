@@ -34,7 +34,7 @@ env = environ.Env(
     MAIL_MAILGUN_DOMAIN=(str, ''),
     MAIL_MAILGUN_API=(str, ''),
     RESPA_IMAGE_BASE_URL=(str, ''),
-    ACCESSIBILITY_API_BASE_URL=(str, 'https://asiointi.hel.fi/kapaesteettomyys/'),
+    ACCESSIBILITY_API_BASE_URL=(str, 'https://asiointi.turku.fi/kapaesteettomyys/'),
     ACCESSIBILITY_API_SYSTEM_ID=(str, ''),
     ACCESSIBILITY_API_SECRET=(str, ''),
     RESPA_ADMIN_INSTRUCTIONS_URL=(str, ''),
@@ -44,11 +44,9 @@ env = environ.Env(
     RESPA_ADMIN_KORO_STYLE=(str, ''),
 )
 environ.Env.read_env()
-
 # used for generating links to images, when no request context is available
 # reservation confirmation emails use this
 RESPA_IMAGE_BASE_URL = env('RESPA_IMAGE_BASE_URL')
-
 BASE_DIR = root()
 
 DEBUG_TOOLBAR_CONFIG = {
@@ -69,7 +67,7 @@ SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 SITE_ID = 1
 # Application definition
 INSTALLED_APPS = [
-    'helusers',
+    'tkusers',
     'modeltranslation',
     'parler',
     'grappelli',
@@ -99,7 +97,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    #'helusers.providers.helsinki',
+    'tkusers.providers.turku',
 
     'munigeo',
 
@@ -227,13 +225,13 @@ AUTHENTICATION_BACKENDS = (
 )
 
 SOCIALACCOUNT_PROVIDERS = {
-    'helsinki': {
+    'turku': {
         'VERIFIED_EMAIL': True
     }
 }
 LOGIN_REDIRECT_URL = '/'
 ACCOUNT_LOGOUT_ON_GET = True
-SOCIALACCOUNT_ADAPTER = 'helusers.adapter.SocialAccountAdapter'
+SOCIALACCOUNT_ADAPTER = 'tkusers.adapter.SocialAccountAdapter'
 
 
 # REST Framework
@@ -244,7 +242,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'helusers.jwt.JWTAuthentication',
+        'tkusers.jwt.JWTAuthentication',
     ] + ([
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
@@ -253,7 +251,7 @@ REST_FRAMEWORK = {
 }
 
 JWT_AUTH = {
-    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'helusers.jwt.get_user_id_from_payload_handler',
+    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'tkusers.jwt.get_user_id_from_payload_handler',
     'JWT_AUDIENCE': env('TOKEN_AUTH_ACCEPTED_AUDIENCE'),
     'JWT_SECRET_KEY': env('TOKEN_AUTH_SHARED_SECRET')
 }
