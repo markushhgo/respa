@@ -29,9 +29,7 @@ def test_tunnistamo_login_when_already_logged_in_as_non_staff(client):
     assert initial_login_ok
     response = client.get(tunnistamo_login_url)
     assert response.status_code == 302
-    assert response.url == 'https://api.hel.fi/sso/logout/?next={url}'.format(
-        url=('http://testserver/ra/login/tunnistamo/'
-             .replace(':', '%3A').replace('/', '%2F')))
+    assert response.url == 'https://turku.fi/'
 
 
 @pytest.mark.django_db
@@ -116,5 +114,5 @@ def test_logout(client):
     response = client.get(reverse('respa_admin:logout'))
     assert response.status_code == 302
     assert response.url == (
-        'https://api.hel.fi/sso/logout/?next=http%3A%2F%2Ftestserver%2Fra%2F')
+        'https://turku.fi/')
     assert '_auth_user_id' not in client.session

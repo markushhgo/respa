@@ -67,7 +67,6 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 
 SITE_ID = 1
-
 # Application definition
 INSTALLED_APPS = [
     'helusers',
@@ -100,7 +99,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'helusers.providers.helsinki',
+    #'helusers.providers.helsinki',
 
     'munigeo',
 
