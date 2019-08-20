@@ -4,7 +4,7 @@ import { toggleCurrentLanguage, calculateTranslatedFields }  from './resourceFor
 function start() {
   initializeEventHandlers();
   setClonableItems();
-  toggleCurrentLanguage();
+  toggleCurrentLanguage('fi');
   calculateTranslatedFields();
   calendarHandler();
   initialSortPeriodDays();
