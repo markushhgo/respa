@@ -38,7 +38,7 @@ _defaults = dict(
     # OIDC config expiration time
     OIDC_CONFIG_EXPIRATION_TIME=24 * 60 * 60
 )
-
+LOGOUT_REDIRECT_URL = 'https://turku.fi'
 _import_strings = [
     'USER_RESOLVER',
 ]
