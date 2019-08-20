@@ -1,5 +1,5 @@
-Django==2.1.11
-django-modeltranslation>=0.13-beta1
+Django==2.2.4
+django-modeltranslation==0.13.3
 --no-binary psycopg2
 psycopg2
 django-munigeo
@@ -44,7 +44,7 @@ django-reversion
 daemonize
 django-environ
 django-enumfields
-django-sanitized-dump>=0.2.0
-database-sanitizer>=0.4.0
+django-sanitized-dump==1.2.0
+database-sanitizer==1.1.0
 jsonschema
 django-admin-json-editor
