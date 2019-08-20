@@ -177,7 +177,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
                              on_delete=models.PROTECT)
     purposes = models.ManyToManyField(Purpose, verbose_name=_('Purposes'))
     name = models.CharField(verbose_name=_('Name'), max_length=200)
-    description = models.TextField(verbose_name=_('Description'))
+    description = models.TextField(verbose_name=_('Description'), null=True, blank=True)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
