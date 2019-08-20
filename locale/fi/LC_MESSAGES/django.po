@@ -1052,7 +1052,7 @@ msgid "Images"
 msgstr "Kuva"
 
 msgid "You can only choose one main image."
-msgstr "Voit valita vain yhden pääkuvan. Kuvan enimmäiskoko 10mb."
+msgstr "Voit valita vain yhden pääkuvan."
 
 msgid "Add image"
 msgstr "Lisää kuva"

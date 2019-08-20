@@ -1054,7 +1054,7 @@ msgid "Images"
 msgstr "Bilder"
 
 msgid "You can only choose one main image."
-msgstr "Du kan endast välja en huvudbild. Bildens storlek högst 10mb."
+msgstr "Du kan endast välja en huvudbild."
 
 msgid "Add image"
 msgstr "Lägg till bild"
