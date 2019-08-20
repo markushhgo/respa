@@ -42,13 +42,13 @@ env = environ.Env(
     RESPA_ADMIN_VIEW_RESOURCE_URL=(str, ''),
     RESPA_ADMIN_LOGO=(str, ''),
     RESPA_ADMIN_KORO_STYLE=(str, ''),
+    LOGOUT_REDIRECT_URL = (str, 'https://turku.fi')
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
 # reservation confirmation emails use this
 RESPA_IMAGE_BASE_URL = env('RESPA_IMAGE_BASE_URL')
 BASE_DIR = root()
-
 DEBUG_TOOLBAR_CONFIG = {
     'RESULTS_CACHE_SIZE': 100,
 }
@@ -230,6 +230,7 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = env('LOGOUT_REDIRECT_URL')
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_ADAPTER = 'tkusers.adapter.SocialAccountAdapter'
 

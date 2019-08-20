@@ -81,6 +81,7 @@ pytest-django==3.4.5
 pytest==4.1.1
 python-dateutil==2.7.5    # via arrow, delorean, faker, freezegun, icalendar
 python-docx==0.8.10
+python-jose==3.0.1        # via social-auth-core
 python3-openid==3.1.0     # via django-allauth
 pytz==2018.9
 pyyaml==5.1               # via database-sanitizer, django-munigeo, django-sanitized-dump
