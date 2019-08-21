@@ -39,11 +39,6 @@ export function toggleCurrentLanguage(language = undefined, input = null) {
   languagesToHide.forEach(language => hideLanguage(language, input));
   let $languageButtons = $('[name$="language-' + language + '"]');
   $languageButtons.each((i, input) => input.classList.add('language-item-selected'));
-  if (language === 'fi') {
-    toggleLanguage('sv');
-  } else if (language === 'sv') {
-    toggleLanguage('fi');
-  }
 }
 
 /*
