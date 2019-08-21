@@ -83,12 +83,14 @@ class Reservation(ModifiableModel):
     CREATED = 'created'
     CANCELLED = 'cancelled'
     CONFIRMED = 'confirmed'
+    MODIFIED = 'modified'
     DENIED = 'denied'
     REQUESTED = 'requested'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
         (CONFIRMED, _('confirmed')),
+        (MODIFIED, _('modified')),
         (DENIED, _('denied')),
         (REQUESTED, _('requested')),
     )
@@ -246,6 +248,8 @@ class Reservation(ModifiableModel):
                 if not user_is_staff:
                     # notifications are not sent from staff created reservations to avoid spam
                     self.send_reservation_created_mail()
+        elif new_state == Reservation.MODIFIED:
+            self.send_reservation_modified_mail()
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
@@ -429,6 +433,9 @@ class Reservation(ModifiableModel):
             raise Exception("Refusing to notify more than 100 users (%s)" % self)
         for user in notify_users:
             self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED_OFFICIAL, user=user)
+
+    def send_reservation_modified_mail(self):
+        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
