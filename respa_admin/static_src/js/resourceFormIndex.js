@@ -1,10 +1,15 @@
 import { initializeEventHandlers, initialSortPeriodDays, setClonableItems, calendarHandler, coloredDropdownListener, addDropdownColor }  from './resourceForm';
-import { toggleCurrentLanguage, calculateTranslatedFields }  from './resourceFormLanguage';
+import { toggleCurrentLanguage, calculateTranslatedFields, getCurrentLanguage, toggleLanguage }  from './resourceFormLanguage';
 
 function start() {
   initializeEventHandlers();
   setClonableItems();
-  toggleCurrentLanguage('fi');
+  toggleCurrentLanguage();
+  if (getCurrentLanguage() === 'fi') {
+    toggleLanguage('sv');
+  } else if (getCurrentLanguage() === 'sv') {
+    toggleLanguage('fi');
+  }
   calculateTranslatedFields();
   calendarHandler();
   initialSortPeriodDays();
