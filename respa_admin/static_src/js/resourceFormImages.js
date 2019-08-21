@@ -1,5 +1,5 @@
 import { getEmptyImage } from './resourceForm';
-import { toggleCurrentLanguage } from './resourceFormLanguage';
+import { toggleCurrentLanguage, showLanguage } from './resourceFormLanguage';
 
 export function updateImagesTotalForms() {
   $('#id_images-TOTAL_FORMS').val(getImageCount());
@@ -53,6 +53,11 @@ export function addNewImage() {
 
     attachImageEventHandlers(newImage);
     toggleCurrentLanguage(document.documentElement.lang, newImage);
+    if (document.documentElement.lang === 'fi') {
+      showLanguage('sv', newImage);
+    } else if (document.documentElement.lang === 'sv') {
+      showLanguage('fi', newImage);
+    }
     updateImagesTotalForms();
     updateImagesIndices();
   }
