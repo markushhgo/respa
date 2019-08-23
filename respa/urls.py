@@ -2,7 +2,7 @@ from django.urls import path, re_path
 from django.conf.urls import include
 from django.conf import settings
 from django.conf.urls.static import static
-from helusers import admin
+from tkusers import admin
 from django.views.generic.base import RedirectView
 
 from resources.api import RespaAPIRouter

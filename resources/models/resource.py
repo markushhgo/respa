@@ -685,6 +685,8 @@ class ResourceImage(ModifiableModel):
         try:
             img = Image.open(self.image)
             img.load()
+            if (img.size[0] < 5 or img.size[1] < 5) or (img.size[0] > 1920 or img.size[1] > 1080):
+                raise
         except Exception as exc:
             raise InvalidImage("Image %s not valid (%s)" % (self.image, exc)) from exc
 

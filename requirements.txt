@@ -81,6 +81,7 @@ pytest-django==3.5.1
 pytest==5.1.0
 python-dateutil==2.8.0    # via arrow, delorean, faker, freezegun, icalendar
 python-docx==0.8.10
+python-jose==3.0.1        # via social-auth-core
 python3-openid==3.1.0     # via django-allauth
 pytz==2019.2
 pyyaml==5.1.2             # via database-sanitizer, django-munigeo, django-sanitized-dump
@@ -90,6 +91,7 @@ requests-ntlm==1.1.0
 requests-oauthlib==1.2.0  # via django-allauth
 requests==2.22.0
 six==1.12.0
+social-auth-core==3.2.0
 text-unidecode==1.2       # via faker
 tzlocal==2.0.0            # via delorean
 urllib3==1.25.3           # via requests

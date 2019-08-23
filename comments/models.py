@@ -29,7 +29,6 @@ if getattr(settings, 'RESPA_CATERINGS_ENABLED', False):
 def get_commentable_content_types():
     return ContentType.objects.get_for_models(*COMMENTABLE_MODELS.values()).values()
 
-
 class CommentQuerySet(models.QuerySet):
     def can_view(self, user):
         if not user.is_authenticated:
