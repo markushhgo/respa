@@ -956,8 +956,8 @@ msgstr ""
 msgid "Login failed"
 msgstr "Inloggningen misslyckades"
 
-msgid "Log in with Helsinki account"
-msgstr "Logga in med Helsinki konto"
+msgid "Log in with Turku account"
+msgstr "Logga in med Turku konto"
 
 #, fuzzy
 #| msgid "username"
