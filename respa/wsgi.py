@@ -9,20 +9,18 @@ https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
 
 import os
 import sys
-import environ
 
 from django.core.wsgi import get_wsgi_application
 
-if sys.prefix not in sys.path:
-    sys.path.append(sys.prefix)
-env = environ.Env(
-    RESPA_PROJECT_PATH = (str, ''),
-    RESPA_APP_PATH = (str, '')
-)
-environ.Env.read_env()
+project_path = None
+app_path = None
 
-project_path = env('RESPA_PROJECT_PATH')
-app_path = env('RESPA_APP_PATH')
+
+for line in open('./.env', 'r').read().split('\n'):
+    if line.split('=')[0].strip() == 'RESPA_PROJECT_PATH':
+        project_path = line.split('=')[1].strip()       # TODO
+    elif line.split('=')[0].strip() == 'RESPA_APP_PATH':
+        app_path = line.split('=')[1].strip()
 
 if project_path and project_path not in sys.path:
     sys.path.append(project_path)
