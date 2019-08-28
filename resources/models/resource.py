@@ -685,8 +685,10 @@ class ResourceImage(ModifiableModel):
         try:
             img = Image.open(self.image)
             img.load()
-            if (img.size[0] < 5 or img.size[1] < 5) or (img.size[0] > 1920 or img.size[1] > 1280):
-                raise AttributeError
+            if (img.size[0] < 5 or img.size[1] < 5):
+                raise ValidationError(_("Image has to be larger than 5x5"))
+            elif (img.size[0] > 1920 or img.size[1] > 1080):
+                raise ValidationError(_("Image has to be less than 1920x1280"))
         except Exception as exc:
             if isinstance(exc, AttributeError):
                 raise ValidationError ("Picture must be bigger than 5x5 or smaller than 1920x1280")

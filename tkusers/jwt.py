@@ -26,7 +26,6 @@ def patch_jwt_settings():
 # Disable automatic settings patching for now because it breaks Travis.
 # patch_jwt_settings()
 
-
 class JWTAuthentication(JSONWebTokenAuthentication):
     def authenticate_credentials(self, payload):
         return get_or_create_user(payload)

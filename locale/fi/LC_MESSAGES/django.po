@@ -1189,3 +1189,11 @@ msgid ""
 msgstr ""
 "Määrää onko käyttäjä yleinen ylläpitäjä, jolla on erityisoikeuksia moniin "
 "Respan kohteisiin. Tämä on lähes yhtä vaikutusvaltainen kuin pääkäyttäjä."
+
+
+
+msgid "Image has to be larger than 5x5"
+msgstr "Kuva pitää olla isompi kuin 5x5"
+
+msgid "Image has to be less than 1920x1280"
+msgstr "Kuva pitää olla pienempi kuin 1920x1280"
