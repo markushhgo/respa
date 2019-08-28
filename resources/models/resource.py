@@ -686,9 +686,12 @@ class ResourceImage(ModifiableModel):
             img = Image.open(self.image)
             img.load()
             if (img.size[0] < 5 or img.size[1] < 5) or (img.size[0] > 1920 or img.size[1] > 1080):
-                raise
+                raise AttributeError
         except Exception as exc:
-            raise InvalidImage("Image %s not valid (%s)" % (self.image, exc)) from exc
+            if isinstance(exc, AttributeError):
+                raise ValidationError ("Picture must be bigger than 5x5 or smaller than 1920x1080")
+            else:
+                raise InvalidImage("Image %s not valid (%s)" % (self.image, exc)) from exc
 
         if img.format not in ("JPEG", "PNG"):  # Needs transcoding.
             if self.type in ("map", "ground_plan"):
