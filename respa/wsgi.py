@@ -16,7 +16,7 @@ project_path = None
 app_path = None
 
 
-if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'), 'r'):
+if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')):
     for line in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'), 'r').read().split('\n'):
         if line.split('=')[0].strip() == 'RESPA_PROJECT_PATH':
             project_path = line.split('=')[1].replace('\'','').strip()       # TODO
