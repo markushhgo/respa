@@ -921,9 +921,10 @@ def test_user_cannot_see_others_denied_or_cancelled_reservations(api_client, use
     api_client.force_authenticate(user=user2)
     response = api_client.get(list_url)
     assert response.status_code == 200
-    assert response.data['count'] == 2
-    expected = {Reservation.CONFIRMED, Reservation.REQUESTED}
+    assert response.data['count'] == 3
+    expected = {Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT}
     assert {r['state'] for r in response.data['results']} == expected
+
 
 @pytest.mark.django_db
 def test_admins_can_see_reservations_in_all_states(
