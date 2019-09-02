@@ -691,9 +691,9 @@ class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,
     queryset = queryset.prefetch_related('favorited_by', 'resource_equipment', 'resource_equipment__equipment',
                                          'purposes', 'images', 'purposes', 'groups')
     filter_backends = (filters.SearchFilter, ResourceFilterBackend, LocationFilterBackend)
-    search_fields = ('name_fi', 'description_fi', 'unit__name_fi',
-                     'name_sv', 'description_sv', 'unit__name_sv',
-                     'name_en', 'description_en', 'unit__name_en')
+    search_fields = ('name_fi', 'description_fi', 'unit__name_fi', 'type__name_fi',
+                     'name_sv', 'description_sv', 'unit__name_sv', 'type__name_sv',
+                     'name_en', 'description_en', 'unit__name_en', 'type__name_en')
     serializer_class = ResourceSerializer
     authentication_classes = (
         list(drf_settings.DEFAULT_AUTHENTICATION_CLASSES) +
