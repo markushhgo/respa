@@ -64,6 +64,8 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 
 SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 
+GDAL_LIBRARY_PATH = 'C:\\OSGeo4W\\bin\\gdal204.dll'
+
 SITE_ID = 1
 # Application definition
 INSTALLED_APPS = [
