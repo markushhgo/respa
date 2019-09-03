@@ -1,5 +1,5 @@
-Django==2.2.4
-django-modeltranslation==0.13.3
+Django
+django-modeltranslation>=0.13-beta1
 --no-binary psycopg2
 psycopg2
 django-munigeo
@@ -19,7 +19,6 @@ django-image-cropping
 easy_thumbnails
 django-helusers
 django-allauth
-django-environ
 djangorestframework-jwt
 pyjwt
 django-hstore
@@ -31,7 +30,7 @@ django-guardian
 Jinja2
 django-jinja
 django-anymail
-raven
+sentry-sdk
 delorean
 freezegun
 python-docx
@@ -44,9 +43,7 @@ django-reversion
 daemonize
 django-environ
 django-enumfields
-django-sanitized-dump==1.2.0
-database-sanitizer==1.1.0
+django-sanitized-dump>=0.2.0
+database-sanitizer>=0.4.0
 jsonschema
 django-admin-json-editor
-social-auth-core
-python-jose
