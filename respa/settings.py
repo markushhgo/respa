@@ -13,6 +13,7 @@ from django.core.exceptions import ImproperlyConfigured
 root = environ.Path(__file__) - 2  # two folders back
 env = environ.Env(
     DEBUG=(bool, False),
+    GDAL_LIBRARY_PATH=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
     ADMINS=(list, []),
@@ -55,6 +56,7 @@ DEBUG_TOOLBAR_CONFIG = {
     'RESULTS_CACHE_SIZE': 100,
 }
 DEBUG = env('DEBUG')
+GDAL_LIBRARY_PATH = env('GDAL_LIBRARY_PATH')
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 ADMINS = env('ADMINS')
 INTERNAL_IPS = env.list('INTERNAL_IPS',
