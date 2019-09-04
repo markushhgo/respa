@@ -233,7 +233,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         verbose_name=_('External reservation URL'),
         help_text=_('A link to an external reservation system if this resource is managed elsewhere'),
         null=True, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+    reservation_extra_questions_fi = models.TextField(verbose_name=_('Reservation extra questions [Fi]'), blank=True)
+    reservation_extra_questions_en = models.TextField(verbose_name=_('Reservation extra questions [En]'), blank=True)
+    reservation_extra_questions_sv = models.TextField(verbose_name=_('Reservation extra questions [Sv]'), blank=True)
 
     objects = ResourceQuerySet.as_manager()
 

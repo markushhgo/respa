@@ -33,7 +33,7 @@ RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_
                             'reserver_address_city', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
                             'number_of_participants', 'participants', 'reserver_email_address', 'host_name',
-                            'reservation_extra_questions')
+                            'reservation_extra_questions_fi','reservation_extra_questions_en','reservation_extra_questions_sv')
 
 
 class ReservationQuerySet(models.QuerySet):
