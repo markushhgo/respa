@@ -6,6 +6,7 @@ Django settings for respa project.
 import os
 import environ
 import raven
+from sys import platform
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ImproperlyConfigured
 
@@ -56,7 +57,11 @@ DEBUG_TOOLBAR_CONFIG = {
     'RESULTS_CACHE_SIZE': 100,
 }
 DEBUG = env('DEBUG')
-GDAL_LIBRARY_PATH = env('GDAL_LIBRARY_PATH')
+
+if platform == 'win32':
+    if env('GDAL_LIBRARY_PATH'):
+        GDAL_LIBRARY_PATH = env('GDAL_LIBRARY_PATH')
+
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 ADMINS = env('ADMINS')
 INTERNAL_IPS = env.list('INTERNAL_IPS',
