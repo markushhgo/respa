@@ -83,7 +83,9 @@ def reservation_data_extra(reservation_data):
         'billing_address_city': 'Tampere',
         'company': 'a very secret association',
         'reserver_email_address': 'test.reserver@test.com',
+        'reservation_extra_questions_fi': 'Joku kysymys tähän',
         'reservation_extra_questions_en': 'Some question here',
+        'reservation_extra_questions_sv': 'Några fråga här',
     })
     return extra_data
 
@@ -1621,11 +1623,13 @@ def test_reservation_metadata_set(user_api_client, reservation, list_url, reserv
     detail_url = reverse('reservation-detail', kwargs={'pk': reservation.pk})
     field_1 = ReservationMetadataField.objects.get(field_name='reserver_name')
     field_2 = ReservationMetadataField.objects.get(field_name='reserver_phone_number')
-    field_3 = ReservationMetadataField.objects.get(field_name='reservation_extra_questions_en')
+    field_3 = ReservationMetadataField.objects.get(field_name='reservation_extra_questions_fi')
+    field_4 = ReservationMetadataField.objects.get(field_name='reservation_extra_questions_en')
+    field_5 = ReservationMetadataField.objects.get(field_name='reservation_extra_questions_sv')
     metadata_set = ReservationMetadataSet.objects.create(
         name='test_set',
     )
-    metadata_set.supported_fields.set([field_1, field_2, field_3])
+    metadata_set.supported_fields.set([field_1, field_2, field_3, field_4, field_5])
     metadata_set.required_fields.set([field_1])
 
     reservation.resource.reservation_metadata_set = metadata_set
@@ -1639,7 +1643,9 @@ def test_reservation_metadata_set(user_api_client, reservation, list_url, reserv
     reservation_data['reserver_name'] = 'Mr. Reserver'
     reservation_data['reserver_phone_number'] = '0700-555555'
     reservation_data['reserver_address_street'] = 'ignored street 7'
+    reservation_data['reservation_extra_questions_fi'] = 'Kyllä tämä on extra kysymys'
     reservation_data['reservation_extra_questions_en'] = 'Yes this is extra question'
+    reservation_data['reservation_extra_questions_sv'] = 'Ja de här är en extra fråga'
 
     response = user_api_client.put(detail_url, data=reservation_data)
     assert response.status_code == 200
@@ -1648,7 +1654,9 @@ def test_reservation_metadata_set(user_api_client, reservation, list_url, reserv
     assert reservation.reserver_name == 'Mr. Reserver'
     assert reservation.reserver_phone_number == '0700-555555'
     assert reservation.reserver_address_street != 'ignored street 7'
-    assert reservation.reservation_extra_questions_en == 'Yes this is extra question'
+    assert 'reservation_extra_questions_fi' == 'Kyllä tämä on extra kysymys'
+    assert 'reservation_extra_questions_en' == 'Yes this is extra question'
+    assert 'reservation_extra_questions_sv' == 'Ja de här är en extra fråga'
 
 
 @pytest.mark.django_db
