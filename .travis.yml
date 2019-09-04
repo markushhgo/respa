@@ -38,6 +38,7 @@ before_script:
   - ./build-resources
   - ls -l respa_admin/static/respa_admin/main.css  # Check main.css got built
   - ./manage.py compilemessages
+  - ./manage.py migrate
 
 script: pytest --cov . --doctest-modules
 

@@ -121,9 +121,9 @@ class Reservation(ModifiableModel):
                                                               null=True)
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
-    reservation_extra_questions_fi = models.TextField(verbose_name=_('Reservation extra questions [Fi]'), blank=True)
-    reservation_extra_questions_en = models.TextField(verbose_name=_('Reservation extra questions [En]'), blank=True)
-    reservation_extra_questions_sv = models.TextField(verbose_name=_('Reservation extra questions [Sv]'), blank=True)
+    reservation_extra_questions_fi = models.TextField(verbose_name=_('Reservation extra questions [fi]'), blank=True)
+    reservation_extra_questions_en = models.TextField(verbose_name=_('Reservation extra questions [en]'), blank=True)
+    reservation_extra_questions_sv = models.TextField(verbose_name=_('Reservation extra questions [sv]'), blank=True)
 
     # extra detail fields for manually confirmed reservations
     reserver_name = models.CharField(verbose_name=_('Reserver name'), max_length=100, blank=True)
