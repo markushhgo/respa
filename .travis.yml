@@ -32,12 +32,14 @@ before_install:
   - chmod -R +x .
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+  - psql -c 'create database respa;' -U postgres
   - pip install codecov -r requirements.txt
 
 before_script:
   - ./build-resources
   - ls -l respa_admin/static/respa_admin/main.css  # Check main.css got built
   - ./manage.py compilemessages
+  - ./manage.py makemigrations
   - ./manage.py migrate
 
 script: pytest --cov . --doctest-modules
