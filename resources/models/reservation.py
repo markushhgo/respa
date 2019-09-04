@@ -216,7 +216,7 @@ class Reservation(ModifiableModel):
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
-            Reservation.CANCELLED
+            Reservation.CANCELLED, Reservation.CREATED
         )
 
         old_state = self.state
@@ -239,6 +239,11 @@ class Reservation(ModifiableModel):
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
             self.send_reservation_requested_mail_to_officials()
+        elif new_state == Reservation.CREATED:
+            if user_is_staff:
+                self.send_reservation_created_by_official_mail()
+            else:
+                self.send_reservation_created_mail()
         elif new_state == Reservation.CONFIRMED:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
@@ -455,6 +460,12 @@ class Reservation(ModifiableModel):
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED,
+                                   attachments=[attachment])
+
+    def send_reservation_created_by_official_mail(self):
+        reservations = [self]
+        ical_file = build_reservations_ical_file(reservations)
+        self.send_reservation_mail(Notification.RESERVATION_CREATED_OFFICIAL,
                                    attachments=[attachment])
 
     def send_reservation_created_with_access_code_mail(self):

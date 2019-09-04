@@ -33,6 +33,7 @@ env = environ.Env(
     MAIL_MAILGUN_KEY=(str, ''),
     MAIL_MAILGUN_DOMAIN=(str, ''),
     MAIL_MAILGUN_API=(str, ''),
+    USE_DJANGO_DEFAULT_EMAIL=(bool, False),
     RESPA_IMAGE_BASE_URL=(str, ''),
     ACCESSIBILITY_API_BASE_URL=(str, 'https://asiointi.turku.fi/kapaesteettomyys/'),
     ACCESSIBILITY_API_SYSTEM_ID=(str, ''),
@@ -40,6 +41,7 @@ env = environ.Env(
     RESPA_ADMIN_INSTRUCTIONS_URL=(str, ''),
     RESPA_ADMIN_SUPPORT_EMAIL=(str, ''),
     RESPA_ADMIN_VIEW_RESOURCE_URL=(str, ''),
+    RESPA_ERROR_EMAIL=(str,''),
     RESPA_ADMIN_LOGO=(str, ''),
     RESPA_ADMIN_KORO_STYLE=(str, ''),
     LOGOUT_REDIRECT_URL = (str, 'https://turku.fi')
@@ -305,14 +307,24 @@ RESPA_ADMIN_KORO_STYLE = env('RESPA_ADMIN_KORO_STYLE')
 RESPA_ADMIN_VIEW_RESOURCE_URL = env('RESPA_ADMIN_VIEW_RESOURCE_URL')
 RESPA_ADMIN_INSTRUCTIONS_URL = env('RESPA_ADMIN_INSTRUCTIONS_URL')
 RESPA_ADMIN_SUPPORT_EMAIL = env('RESPA_ADMIN_SUPPORT_EMAIL')
+SERVER_EMAIL = env('RESPA_ERROR_EMAIL')
 
-if env('MAIL_MAILGUN_KEY'):
+USE_DJANGO_DEFAULT_EMAIL = env('USE_DJANGO_DEFAULT_EMAIL')
+
+if env('MAIL_MAILGUN_KEY') and not USE_DJANGO_DEFAULT_EMAIL:
     ANYMAIL = {
         'MAILGUN_API_KEY': env('MAIL_MAILGUN_KEY'),
         'MAILGUN_SENDER_DOMAIN': env('MAIL_MAILGUN_DOMAIN'),
         'MAILGUN_API_URL': env('MAIL_MAILGUN_API'),
     }
     EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+elif USE_DJANGO_DEFAULT_EMAIL:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.turku.fi'
+    EMAIL_PORT = 25
+    EMAIL_HOST_USER = env('MAIL_DEFAULT_FROM')
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 RESPA_ADMIN_USERNAME_LOGIN = env.bool(
     'RESPA_ADMIN_USERNAME_LOGIN', default=True)

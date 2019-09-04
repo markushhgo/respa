@@ -21,10 +21,13 @@ class NotificationType:
     RESERVATION_REQUESTED = 'reservation_requested'
     RESERVATION_REQUESTED_OFFICIAL = 'reservation_requested_official'
     RESERVATION_CANCELLED = 'reservation_cancelled'
+    RESERVATION_CANCELLED_OFFICIAL = 'reservation_cancelled_official'
     RESERVATION_CONFIRMED = 'reservation_confirmed'
     RESERVATION_DENIED = 'reservation_denied'
     RESERVATION_CREATED = 'reservation_created'
+    RESERVATION_CREATED_OFFICIAL = 'reservation_created_official'
     RESERVATION_MODIFIED = 'reservation_modified'
+    RESERVATION_MODIFIED_OFFICIAL = 'reservation_modified_official'
     # If the access code is known at reservation time, this notification
     # type is used.
     RESERVATION_CREATED_WITH_ACCESS_CODE = 'reservation_created_with_access_code'
@@ -50,9 +53,12 @@ class NotificationTemplate(TranslatableModel):
         (NotificationType.RESERVATION_REQUESTED, _('Reservation requested')),
         (NotificationType.RESERVATION_REQUESTED_OFFICIAL, _('Reservation requested official')),
         (NotificationType.RESERVATION_CANCELLED, _('Reservation cancelled')),
+        (NotificationType.RESERVATION_CANCELLED_OFFICIAL, _('Reservation cancelled official')),
         (NotificationType.RESERVATION_CONFIRMED, _('Reservation confirmed')),
         (NotificationType.RESERVATION_CREATED, _('Reservation created')),
+        (NotificationType.RESERVATION_CREATED_OFFICIAL, _('Reservation created official')),
         (NotificationType.RESERVATION_MODIFIED, _('Reservation modified')),
+        (NotificationType.RESERVATION_MODIFIED_OFFICIAL, _('Reservation modified official')),
         (NotificationType.RESERVATION_DENIED, _('Reservation denied')),
         (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE, _('Reservation created with access code')),
         (NotificationType.RESERVATION_ACCESS_CODE_CREATED, _('Access code was created for a reservation')),
