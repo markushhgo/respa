@@ -220,7 +220,6 @@ class Reservation(ModifiableModel):
         )
 
         old_state = self.state
-        old_user = old_state.user
         if new_state == old_state:
             if old_state == Reservation.CONFIRMED:
                 reservation_modified.send(sender=self.__class__, instance=self,
