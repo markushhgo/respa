@@ -148,6 +148,7 @@ def generate_reservation_xlsx(reservations):
         ('User', 30),
         ('Comments', 30),
         ('Staff event', 10),
+        ('Require assistance', 10),
     ]
 
     for field in RESERVATION_EXTRA_FIELDS:
@@ -170,6 +171,7 @@ def generate_reservation_xlsx(reservations):
         if 'comments' in reservation:
             worksheet.write(row, 6, reservation['comments'])
         worksheet.write(row, 7, reservation['staff_event'])
+        worksheet.write(row, 8, reservation['require_assistance'])
         for i, field in enumerate(RESERVATION_EXTRA_FIELDS, 8):
             if field in reservation:
                 worksheet.write(row, i, reservation[field])
