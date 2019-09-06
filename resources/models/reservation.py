@@ -235,13 +235,15 @@ class Reservation(ModifiableModel):
 
         user_is_staff = self.user is not None and self.user.is_staff
 
+
+
         # Notifications
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
             self.send_reservation_requested_mail_to_officials()
         elif new_state == Reservation.CREATED:
-            if user != self.user and user_is_staff:
-                self.send_reservation_created_by_official_mail(user)
+            if user != self.user:
+                self.send_reservation_created_by_official_mail(user=user)
             else:
                 self.send_reservation_created_mail()
         elif new_state == Reservation.CONFIRMED:
@@ -254,7 +256,10 @@ class Reservation(ModifiableModel):
                     # notifications are not sent from staff created reservations to avoid spam
                     self.send_reservation_created_mail()
         elif new_state == Reservation.MODIFIED:
-            self.send_reservation_modified_mail()
+            if user != self.user:
+                self.send_reservation_modified_by_official_mail(user=user)
+            else:
+                self.send_reservation_modified_mail()
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
@@ -441,6 +446,9 @@ class Reservation(ModifiableModel):
 
     def send_reservation_modified_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED)
+
+    def send_reservation_modified_by_official_mail(self, user=None):
+        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED_OFFICIAL, user=user)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
