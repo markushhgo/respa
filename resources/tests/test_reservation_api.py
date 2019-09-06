@@ -83,7 +83,7 @@ def reservation_data_extra(reservation_data):
         'billing_address_city': 'Tampere',
         'company': 'a very secret association',
         'reserver_email_address': 'test.reserver@test.com',
-        'reservation_extra_questions_en': 'Some question here',
+        'reservation_extra_questions': 'Some question here',
     })
     return extra_data
 
