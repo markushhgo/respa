@@ -253,7 +253,7 @@ class Reservation(ModifiableModel):
                 if not user_is_staff:
                     self.send_reservation_created_mail()
                 else:
-                    if self.reserver_email_address != self.user.email_address:
+                    if self.reserver_email_address != self.user.email:
                         self.send_reservation_created_by_official_mail()
         elif new_state == Reservation.MODIFIED:
             if user != self.user:
