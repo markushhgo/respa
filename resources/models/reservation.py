@@ -263,7 +263,7 @@ class Reservation(ModifiableModel):
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
-            if self.reserver_email_address != self.user.mail:
+            if self.reserver_email_address != self.user.email:
                 self.send_reservation_cancelled_by_official_mail()
             else:
                 self.send_reservation_cancelled_mail()
