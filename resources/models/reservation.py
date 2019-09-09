@@ -472,7 +472,7 @@ class Reservation(ModifiableModel):
         self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED)
 
     def send_reservation_cancelled_by_official_mail(self):
-        self.send_reservation_cancelled_mail(NotificationType.RESERVATION_CANCELLED_OFFICIAL, action_by_official=True)
+        self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED_OFFICIAL, action_by_official=True)
 
     def send_reservation_created_mail(self):
         reservations = [self]
