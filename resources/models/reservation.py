@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_address_street', 'reserver_address_zip',
                             'reserver_address_city', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
-                            'number_of_participants', 'participants', 'reserver_email_address', 'host_name',
+                            'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'host_name',
                             'reservation_extra_questions')
 
 
@@ -121,9 +121,10 @@ class Reservation(ModifiableModel):
                                                               null=True)
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+    require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
 
     # extra detail fields for manually confirmed reservations
+
     reserver_name = models.CharField(verbose_name=_('Reserver name'), max_length=100, blank=True)
     reserver_id = models.CharField(verbose_name=_('Reserver ID (business or person)'), max_length=30, blank=True)
     reserver_email_address = models.EmailField(verbose_name=_('Reserver email address'), blank=True)
@@ -131,6 +132,8 @@ class Reservation(ModifiableModel):
     reserver_address_street = models.CharField(verbose_name=_('Reserver address street'), max_length=100, blank=True)
     reserver_address_zip = models.CharField(verbose_name=_('Reserver address zip'), max_length=30, blank=True)
     reserver_address_city = models.CharField(verbose_name=_('Reserver address city'), max_length=100, blank=True)
+    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+
     company = models.CharField(verbose_name=_('Company'), max_length=100, blank=True)
     billing_address_street = models.CharField(verbose_name=_('Billing address street'), max_length=100, blank=True)
     billing_address_zip = models.CharField(verbose_name=_('Billing address zip'), max_length=30, blank=True)
@@ -216,7 +219,7 @@ class Reservation(ModifiableModel):
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
-            Reservation.CANCELLED, Reservation.CREATED
+            Reservation.CANCELLED
         )
 
         old_state = self.state
@@ -241,11 +244,6 @@ class Reservation(ModifiableModel):
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
             self.send_reservation_requested_mail_to_officials()
-        elif new_state == Reservation.CREATED:
-            if user_is_staff:
-                self.send_reservation_created_by_official_mail()
-            else:
-                self.send_reservation_created_mail()
         elif new_state == Reservation.CONFIRMED:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
@@ -255,6 +253,8 @@ class Reservation(ModifiableModel):
                 if not user_is_staff:
                     # notifications are not sent from staff created reservations to avoid spam
                     self.send_reservation_created_mail()
+                else:
+                    self.send_reservation_created_by_official_mail()
         elif new_state == Reservation.MODIFIED:
             if user != self.user:
                 self.send_reservation_modified_by_official_mail()
@@ -417,7 +417,7 @@ class Reservation(ModifiableModel):
             if reserved_by_staff:
                 email_address = self.reserver_email_address
             else:
-                email_address = self.user.email
+                email_address = self.user.email or self.reserver_email_address
             user = self.user
 
         language = user.get_preferred_language() if user else DEFAULT_LANG
@@ -427,8 +427,9 @@ class Reservation(ModifiableModel):
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
             logger.error(e, exc_info=True, extra={'user': user.uuid})
+            print("Notification template exception")
             return
-
+        print("Sending automated mail :: (%s) %s" % (email_address, rendered_notification['subject']))
         send_respa_mail(
             email_address,
             rendered_notification['subject'],
@@ -476,6 +477,7 @@ class Reservation(ModifiableModel):
     def send_reservation_created_by_official_mail(self):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
+        attachment = 'reservation.ics', ical_file, 'text/calendar'
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_OFFICIAL,
                                    attachments=[attachment], reserved_by_staff=True)
 
