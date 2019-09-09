@@ -121,10 +121,10 @@ class Reservation(ModifiableModel):
                                                               null=True)
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
     require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
 
     # extra detail fields for manually confirmed reservations
+
     reserver_name = models.CharField(verbose_name=_('Reserver name'), max_length=100, blank=True)
     reserver_id = models.CharField(verbose_name=_('Reserver ID (business or person)'), max_length=30, blank=True)
     reserver_email_address = models.EmailField(verbose_name=_('Reserver email address'), blank=True)
@@ -132,6 +132,8 @@ class Reservation(ModifiableModel):
     reserver_address_street = models.CharField(verbose_name=_('Reserver address street'), max_length=100, blank=True)
     reserver_address_zip = models.CharField(verbose_name=_('Reserver address zip'), max_length=30, blank=True)
     reserver_address_city = models.CharField(verbose_name=_('Reserver address city'), max_length=100, blank=True)
+    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+
     company = models.CharField(verbose_name=_('Company'), max_length=100, blank=True)
     billing_address_street = models.CharField(verbose_name=_('Billing address street'), max_length=100, blank=True)
     billing_address_zip = models.CharField(verbose_name=_('Billing address zip'), max_length=30, blank=True)
