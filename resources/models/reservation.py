@@ -251,10 +251,10 @@ class Reservation(ModifiableModel):
                 self.send_reservation_created_with_access_code_mail()
             else:
                 if not user_is_staff:
-                    # notifications are not sent from staff created reservations to avoid spam
                     self.send_reservation_created_mail()
                 else:
-                    self.send_reservation_created_by_official_mail()
+                    if self.reserver_email_address != self.user.email_address:
+                        self.send_reservation_created_by_official_mail()
         elif new_state == Reservation.MODIFIED:
             if user != self.user:
                 self.send_reservation_modified_by_official_mail()
