@@ -263,11 +263,14 @@ class Reservation(ModifiableModel):
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
-            if user != self.user:
+            if self.reserver_email_address != self.user.mail:
+                self.send_reservation_cancelled_by_official_mail()
+            else:
                 self.send_reservation_cancelled_mail()
+            """
             reservation_cancelled.send(sender=self.__class__, instance=self,
                                        user=user)
-
+            """
         self.state = new_state
         self.save()
 
@@ -398,7 +401,7 @@ class Reservation(ModifiableModel):
 
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None, reserved_by_staff=False):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False):
         """
         Stuff common to all reservation related mails.
 
@@ -414,7 +417,7 @@ class Reservation(ModifiableModel):
         else:
             if not (self.reserver_email_address or self.user):
                 return
-            if reserved_by_staff:
+            if action_by_official:
                 email_address = self.reserver_email_address
             else:
                 email_address = self.user.email or self.reserver_email_address
@@ -430,13 +433,14 @@ class Reservation(ModifiableModel):
             print("Notification template exception")
             return
         print("Sending automated mail :: (%s) %s" % (email_address, rendered_notification['subject']))
-        send_respa_mail(
+        ret = send_respa_mail(
             email_address,
             rendered_notification['subject'],
             rendered_notification['body'],
             rendered_notification['html_body'],
             attachments
         )
+        print(ret[1])
 
     def send_reservation_requested_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED)
@@ -452,7 +456,7 @@ class Reservation(ModifiableModel):
         self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED)
 
     def send_reservation_modified_by_official_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED_OFFICIAL, reserved_by_staff=True)
+        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED_OFFICIAL, action_by_official=True)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
@@ -467,6 +471,9 @@ class Reservation(ModifiableModel):
     def send_reservation_cancelled_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED)
 
+    def send_reservation_cancelled_by_official_mail(self):
+        self.send_reservation_cancelled_mail(NotificationType.RESERVATION_CANCELLED_OFFICIAL, action_by_official=True)
+
     def send_reservation_created_mail(self):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
@@ -479,7 +486,7 @@ class Reservation(ModifiableModel):
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_OFFICIAL,
-                                   attachments=[attachment], reserved_by_staff=True)
+                                   attachments=[attachment], action_by_official=True)
 
     def send_reservation_created_with_access_code_mail(self):
         reservations = [self]
