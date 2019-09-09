@@ -103,19 +103,22 @@ notification_logger = logging.getLogger('respa.notifications')
 
 def send_respa_mail(email_address, subject, body, html_body=None, attachments=None):
     if not getattr(settings, 'RESPA_MAILS_ENABLED', False):
-        return
+        return False, "Respa mail is not enabled."
 
-    from_address = (getattr(settings, 'RESPA_MAILS_FROM_ADDRESS', None) or
-                    'noreply@%s' % Site.objects.get_current().domain)
+    try:
+        from_address = (getattr(settings, 'RESPA_MAILS_FROM_ADDRESS', None) or
+                        'noreply@%s' % Site.objects.get_current().domain)
 
-    notification_logger.info('Sending notification email to %s: "%s"' % (email_address, subject))
+        notification_logger.info('Sending notification email to %s: "%s"' % (email_address, subject))
 
-    text_content = body
-    msg = EmailMultiAlternatives(subject, text_content, from_address, [email_address], attachments=attachments)
-    if html_body:
-        msg.attach_alternative(html_body, 'text/html')
-    msg.send()
-
+        text_content = body
+        msg = EmailMultiAlternatives(subject, text_content, from_address, [email_address], attachments=attachments)
+        if html_body:
+            msg.attach_alternative(html_body, 'text/html')
+        msg.send()
+        return True, "Respa mail success"
+    except Exception as ex:
+        return False, ex
 
 def generate_reservation_xlsx(reservations):
     """
