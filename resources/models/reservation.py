@@ -263,14 +263,14 @@ class Reservation(ModifiableModel):
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
-            if self.reserver_email_address != self.user.email:
-                self.send_reservation_cancelled_by_official_mail()
+            if self.user:
+                if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
+                    self.send_reservation_cancelled_by_official_mail()
+                else:
+                    self.send_reservation_cancelled_mail()
             else:
-                self.send_reservation_cancelled_mail()
-            """
-            reservation_cancelled.send(sender=self.__class__, instance=self,
-                                       user=user)
-            """
+                reservation_cancelled.send(sender=self.__class__, instance=self,
+                                    user=user)
         self.state = new_state
         self.save()
 
