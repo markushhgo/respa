@@ -391,7 +391,7 @@ class Reservation(ModifiableModel):
 
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, reserved_by_staff=False):
         """
         Stuff common to all reservation related mails.
 
@@ -400,7 +400,7 @@ class Reservation(ModifiableModel):
         try:
             notification_template = NotificationTemplate.objects.get(type=notification_type)
         except NotificationTemplate.DoesNotExist:
-            print("NotificationDoesNotExist")
+            return
 
         if user:
             email_address = user.email
@@ -467,8 +467,9 @@ class Reservation(ModifiableModel):
     def send_reservation_created_by_official_mail(self, user=None):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
+        attachment = 'reservation.ics', ical_file, 'text/calendar'
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_OFFICIAL,
-                                   attachments=[attachment], user=user)
+                                   attachments=[attachment], user=user, reserved_by_staff=True)
 
     def send_reservation_created_with_access_code_mail(self):
         reservations = [self]
