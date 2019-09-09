@@ -238,6 +238,8 @@ class Reservation(ModifiableModel):
 
         user_is_staff = self.user is not None and self.user.is_staff
 
+
+
         # Notifications
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
@@ -254,7 +256,10 @@ class Reservation(ModifiableModel):
                 else:
                     self.send_reservation_created_by_official_mail()
         elif new_state == Reservation.MODIFIED:
-            self.send_reservation_modified_mail()
+            if user != self.user:
+                self.send_reservation_modified_by_official_mail()
+            else:
+                self.send_reservation_modified_mail()
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
@@ -446,6 +451,9 @@ class Reservation(ModifiableModel):
     def send_reservation_modified_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED)
 
+    def send_reservation_modified_by_official_mail(self):
+        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED_OFFICIAL, reserved_by_staff=True)
+
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
 
@@ -466,12 +474,12 @@ class Reservation(ModifiableModel):
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED,
                                    attachments=[attachment])
 
-    def send_reservation_created_by_official_mail(self, user=None):
+    def send_reservation_created_by_official_mail(self):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_OFFICIAL,
-                                   attachments=[attachment], user=user, reserved_by_staff=True)
+                                   attachments=[attachment], reserved_by_staff=True)
 
     def send_reservation_created_with_access_code_mail(self):
         reservations = [self]
