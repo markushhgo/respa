@@ -20,7 +20,6 @@ class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField(source='get_display_name')
     ical_feed_url = serializers.SerializerMethodField()
     staff_perms = serializers.SerializerMethodField()
-    preferred_language = serializers.ChoiceField(choices=settings.LANGUAGES, allow_null=True, required=False)
 
     class Meta:
         fields = [
