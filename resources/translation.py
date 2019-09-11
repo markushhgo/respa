@@ -22,7 +22,7 @@ class ResourceTranslationOptions(TranslationOptions):
               'reservation_confirmed_notification_extra',
               'reservation_requested_notification_extra',
               'reservation_info', 'responsible_contact_info',
-              'reservation_extra_questions')
+              'reservation_additional_information')
 
 
 @register(ResourceType)
@@ -33,10 +33,6 @@ class ResourceTypeTranslationOptions(TranslationOptions):
 @register(ResourceImage)
 class ResourceImageTranslationOptions(TranslationOptions):
     fields = ('caption',)
-
-@register(Reservation)
-class ReservationTranslationOptions(TranslationOptions):
-    fields = ('reservation_extra_questions',)
 
 
 @register(Purpose)
