@@ -25,7 +25,7 @@ from resources.models.reservation import RESERVATION_EXTRA_FIELDS
 from resources.pagination import ReservationPagination
 from resources.models.utils import generate_reservation_xlsx, get_object_or_none
 
-from ..auth import is_general_admin
+from ..auth import is_general_admin, is_underage
 from .base import (
     NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget
 )
@@ -72,7 +72,7 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
     state = serializers.ChoiceField(choices=Reservation.STATE_CHOICES, required=False)
     need_manual_confirmation = serializers.ReadOnlyField()
     user_permissions = serializers.SerializerMethodField()
-    preferred_language = serializers.ChoiceField(choices=settings.LANGUAGES)
+    preferred_language = serializers.ChoiceField(choices=settings.LANGUAGES, required=False)
 
     class Meta:
         model = Reservation
@@ -154,11 +154,15 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if data['end'] < timezone.now():
             raise ValidationError(_('You cannot make a reservation in the past'))
 
+        if resource.age_restriction >= 18:
+            if is_underage(request_user):
+                raise PermissionDenied(_('You have to be over 18 years old to reserve this resource'))
+
         is_resource_admin = resource.is_admin(request_user)
         is_resource_manager = resource.is_manager(request_user)
 
         if request_user.preferred_language is None:
-            request_user.preferred_language = data['preferred_language']
+            request_user.preferred_language = settings.LANGUAGES[0][0]
             request_user.save()
 
         if not is_resource_admin:

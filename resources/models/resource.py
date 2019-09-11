@@ -29,7 +29,7 @@ from PIL import Image
 from guardian.shortcuts import get_objects_for_user, get_users_with_perms
 from guardian.core import ObjectPermissionChecker
 
-from ..auth import is_authenticated_user, is_general_admin
+from ..auth import is_authenticated_user, is_general_admin, is_underage
 from ..errors import InvalidImage
 from ..fields import EquipmentField
 from .accessibility import AccessibilityValue, AccessibilityViewpoint, ResourceAccessibility
@@ -178,6 +178,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     purposes = models.ManyToManyField(Purpose, verbose_name=_('Purposes'))
     name = models.CharField(verbose_name=_('Name'), max_length=200)
     description = models.TextField(verbose_name=_('Description'), null=True, blank=True)
+    age_restriction = models.PositiveIntegerField(verbose_name=_('Age restriction'), default=18)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
@@ -542,6 +543,11 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         # Admins are almighty.
         if self.is_admin(user) and allow_admin:
             return True
+
+        if self.age_restriction >= 18:
+            if is_underage(user):
+                return False
+
         if hasattr(self, '_permission_checker'):
             checker = self._permission_checker
         else:
