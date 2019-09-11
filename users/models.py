@@ -8,10 +8,10 @@ from resources.models import Resource
 import datetime
 
 class User(AbstractUser):
-    first_name = models.CharField(verbose_name=_('First name'), null=False, max_length=20)
-    last_name = models.CharField(verbose_name=_('Last name'), null=False, max_length=20)
-    email = models.CharField(verbose_name=('Email'), null=False, max_length=20)
-    birthday = models.DateField(null=True, verbose_name=_('Birthday'))
+    first_name = models.CharField(verbose_name=_('First name'), max_length=100, null=True, blank=True)
+    last_name = models.CharField(verbose_name=_('Last name'), max_length=100, null=True, blank=True)
+    email = models.CharField(verbose_name=('Email'), null=True, max_length=100)
+    birthday = models.DateField(null=True, verbose_name=_('Birthday'), default=datetime.date.today)
 
     ical_token = models.SlugField(
         max_length=16, null=True, blank=True, unique=True, db_index=True, verbose_name="iCal token"
@@ -37,10 +37,6 @@ class User(AbstractUser):
             "Designates whether the user is a General Administrator "
             "with special permissions to many objects within Respa. "
             "This is almost as powerful as superuser."))
-
-    fieldsets =  (
-        (_('Personal information'), {'fields': ('first_name', 'last_name', 'email', 'birthday')}),
-    )
 
     class Meta:
         ordering = ('id',)
