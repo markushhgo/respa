@@ -567,6 +567,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         return users
 
     def can_make_reservations(self, user):
+        if self.age_restriction >= 18:
+            if is_underage(user):
+                return False
         return self.reservable or self._has_perm(user, 'can_make_reservations')
 
     def can_modify_reservations(self, user):
