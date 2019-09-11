@@ -104,6 +104,9 @@ class Reservation(ModifiableModel):
     comments = models.TextField(null=True, blank=True, verbose_name=_('Comments'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('User'), null=True,
                              blank=True, db_index=True, on_delete=models.PROTECT)
+
+    preferred_language = models.CharField(choices=settings.LANGUAGES, verbose_name='Preferred Language', null=True, default=settings.LANGUAGES[0][0], max_length=8)
+
     state = models.CharField(max_length=16, choices=STATE_CHOICES, verbose_name=_('State'), default=CREATED)
     approver = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('Approver'),
                                  related_name='approved_reservations', null=True, blank=True,
@@ -423,7 +426,7 @@ class Reservation(ModifiableModel):
                 email_address = self.user.email or self.reserver_email_address
             user = self.user
 
-        language = user.get_preferred_language() if user else DEFAULT_LANG
+        language = self.preferred_language if not user.is_staff else DEFAULT_LANG
         context = self.get_notification_context(language, notification_type=notification_type)
 
         try:
@@ -432,7 +435,7 @@ class Reservation(ModifiableModel):
             logger.error(e, exc_info=True, extra={'user': user.uuid})
             print("Notification template exception")
             return
-        print("Sending automated mail :: (%s) %s" % (email_address, rendered_notification['subject']))
+        print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (email_address, rendered_notification['subject'], language))
         ret = send_respa_mail(
             email_address,
             rendered_notification['subject'],

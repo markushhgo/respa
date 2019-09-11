@@ -192,9 +192,9 @@ class ResourceForm(forms.ModelForm):
             'responsible_contact_info_fi',
             'responsible_contact_info_en',
             'responsible_contact_info_sv',
-            'reservation_extra_questions_fi',
-            'reservation_extra_questions_en',
-            'reservation_extra_questions_sv',
+            'reservation_additional_information_fi',
+            'reservation_additional_information_en',
+            'reservation_additional_information_sv',
         ]
 
         fields = [

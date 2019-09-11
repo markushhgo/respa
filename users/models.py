@@ -3,10 +3,16 @@ from tkusers.models import AbstractUser
 from django.utils.crypto import get_random_string
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
+from django.contrib import admin, messages
 from resources.models import Resource
-
+import datetime
 
 class User(AbstractUser):
+    first_name = models.CharField(verbose_name=_('First name'), null=False, max_length=20)
+    last_name = models.CharField(verbose_name=_('Last name'), null=False, max_length=20)
+    email = models.CharField(verbose_name=('Email'), null=False, max_length=20)
+    birthday = models.DateField(null=True, verbose_name=_('Birthday'))
+
     ical_token = models.SlugField(
         max_length=16, null=True, blank=True, unique=True, db_index=True, verbose_name="iCal token"
     )
@@ -32,6 +38,10 @@ class User(AbstractUser):
             "with special permissions to many objects within Respa. "
             "This is almost as powerful as superuser."))
 
+    fieldsets =  (
+        (_('Personal information'), {'fields': ('first_name', 'last_name', 'email', 'birthday')}),
+    )
+
     class Meta:
         ordering = ('id',)
 
@@ -49,3 +59,6 @@ class User(AbstractUser):
             return settings.LANGUAGES[0][0]
         else:
             return self.preferred_language
+
+    def get_user_age(self):
+        return int((datetime.date.today() - self.birthday).days / 365.25)

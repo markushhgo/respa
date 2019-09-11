@@ -29,7 +29,7 @@ from PIL import Image
 from guardian.shortcuts import get_objects_for_user, get_users_with_perms
 from guardian.core import ObjectPermissionChecker
 
-from ..auth import is_authenticated_user, is_general_admin
+from ..auth import is_authenticated_user, is_general_admin, is_underage
 from ..errors import InvalidImage
 from ..fields import EquipmentField
 from .accessibility import AccessibilityValue, AccessibilityViewpoint, ResourceAccessibility
@@ -178,6 +178,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     purposes = models.ManyToManyField(Purpose, verbose_name=_('Purposes'))
     name = models.CharField(verbose_name=_('Name'), max_length=200)
     description = models.TextField(verbose_name=_('Description'), null=True, blank=True)
+    age_restriction = models.PositiveIntegerField(verbose_name=_('Age restriction'), default=18)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
@@ -206,6 +207,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         'Extra content to "reservation requested" notification'), blank=True)
     reservation_confirmed_notification_extra = models.TextField(verbose_name=_(
         'Extra content to "reservation confirmed" notification'), blank=True)
+    reservation_additional_information = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+
+
     min_price_per_hour = models.DecimalField(verbose_name=_('Min price per hour'), max_digits=8, decimal_places=2,
                                              blank=True, null=True, validators=[MinValueValidator(Decimal('0.00'))])
     max_price_per_hour = models.DecimalField(verbose_name=_('Max price per hour'), max_digits=8, decimal_places=2,
@@ -233,7 +237,6 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         verbose_name=_('External reservation URL'),
         help_text=_('A link to an external reservation system if this resource is managed elsewhere'),
         null=True, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
 
     objects = ResourceQuerySet.as_manager()
 
@@ -540,6 +543,10 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         # Admins are almighty.
         if self.is_admin(user) and allow_admin:
             return True
+
+        if is_underage(user, self.age_restriction):
+            return False
+
         if hasattr(self, '_permission_checker'):
             checker = self._permission_checker
         else:
@@ -559,6 +566,8 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         return users
 
     def can_make_reservations(self, user):
+        if is_underage(user, self.age_restriction):
+            return False
         return self.reservable or self._has_perm(user, 'can_make_reservations')
 
     def can_modify_reservations(self, user):
