@@ -154,9 +154,8 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if data['end'] < timezone.now():
             raise ValidationError(_('You cannot make a reservation in the past'))
 
-        if resource.age_restriction >= 18:
-            if is_underage(request_user):
-                raise PermissionDenied(_('You have to be over 18 years old to reserve this resource'))
+        if is_underage(request_user, resource.age_restriction):
+            raise PermissionDenied(_('You have to be over 18 years old to reserve this resource'))
 
         is_resource_admin = resource.is_admin(request_user)
         is_resource_manager = resource.is_manager(request_user)

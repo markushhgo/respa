@@ -19,5 +19,5 @@ def is_any_admin(user):
         user.unit_authorizations.admin_level().exists())
 
 
-def is_underage(user):
-    return user.get_user_age() < 18
+def is_underage(user, age):
+    return user.get_user_age() < age
