@@ -18,6 +18,7 @@ from rest_framework.fields import BooleanField, IntegerField
 from rest_framework import renderers
 from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.settings import api_settings as drf_settings
+from psycopg2.extras import DateTimeTZRange
 
 from munigeo import api as munigeo_api
 from resources.models import Reservation, Resource, ReservationMetadataSet
@@ -581,6 +582,10 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_state = Reservation.CONFIRMED
 
         instance.set_state(new_state, self.request.user)
+        if resource.cooldown:
+            cooldown = Reservation(resource=resource, begin=instance.begin + resource.cooldown, end=instance.end + resource.cooldown,
+                                   comments=instance.comments, user=None, state=Reservation.COOLDOWN, event_subject="This is an automated cooldown")
+            cooldown.save()
 
     def perform_update(self, serializer):
         old_instance = self.get_object()

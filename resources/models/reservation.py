@@ -85,12 +85,14 @@ class Reservation(ModifiableModel):
     CONFIRMED = 'confirmed'
     DENIED = 'denied'
     REQUESTED = 'requested'
+    COOLDOWN = 'cooldown'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
         (CONFIRMED, _('confirmed')),
         (DENIED, _('denied')),
         (REQUESTED, _('requested')),
+        (COOLDOWN, _('cooldown'))
     )
 
     TYPE_NORMAL = 'normal'

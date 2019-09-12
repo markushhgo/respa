@@ -192,6 +192,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     min_period = models.DurationField(verbose_name=_('Minimum reservation time'),
                                       default=datetime.timedelta(minutes=30))
     max_period = models.DurationField(verbose_name=_('Maximum reservation time'), null=True, blank=True)
+
+    cooldown = models.DurationField(verbose_name=_('Reservation cooldown'), null=True, blank=True, default=datetime.timedelta(minutes=0))
+
     slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'),
                                      default=datetime.timedelta(minutes=30))
 
