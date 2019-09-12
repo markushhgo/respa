@@ -25,7 +25,7 @@ from resources.models.reservation import RESERVATION_EXTRA_FIELDS
 from resources.pagination import ReservationPagination
 from resources.models.utils import generate_reservation_xlsx, get_object_or_none
 
-from ..auth import is_general_admin, is_underage
+from ..auth import is_general_admin, is_underage, is_overage
 from .base import (
     NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget
 )
@@ -154,8 +154,11 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if data['end'] < timezone.now():
             raise ValidationError(_('You cannot make a reservation in the past'))
 
-        if is_underage(request_user, resource.age_restriction):
-            raise PermissionDenied(_('You have to be over 18 years old to reserve this resource'))
+        if resource.min_age and is_underage(request_user, resource.min_age):
+            raise PermissionDenied(_('You have to be over %s years old to reserve this resource' % (resource.min_age)))
+
+        if resource.max_age and is_overage(request_user, resource.max_age):
+            raise PermissionDenied(_('You have to be under %s years old to reserve this resource' % (resource.max_age)))
 
         is_resource_admin = resource.is_admin(request_user)
         is_resource_manager = resource.is_manager(request_user)

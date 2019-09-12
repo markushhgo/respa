@@ -29,3 +29,13 @@ def is_underage(user, age):
             return user.get_user_age() < age
     except Exception as ex:
         return False                     # Default to False
+
+
+def is_overage(user, age):
+    try:
+        if isinstance(user, AnonymousUser):
+            return False
+        else:
+            return user.get_user_age() > age
+    except:
+        return False
