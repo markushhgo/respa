@@ -204,6 +204,7 @@ class ResourceForm(forms.ModelForm):
             'equipment',
             'external_reservation_url',
             'people_capacity',
+            'age_restriction',
             'area',
             'min_period',
             'max_period',

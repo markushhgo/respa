@@ -78,7 +78,7 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         model = Reservation
         fields = [
             'url', 'id', 'resource', 'user', 'begin', 'end', 'comments', 'is_own', 'state', 'need_manual_confirmation',
-            'require_assistance', 'staff_event', 'access_code', 'user_permissions', 'preferred_language'
+            'require_assistance', 'staff_event', 'access_code', 'user_permissions', 'preferred_language', 'type'
         ] + list(RESERVATION_EXTRA_FIELDS)
         read_only_fields = RESERVATION_EXTRA_FIELDS
 
@@ -184,6 +184,10 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if data.get('staff_event', False):
             if not is_resource_manager:
                 raise ValidationError(dict(staff_event=_('Only allowed to be set by resource managers')))
+
+        if 'type' in data:
+            if data['type'] != Reservation.TYPE_NORMAL and not (is_resource_admin or is_resource_manager):
+                raise ValidationError({'type': _('You are not allowed to make a reservation of this type')})
 
         if 'comments' in data:
             if not is_resource_admin:

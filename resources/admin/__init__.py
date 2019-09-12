@@ -222,9 +222,11 @@ class ResourceEquipmentAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin
 
 class ReservationAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, ExtraReadonlyFieldsOnUpdateMixin,
                        admin.ModelAdmin):
+    list_display = ('__str__', 'type')
+    list_filter = ('type',)
     extra_readonly_fields_on_update = ('access_code',)
     search_fields = ('user__first_name', 'user__last_name', 'user__username', 'user__email')
-    raw_id_fields = ('user',)
+    raw_id_fields = ('user', 'resource')
 
 
 class ResourceTypeAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, TranslationAdmin):
