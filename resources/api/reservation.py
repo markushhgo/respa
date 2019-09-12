@@ -580,6 +580,11 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         new_state = serializer.validated_data.pop('state', old_instance.state)
         new_instance = serializer.save(modified_by=self.request.user)
         new_instance.set_state(new_state, self.request.user)
+        if new_state != 'denied': # Reservation was modified
+            if self.request.user.is_staff:
+                self.send_modified_mail(new_instance, staff=True)
+            else:
+                self.send_modified_mail(new_instance)
 
     def perform_destroy(self, instance):
         instance.set_state(Reservation.CANCELLED, self.request.user)
@@ -595,5 +600,11 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         if request.accepted_renderer.format == 'xlsx':
             response['Content-Disposition'] = 'attachment; filename={}-{}.xlsx'.format(_('reservation'), kwargs['pk'])
         return response
+
+    def send_modified_mail(self, new_instance, staff=False):
+        if staff:
+            new_instance.send_reservation_modified_mail(action_by_official=True)
+        else:
+            new_instance.send_reservation_modified_mail()
 
 register_view(ReservationViewSet, 'reservation')

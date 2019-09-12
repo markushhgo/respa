@@ -36,6 +36,7 @@ class NotificationType:
     # If the access code is known at reservation time, this notification
     # type is used.
     RESERVATION_CREATED_WITH_ACCESS_CODE = 'reservation_created_with_access_code'
+    RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL = 'reservation_created_with_access_code_official'
     # In some cases, the access code is known only some time after the
     # reservation is made. A separate notification type is used so that
     # we don't confuse the user with "new reservation created"-style
@@ -71,6 +72,7 @@ class NotificationTemplate(TranslatableModel):
         (NotificationType.RESERVATION_MODIFIED_OFFICIAL, _('Reservation modified official')),
 
         (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE, _('Reservation created with access code')),
+        (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL, _('Reservation created with access code official')),
         (NotificationType.RESERVATION_ACCESS_CODE_CREATED, _('Access code was created for a reservation')),
 
         (NotificationType.CATERING_ORDER_CREATED, _('Catering order created')),
