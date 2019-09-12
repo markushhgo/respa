@@ -83,14 +83,12 @@ class Reservation(ModifiableModel):
     CREATED = 'created'
     CANCELLED = 'cancelled'
     CONFIRMED = 'confirmed'
-    MODIFIED = 'modified'
     DENIED = 'denied'
     REQUESTED = 'requested'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
         (CONFIRMED, _('confirmed')),
-        (MODIFIED, _('modified')),
         (DENIED, _('denied')),
         (REQUESTED, _('requested')),
     )
@@ -219,6 +217,15 @@ class Reservation(ModifiableModel):
         return self.resource.can_view_access_codes(user)
 
     def set_state(self, new_state, user):
+        """ Available states
+
+            CREATED
+            CANCELLED
+            CONFIRME
+            DENIED
+            REQUESTED
+        """
+
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
@@ -240,9 +247,6 @@ class Reservation(ModifiableModel):
             self.approver = None
 
         user_is_staff = self.user is not None and self.user.is_staff
-
-
-
         # Notifications
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
@@ -251,24 +255,23 @@ class Reservation(ModifiableModel):
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
             elif self.access_code:
-                self.send_reservation_created_with_access_code_mail()
+                if not user_is_staff:
+                    self.send_reservation_created_with_access_code_mail()
+                else:
+                    if self.reserver_email_address != self.user.email:
+                        self.send_reservation_created_with_access_code_mail(action_by_official=True)
             else:
                 if not user_is_staff:
                     self.send_reservation_created_mail()
                 else:
                     if self.reserver_email_address != self.user.email:
-                        self.send_reservation_created_by_official_mail()
-        elif new_state == Reservation.MODIFIED:
-            if user != self.user:
-                self.send_reservation_modified_by_official_mail()
-            else:
-                self.send_reservation_modified_mail()
+                        self.send_reservation_created_mail(action_by_official=True)
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
             if self.user:
                 if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
-                    self.send_reservation_cancelled_by_official_mail()
+                    self.send_reservation_cancelled_mail(action_by_official=True)
                 else:
                     self.send_reservation_cancelled_mail()
             else:
@@ -455,11 +458,9 @@ class Reservation(ModifiableModel):
         for user in notify_users:
             self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED_OFFICIAL, user=user)
 
-    def send_reservation_modified_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED)
-
-    def send_reservation_modified_by_official_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_MODIFIED_OFFICIAL, action_by_official=True)
+    def send_reservation_modified_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_MODIFIED_OFFICIAL if action_by_official else NotificationType.RESERVATION_MODIFIED
+        self.send_reservation_mail(notification, action_by_official=action_by_official)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
@@ -471,32 +472,25 @@ class Reservation(ModifiableModel):
         self.send_reservation_mail(NotificationType.RESERVATION_CONFIRMED,
                                    attachments=[attachment])
 
-    def send_reservation_cancelled_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED)
+    def send_reservation_cancelled_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_CANCELLED_OFFICIAL if action_by_official else NotificationType.RESERVATION_CANCELLED
+        self.send_reservation_mail(notification, action_by_official=action_by_official)
 
-    def send_reservation_cancelled_by_official_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED_OFFICIAL, action_by_official=True)
-
-    def send_reservation_created_mail(self):
+    def send_reservation_created_mail(self, action_by_official=False):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
-        self.send_reservation_mail(NotificationType.RESERVATION_CREATED,
-                                   attachments=[attachment])
+        notification = NotificationType.RESERVATION_CREATED_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED
+        self.send_reservation_mail(notification,
+                                   attachments=[attachment], action_by_official=action_by_official)
 
-    def send_reservation_created_by_official_mail(self):
+    def send_reservation_created_with_access_code_mail(self, action_by_official=False):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
-        self.send_reservation_mail(NotificationType.RESERVATION_CREATED_OFFICIAL,
-                                   attachments=[attachment], action_by_official=True)
-
-    def send_reservation_created_with_access_code_mail(self):
-        reservations = [self]
-        ical_file = build_reservations_ical_file(reservations)
-        attachment = 'reservation.ics', ical_file, 'text/calendar'
+        notification = NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE,
-                                   attachments=[attachment])
+                                   attachments=[attachment], action_by_official=action_by_official)
 
     def send_access_code_created_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_ACCESS_CODE_CREATED)
