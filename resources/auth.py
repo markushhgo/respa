@@ -1,3 +1,5 @@
+from django.contrib.auth.models import AnonymousUser
+
 def is_authenticated_user(user):
     return bool(user and user.is_authenticated)
 
@@ -20,4 +22,10 @@ def is_any_admin(user):
 
 
 def is_underage(user, age):
-    return user.get_user_age() < age
+    try:
+        if isinstance(user, AnonymousUser):
+            return False                 # Would require custom AnonymousUser class
+        else:
+            return user.get_user_age() < age
+    except Exception as ex:
+        return False                     # Default to False

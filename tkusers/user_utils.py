@@ -5,7 +5,6 @@ from django.db import transaction, IntegrityError
 from rest_framework import exceptions
 
 
-
 def oidc_to_user_data(payload):
     """
     Map OIDC claims to Django user fields.
@@ -42,16 +41,16 @@ def populate_user(user, data):
 def update_user(user, payload, oidc=False):
     if oidc:
         payload = oidc_to_user_data(payload)
-    
+
     changed = populate_user(user, payload)
     if changed or not user.pk:
         user.save()
-    
+
     ad_groups = payload.get('ad_groups', None)
     # Only update AD groups if it's a list of non-empty strings
     if isinstance(ad_groups, list) and (all([isinstance(x, str) and x for x in ad_groups])):
         user.update_ad_groups(ad_groups)
-    
+
 def _try_create_or_update(user_id, payload, oidc):
     user_model = get_user_model()
     with transaction.atomic():
@@ -68,7 +67,7 @@ def get_or_create_user(payload, oidc=False):
     if not user_id:
         msg = _('Invalid payload')
         raise exceptions.AuthenticationFailed(msg)
-    
+
     try_again = False
     try:
         user = _try_create_or_update(user_id, payload, oidc)
@@ -77,7 +76,7 @@ def get_or_create_user(payload, oidc=False):
         # condition with another process. Another attempt should
         # succeed.
         try_again = True
-    
+
     if try_again:
         user = _try_create_or_update(user_id, payload, oidc)
 
