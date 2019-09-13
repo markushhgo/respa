@@ -351,7 +351,8 @@ class Reservation(ModifiableModel):
                 raise ValidationError(_("Begin and end time must match time slots"), code='invalid_time_slot')
 
         original_reservation = self if self.pk else kwargs.get('original_reservation', None)
-        if self.resource.check_reservation_collision(self.begin, self.end, original_reservation):
+        end = self.end + self.resource.cooldown
+        if self.resource.check_reservation_collision(self.begin, self.end + self.resource.cooldown, original_reservation):
             raise ValidationError(_("The resource is already reserved for some of the period"))
 
         if (self.end - self.begin) < self.resource.min_period:
@@ -386,6 +387,7 @@ class Reservation(ModifiableModel):
                 'reserver_email_address': reserver_email_address,
                 'reserver_phone_number': self.reserver_phone_number,
             }
+
             if self.resource.unit:
                 context['unit'] = self.resource.unit.name
                 context['unit_id'] = self.resource.unit.id

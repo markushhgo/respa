@@ -272,6 +272,8 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
                 'created_at': instance.created_at
             })
 
+        if resource.cooldown:
+            data['end'] = instance.end + resource.cooldown
         # Show the comments field and the user object only for staff
         if not resource.is_admin(user):
             del data['comments']
@@ -580,7 +582,6 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_state = Reservation.REQUESTED
         else:
             new_state = Reservation.CONFIRMED
-
         instance.set_state(new_state, self.request.user)
 
     def perform_update(self, serializer):
