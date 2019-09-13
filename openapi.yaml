@@ -556,7 +556,14 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/resource'
+                      allOf:
+                        - $ref: '#/components/schemas/resource'
+                        - type: object
+                          properties:
+                            products:
+                              type: array
+                              items:
+                                $ref: '#/components/schemas/product'
   /resource/{id}/:
     get:
       tags:
@@ -596,7 +603,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource'
+                allOf:
+                  - $ref: '#/components/schemas/resource'
+                  - type: object
+                    properties:
+                      products:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/product'
   /reservation/:
     get:
       tags:
@@ -630,6 +644,12 @@ paths:
           from unit personnel.
         schema:
           type: boolean
+      - name: reserver_info_search
+        in: query
+        description: Only return reservations matching the specified string. Queries the
+          reserver's name, email and phone number.
+        schema:
+          type: string
       - name: state
         in: query
         description: 'Display only reservation(s) in given state(s). Possible values:
@@ -710,6 +730,12 @@ paths:
         description: Return only own reservations
         schema:
           type: boolean
+      - name: include
+        in: query
+        description: Include extra data to queryset. Currently accepts values `resource_detail` and `order_detail` (available only when the payment support is enabled).
+        schema:
+          type: string
+        example: resource_detail
       responses:
         200:
           description: Successful response
@@ -730,7 +756,9 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/reservation'
+                      allOf:
+                        - $ref: '#/components/schemas/reservation'
+                        - $ref: '#/components/schemas/order_just_id'
     post:
       tags:
       - reservation
@@ -740,7 +768,9 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/reservation'
+              allOf:
+                - $ref: '#/components/schemas/reservation'
+                - $ref: '#/components/schemas/order_creation_request'
         required: true
       responses:
         201:
@@ -748,7 +778,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/reservation'
+                allOf:
+                  - $ref: '#/components/schemas/reservation'
+                  - $ref: '#/components/schemas/order_creation_response'
         400:
           description: Bad request
           content:
@@ -778,7 +810,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/reservation'
+                allOf:
+                  - $ref: '#/components/schemas/reservation'
+                  - $ref: '#/components/schemas/order_just_id'
     put:
       tags:
       - reservation
@@ -803,7 +837,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/reservation'
+                allOf:
+                  - $ref: '#/components/schemas/reservation'
+                  - $ref: '#/components/schemas/order_just_id'
         400:
           description: Bad request
           content:

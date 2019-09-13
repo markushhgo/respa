@@ -234,7 +234,6 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
             for key, value in exc.error_dict.items():
                 error_dict[key] = [error.message for error in value]
             raise ValidationError(error_dict)
-
         return data
 
     def to_internal_value(self, data):

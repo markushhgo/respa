@@ -38,6 +38,5 @@ if 'reports' in settings.INSTALLED_APPS:
         path('reports/reservation_details/', ReservationDetailsReport.as_view(), name='reservation-details-report'),
     ])
 
-
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
