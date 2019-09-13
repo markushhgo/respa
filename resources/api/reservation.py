@@ -582,10 +582,6 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_state = Reservation.CONFIRMED
 
         instance.set_state(new_state, self.request.user)
-        if resource.cooldown:
-            cooldown = Reservation(resource=resource, begin=instance.begin + resource.cooldown, end=instance.end + resource.cooldown,
-                                   comments=instance.comments, user=None, state=Reservation.COOLDOWN, event_subject="This is an automated cooldown")
-            cooldown.save()
 
     def perform_update(self, serializer):
         old_instance = self.get_object()
