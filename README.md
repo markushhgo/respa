@@ -44,6 +44,7 @@ Who is using Respa
 - [City of Raahe](https://varaamo-api.raahe.fi/v1/) - for [Varaamo UI](https://varaamo.raahe.fi/)
 - [City of Tampere](https://respa.tampere.fi/v1/) - for [Varaamo UI](https://varaamo.tampere.fi/) - [GitHub repo](https://github.com/Tampere/respa)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
+- [City of Turku](https://varaamo.turku.fi:8000/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respaTku)
 - City of Hämeenlinna - for [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 
 FAQ
@@ -112,6 +113,7 @@ python manage.py resources_import --all kirjastot
 Settings are done either by setting environment variables named after the setting or adding them to a `.env` file in the project root. The .env file syntax is similar to TOML files (INI files), ie. key-value pairs. The project root is the directory where this README is found. You can also set settings in a local_settings.py, which allows you to set any variables whatsoever. However, some of the settings documented here are named differently in settings.py, especially authentication variables.
 
 - `DEBUG`: Whether to run Django in debug mode. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#debug).
+- `GDAL_LIBRARY_PATH`: When GeoDjango can’t find the GDAL library, configure your Library environment settings or set GDAL_LIBRARY_PATH in your settings. [Django setting](https://docs.djangoproject.com/en/2.2/ref/contrib/gis/install/geolibs/#gdal-library-path)
 - `SECRET_KEY`: Secret used for various functions within Django. This setting is mandatory for Django. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#secret-key).
 - `ALLOWED_HOSTS`: List of Host-values, that Respa will accept in requests. This setting is a Django protection measure against HTTP [Host-header attacks](https://docs.djangoproject.com/en/2.2/topics/security/#host-headers-virtual-hosting). Specified as a comma separated list of allowed values. Note that this does NOT matter if you are running with DEBUG. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#allowed-hosts).
 - `ADMINS`: List of tuples (or just e-mail addresses) specifying Administrators of this Respa instance. Django uses this only when logging is configured to send exceptions to admins. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#admins).
