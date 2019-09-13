@@ -269,7 +269,8 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
                 'begin': instance.begin,  # datetime object
                 'end': instance.end,  # datetime object
                 'user': instance.user.email if instance.user else '',  # just email
-                'created_at': instance.created_at
+                'created_at': instance.created_at,
+                'require_assistance': False
             })
 
         if resource.cooldown:
