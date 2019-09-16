@@ -51,6 +51,7 @@ drf-oidc-auth==0.9        # via django-helusers
 easy-thumbnails==2.5
 ecdsa==0.13.2             # via python-jose
 faker==1.0.2
+factory_boy>=2.12.0
 flake8==3.6.0
 freezegun==0.3.11
 future==0.17.1            # via pyjwkest, python-jose
