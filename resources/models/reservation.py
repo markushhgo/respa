@@ -404,6 +404,7 @@ class Reservation(ModifiableModel):
                 'time_range': self.format_time(),
                 'reserver_name': reserver_name,
                 'reserver_email_address': reserver_email_address,
+                'require_assistance': self.require_assistance,
             }
             directly_included_fields = (
                 'number_of_participants',
