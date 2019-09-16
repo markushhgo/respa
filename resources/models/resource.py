@@ -5,6 +5,7 @@ import pytz
 from collections import OrderedDict
 from decimal import Decimal
 
+
 import arrow
 import django.db.models as dbm
 from django.db.models import Q
@@ -195,7 +196,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
 
     cooldown = models.DurationField(verbose_name=_('Reservation cooldown'), null=True, blank=True, default=datetime.timedelta(minutes=0))
 
-    slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'),
+    slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'), null=True, blank=True,
                                      default=datetime.timedelta(minutes=30))
 
     equipment = EquipmentField(Equipment, through='ResourceEquipment', verbose_name=_('Equipment'))
@@ -339,6 +340,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         if reservation:
             overlapping = overlapping.exclude(pk=reservation.pk)
         return overlapping.exists()
+
 
     def get_available_hours(self, start=None, end=None, duration=None, reservation=None, during_closing=False):
         """
@@ -577,6 +579,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
             return False
         if self.max_age and is_overage(user, self.max_age):
             return False
+
         return self.reservable or self._has_perm(user, 'can_make_reservations')
 
     def can_modify_reservations(self, user):
@@ -596,6 +599,12 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
 
     def can_modify_catering_orders(self, user):
         return self._has_perm(user, 'can_modify_reservation_catering_orders')
+
+    def can_view_product_orders(self, user):
+        return self._has_perm(user, 'can_view_reservation_product_orders', allow_admin=False)
+
+    def can_modify_paid_reservations(self, user):
+        return self._has_perm(user, 'can_modify_paid_reservations', allow_admin=False)
 
     def can_approve_reservations(self, user):
         return self._has_perm(user, 'can_approve_reservation', allow_admin=False)
@@ -617,6 +626,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
 
     def get_reservable_after(self):
         return create_datetime_days_from_now(self.get_reservable_min_days_in_advance())
+
+    def has_rent(self):
+        return self.products.current().rents().exists()
 
     def get_supported_reservation_extra_field_names(self, cache=None):
         if not self.reservation_metadata_set_id:
@@ -645,6 +657,10 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         if self.min_period % self.slot_size != datetime.timedelta(0):
             raise ValidationError({'min_period': _('This value must be a multiple of slot_size')})
 
+        if self.need_manual_confirmation and self.products.current().exists():
+            raise ValidationError(
+                {'need_manual_confirmation': _('This cannot be enabled because the resource has product(s).')}
+            )
 
 class ResourceImage(ModifiableModel):
     TYPES = (

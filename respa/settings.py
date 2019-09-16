@@ -46,7 +46,10 @@ env = environ.Env(
     RESPA_ERROR_EMAIL=(str,''),
     RESPA_ADMIN_LOGO=(str, ''),
     RESPA_ADMIN_KORO_STYLE=(str, ''),
-    LOGOUT_REDIRECT_URL = (str, 'https://turku.fi')
+    RESPA_PAYMENTS_ENABLED=(bool, False),
+    RESPA_PAYMENTS_PROVIDER_CLASS=(str, ''),
+    RESPA_PAYMENTS_PAYMENT_WAITING_TIME=(int, 15),
+    LOGOUT_REDIRECT_URL = (str, 'https://turku.fi'),
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
@@ -117,6 +120,7 @@ INSTALLED_APPS = [
     'comments',
     'notifications.apps.NotificationsConfig',
     'kulkunen',
+    'payments',
 
     'respa_exchange',
     'respa_admin',
@@ -258,6 +262,7 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
     ] if DEBUG else []),
     'DEFAULT_PAGINATION_CLASS': 'resources.pagination.DefaultPagination',
+    'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
 
 JWT_AUTH = {
@@ -335,6 +340,15 @@ elif USE_DJANGO_DEFAULT_EMAIL:
 
 RESPA_ADMIN_USERNAME_LOGIN = env.bool(
     'RESPA_ADMIN_USERNAME_LOGIN', default=True)
+
+RESPA_PAYMENTS_ENABLED = env('RESPA_PAYMENTS_ENABLED')
+
+# Dotted path to the active payment provider class, see payments.providers init.
+# Example value: 'payments.providers.BamboraPayformProvider'
+RESPA_PAYMENTS_PROVIDER_CLASS = env('RESPA_PAYMENTS_PROVIDER_CLASS')
+
+# amount of minutes before orders in state "waiting" will be set to state "expired"
+RESPA_PAYMENTS_PAYMENT_WAITING_TIME = env('RESPA_PAYMENTS_PAYMENT_WAITING_TIME')
 
 # local_settings.py can be used to override environment-specific settings
 # like database and email that differ between development and production.

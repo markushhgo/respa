@@ -85,12 +85,14 @@ class Reservation(ModifiableModel):
     CONFIRMED = 'confirmed'
     DENIED = 'denied'
     REQUESTED = 'requested'
+    WAITING_FOR_PAYMENT = 'waiting_for_payment'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
         (CONFIRMED, _('confirmed')),
         (DENIED, _('denied')),
-        (REQUESTED, _('requested'))
+        (REQUESTED, _('requested')),
+        (WAITING_FOR_PAYMENT, _('waiting for payment')),
     )
 
     TYPE_NORMAL = 'normal'
@@ -112,7 +114,7 @@ class Reservation(ModifiableModel):
 
     preferred_language = models.CharField(choices=settings.LANGUAGES, verbose_name='Preferred Language', null=True, default=settings.LANGUAGES[0][0], max_length=8)
 
-    state = models.CharField(max_length=16, choices=STATE_CHOICES, verbose_name=_('State'), default=CREATED)
+    state = models.CharField(max_length=32, choices=STATE_CHOICES, verbose_name=_('State'), default=CREATED)
     approver = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('Approver'),
                                  related_name='approved_reservations', null=True, blank=True,
                                  on_delete=models.SET_NULL)
@@ -145,6 +147,10 @@ class Reservation(ModifiableModel):
     reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
 
     company = models.CharField(verbose_name=_('Company'), max_length=100, blank=True)
+    billing_first_name = models.CharField(verbose_name=_('Billing first name'), max_length=100, blank=True)
+    billing_last_name = models.CharField(verbose_name=_('Billing last name'), max_length=100, blank=True)
+    billing_email_address = models.EmailField(verbose_name=_('Billing email address'), blank=True)
+    billing_phone_number = models.CharField(verbose_name=_('Billing phone number'), max_length=30, blank=True)
     billing_address_street = models.CharField(verbose_name=_('Billing address street'), max_length=100, blank=True)
     billing_address_zip = models.CharField(verbose_name=_('Billing address zip'), max_length=30, blank=True)
     billing_address_city = models.CharField(verbose_name=_('Billing address city'), max_length=100, blank=True)
@@ -202,7 +208,8 @@ class Reservation(ModifiableModel):
         return self._get_dt("end", tz)
 
     def is_active(self):
-        return self.end >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED)
+        print(self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED))
+        return self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED)
 
     def is_own(self, user):
         if not (user and user.is_authenticated):
@@ -293,6 +300,12 @@ class Reservation(ModifiableModel):
         if not user:
             return False
 
+        if self.state == Reservation.WAITING_FOR_PAYMENT:
+            return False
+
+        if self.get_order():
+            return self.resource.can_modify_paid_reservations(user)
+
         # reservations that need manual confirmation and are confirmed cannot be
         # modified or cancelled without reservation approve permission
         cannot_approve = not self.resource.can_approve_reservations(user)
@@ -317,6 +330,17 @@ class Reservation(ModifiableModel):
         if self.is_own(user):
             return True
         return self.resource.can_view_catering_orders(user)
+
+    def can_add_product_order(self, user):
+        return self.is_own(user)
+
+    def can_view_product_orders(self, user):
+        if self.is_own(user):
+            return True
+        return self.resource.can_view_product_orders(user)
+
+    def get_order(self):
+        return getattr(self, 'order', None)
 
     def format_time(self):
         tz = self.resource.unit.get_tz()
@@ -351,8 +375,7 @@ class Reservation(ModifiableModel):
                 raise ValidationError(_("Begin and end time must match time slots"), code='invalid_time_slot')
 
         original_reservation = self if self.pk else kwargs.get('original_reservation', None)
-        end = self.end + self.resource.cooldown
-        if self.resource.check_reservation_collision(self.begin, self.end + self.resource.cooldown, original_reservation):
+        if self.resource.check_reservation_collision(self.begin, self.end, original_reservation):
             raise ValidationError(_("The resource is already reserved for some of the period"))
 
         if (self.end - self.begin) < self.resource.min_period:
@@ -379,15 +402,25 @@ class Reservation(ModifiableModel):
                 'begin_dt': self.begin,
                 'end_dt': self.end,
                 'time_range': self.format_time(),
-                'number_of_participants': self.number_of_participants,
-                'host_name': self.host_name,
                 'reserver_name': reserver_name,
-                'event_subject': self.event_subject,
-                'event_description': self.event_description,
                 'reserver_email_address': reserver_email_address,
-                'reserver_phone_number': self.reserver_phone_number,
             }
-
+            directly_included_fields = (
+                'number_of_participants',
+                'host_name',
+                'event_subject',
+                'event_description',
+                'reserver_phone_number',
+                'billing_first_name',
+                'billing_last_name',
+                'billing_email_address',
+                'billing_phone_number',
+                'billing_address_street',
+                'billing_address_zip',
+                'billing_address_city',
+            )
+            for field in directly_included_fields:
+                context[field] = getattr(self, field)
             if self.resource.unit:
                 context['unit'] = self.resource.unit.name
                 context['unit_id'] = self.resource.unit.id
@@ -415,6 +448,10 @@ class Reservation(ModifiableModel):
                 ground_plan_image_url = ground_plan_image.get_full_url()
                 if ground_plan_image_url:
                     context['resource_ground_plan_image_url'] = ground_plan_image_url
+
+            order = getattr(self, 'order', None)
+            if order:
+                context['order'] = order.get_notification_context(language_code)
 
         return context
 
