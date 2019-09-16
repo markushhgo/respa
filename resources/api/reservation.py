@@ -269,12 +269,13 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
                 'end': instance.end,  # datetime object
                 'user': instance.user.email if instance.user else '',  # just email
                 'created_at': instance.created_at,
-                'require_assistance': False
+                'require_assistance': instance.require_assistance
             })
         # Show the comments field and the user object only for staff
         if not resource.is_admin(user):
             del data['comments']
             del data['user']
+            del data['require_assistance']
 
         if instance.are_extra_fields_visible(user):
             cache = self.context.get('reservation_metadata_set_cache')
@@ -295,8 +296,7 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if instance.can_view_catering_orders(user):
             data['has_catering_order'] = instance.catering_orders.exists()
 
-        if instance.require_assistance:
-            data['require_assistance'] = True
+
 
         return data
 
