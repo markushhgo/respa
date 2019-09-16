@@ -271,9 +271,6 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
                 'created_at': instance.created_at,
                 'require_assistance': False
             })
-
-        if resource.cooldown:
-            data['end'] = instance.end + resource.cooldown
         # Show the comments field and the user object only for staff
         if not resource.is_admin(user):
             del data['comments']
