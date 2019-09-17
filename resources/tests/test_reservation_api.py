@@ -1085,10 +1085,9 @@ def test_state_filters(user_api_client, user, list_url, reservations_in_all_stat
     assert reservation_ids == set(reservations_in_all_states[state].id for state in expected_states)
 
 
-#@override_settings(RESPA_MAILS_ENABLED=True)
-#@pytest.mark.parametrize('perm_type', ['unit', 'resource_group'])
-#@pytest.mark.django_db
-@pytest.mark.skip(reason="TODO: Fix later")
+@override_settings(RESPA_MAILS_ENABLED=True)
+@pytest.mark.parametrize('perm_type', ['unit', 'resource_group'])
+@pytest.mark.django_db
 def test_reservation_mails(
         api_client, general_admin, user_api_client, test_unit2,
         list_url, reservation_data_extra, perm_type):
@@ -1120,6 +1119,7 @@ def test_reservation_mails(
 
     # test REQUESTED
     reservation_data_extra['state'] = Reservation.REQUESTED
+    reservation_data_extra['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data_extra, format='json')
     assert response.status_code == 201
 
@@ -1178,13 +1178,14 @@ def test_reservation_mails(
     )
 
 
-#@override_settings(RESPA_MAILS_ENABLED=True)
-#@pytest.mark.parametrize('perm_type', ['unit', 'resource_group'])
-#@pytest.mark.django_db
-@pytest.mark.skip(reason="TODO: fix later")
+@override_settings(RESPA_MAILS_ENABLED=True)
+@pytest.mark.parametrize('perm_type', ['unit', 'resource_group'])
+@pytest.mark.django_db
 def test_reservation_mails_in_finnish(
         api_client, general_admin, user_api_client, test_unit2,
         list_url, reservation_data_extra, perm_type, user):
+    reservation_data_extra['preferred_language'] = 'fi'
+
     resource = Resource.objects.get(id=reservation_data_extra['resource'])
     resource.need_manual_confirmation = True
     resource.reservation_metadata_set = ReservationMetadataSet.objects.get(name='default')

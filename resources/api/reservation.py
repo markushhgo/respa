@@ -26,7 +26,7 @@ from resources.models.reservation import RESERVATION_EXTRA_FIELDS
 from resources.pagination import ReservationPagination
 from resources.models.utils import generate_reservation_xlsx, get_object_or_none
 
-from ..auth import is_general_admin, is_underage, is_overage
+from ..auth import is_general_admin, is_underage, is_overage, is_authenticated_user
 from .base import (
     NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget
 )
@@ -275,6 +275,8 @@ class ReservationSerializer(TranslatedModelSerializer, munigeo_api.GeoModelSeria
         if not resource.is_admin(user):
             del data['comments']
             del data['user']
+
+        if not is_authenticated_user(user):
             del data['require_assistance']
 
         if instance.are_extra_fields_visible(user):
