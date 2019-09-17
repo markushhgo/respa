@@ -28,7 +28,7 @@ def test_period_formset_with_invalid_period_data(valid_resource_form_data):
         period_formset_with_days = get_period_formset(request)
     assert period_formset_with_days.is_valid() is False
     assert period_formset_with_days.errors == [{
-        '__all__': ["Aseta 'resource' tai 'unit'"],
+        '__all__': ["You must set 'start' and 'end' fields."],
         'start': ['Tämä kenttä vaaditaan.'],
     }]
 
@@ -42,7 +42,7 @@ def test_period_formset_with_invalid_days_data(valid_resource_form_data):
         period_formset_with_days = get_period_formset(request)
     assert period_formset_with_days.is_valid() is False
     assert period_formset_with_days.errors == [
-        {'__all__': ['Tarkista aukioloajat.']}
+        {'__all__': ['Please check the opening hours.']}
     ]
     assert period_formset_with_days.forms[0].days.errors == [
         {'weekday': ['Tämä kenttä vaaditaan.']}
@@ -66,7 +66,7 @@ def test_create_resource_with_invalid_data_returns_errors(admin_client, empty_re
         'unit': ['Tämä kenttä vaaditaan.'],
     }
     assert response.context['period_formset_with_days'].errors == [
-        {'__all__': ['Tarkista aukioloajat.']}
+        {'__all__': ['Please check the opening hours.']}
     ]
 
 
