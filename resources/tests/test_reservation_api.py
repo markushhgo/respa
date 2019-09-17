@@ -1132,10 +1132,11 @@ def test_reservation_mails(
         ('made a preliminary reservation', 'Starts: April 4, 2115, 11 a.m.'),
         clear_outbox=False
     )
+    # Staff will use fallback language
     check_received_mail_exists(
-        'Reservation requested',
+        'Alustava varaus tehty',
         general_admin.email,
-        'A new preliminary reservation has been made'
+        'Uusi alustava varaus on tehty'
     )
 
     detail_url = '%s%s/' % (list_url, response.data['id'])
@@ -1280,6 +1281,8 @@ def test_reservation_mails_in_finnish(
 @override_settings(RESPA_MAILS_ENABLED=True)
 @pytest.mark.django_db
 def test_reservation_created_mail(user_api_client, list_url, reservation_data, user, reservation_created_notification):
+    reservation_data['preferred_language'] = 'en'
+
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     file_name, ical_file, mimetype = mail.outbox[0].attachments[0]
     assert response.status_code == 201
@@ -1309,6 +1312,7 @@ def test_reservation_html_mail(user_api_client, list_url, reservation_data, user
         reservation_created_notification.html_body = '<b>HTML</b> body'
         reservation_created_notification.save()
 
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1330,7 +1334,7 @@ def test_reservation_mail_empty_text_body_should_become_html_body_without_tags(u
         reservation_created_notification.body = ''
         reservation_created_notification.html_body = '<b>HTML</b> body'
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1351,7 +1355,7 @@ def test_reservation_mail_can_have_subject_only(user_api_client, list_url, reser
         reservation_created_notification.body = ''
         reservation_created_notification.html_body = ''
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1385,7 +1389,7 @@ def test_reservation_mail_images(user_api_client, user, list_url, reservation_da
         reservation_created_notification.body = 'image url: {{ resource_main_image_url }}'
         reservation_created_notification.html_body = 'image: <img src="{{ resource_ground_plan_image_url }}">'
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     main_image = ResourceImage.objects.create(resource=resource_in_unit, type='main')
     ResourceImage.objects.create(resource=resource_in_unit, type='ground_plan')
     last_ground_plan_image = ResourceImage.objects.create(resource=resource_in_unit, type='ground_plan')
@@ -1527,6 +1531,8 @@ def test_access_code_visibility(
 @override_settings(RESPA_MAILS_ENABLED=True)
 @pytest.mark.django_db
 def test_reservation_created_with_access_code_mail(user_api_client, user, resource_in_unit, list_url, reservation_data):
+    reservation_data['preferred_language'] = 'en'
+
 
     # The mail should not be sent if access code type is none
     response = user_api_client.post(list_url, data=reservation_data)

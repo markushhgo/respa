@@ -475,7 +475,7 @@ class Reservation(ModifiableModel):
             if action_by_official:
                 email_address = self.reserver_email_address
             else:
-                email_address = self.user.email or self.reserver_email_address
+                email_address = self.reserver_email_address or self.user.email
             user = self.user
 
         language = self.preferred_language if not user.is_staff else DEFAULT_LANG

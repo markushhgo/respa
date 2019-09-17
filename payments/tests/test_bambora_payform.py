@@ -3,6 +3,7 @@ import json
 from unittest import mock
 
 import pytest
+from django.conf import settings
 from django.http import HttpResponse, HttpResponseServerError
 from django.test.client import RequestFactory
 from requests.exceptions import RequestException
@@ -17,6 +18,8 @@ from payments.providers.bambora_payform import (
 FAKE_BAMBORA_API_URL = "https://fake-bambora-api-url/api"
 UI_RETURN_URL = 'https://front-end-url'
 RESERVATION_LIST_URL = reverse('reservation-list')
+
+PAYMENTS_ENABLED = bool(getattr(settings, "RESPA_PAYMENTS_ENABLED", False))
 
 
 @pytest.fixture(autouse=True)
@@ -72,6 +75,7 @@ def mocked_response_create(*args, **kwargs):
         })
 
 
+@pytest.mark.skipif(not PAYMENTS_ENABLED, reason="Payments not enabled")
 def test_initiate_payment_success(provider_base_config, order_with_products):
     """Test the request creator constructs the payload base and returns a url that contains a token"""
     rf = RequestFactory()
@@ -84,7 +88,7 @@ def test_initiate_payment_success(provider_base_config, order_with_products):
         assert 'token' in url
         assert 'abc123' in url
 
-
+@pytest.mark.skipif(not PAYMENTS_ENABLED, reason="Payments not enabled")
 def test_initiate_payment_error_unavailable(provider_base_config, order_with_products):
     """Test the request creator raises service unavailable if request doesn't go through"""
     rf = RequestFactory()

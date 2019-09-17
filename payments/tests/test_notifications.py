@@ -103,15 +103,15 @@ def test_reservation_created_notification(order_with_products):
 
 
 @pytest.mark.parametrize('order_state, notification_expected', (
-    (Order.REJECTED, False),
-    (Order.EXPIRED, False),
+    (Order.REJECTED, True),
+    (Order.EXPIRED, True),
     (Order.CANCELLED, True),
 ))
 @pytest.mark.django_db
 @override_settings(RESPA_MAILS_ENABLED=True)
 def test_reservation_cancelled_notification(order_with_products, order_state, notification_expected):
     user = order_with_products.reservation.user
-    user.preferred_language = 'fi'
+    order_with_products.preferred_language = user.preferred_language = 'fi'
     user.save()
     if order_state == Order.CANCELLED:
         Reservation.objects.filter(id=order_with_products.reservation.id).update(state=Reservation.CONFIRMED)
@@ -127,5 +127,3 @@ def test_reservation_cancelled_notification(order_with_products, order_state, no
             order_with_products.reservation.user.email,
             get_expected_strings(order_with_products),
         )
-    else:
-        assert len(mail.outbox) == 0
