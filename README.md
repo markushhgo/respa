@@ -125,12 +125,12 @@ Settings are done either by setting environment variables named after the settin
 - `INTERNAL_IPS`: Django INTERNAL_IPS setting allows some debugging aids for the addresses specified here. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#internal-ips). Example value `'127.0.0.1'`.
 - `MAIL_ENABLED`: Whether sending emails to users is enabled or not.
 - `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://turku.fi'`.
-- `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin. Example value `'https://asiointi.hel.fi/kapaesteettomyys/'`.
+- `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin.
 - `ACCESSIBILITY_API_SYSTEM_ID`: Accessibility API system ID. If left empty, the input link remains hidden in Respa Admin.
 - `ACCESSIBILITY_API_SECRET`: Secret for the Accessibility API. If left empty, the input link remains hidden in Respa Admin.
 - `RESPA_ADMIN_INSTRUCTIONS_URL`: URL for the user instructions link visible in Respa Admin. Example value: `'https://digipoint-turku.gitbook.io/varaamo-turku/yllapitoliittyma/aloitus'`.
 - `RESPA_ADMIN_SUPPORT_EMAIL`: Email address for user support link visible in Respa Admin.
-- `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.hel.fi/resource/'`.
+- `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.turku.fi/resources/'`.
 - `RESPA_ADMIN_LOGO`: Name of the logo file to be displayed in Respa Admin UI. Logo file is assumed to be located in `respa_admin/static_src/img/`. Example value: `ra-logo.svg`.
 - `RESPA_ADMIN_KORO_STYLE`: Defines the style of koro-shape used in login page and resources page. Accepts values: `koro-basic`, `koro-pulse`, `koro-beat`, `koro-storm`, `koro-wave`.
 
@@ -153,7 +153,7 @@ with staff privileges and use that session to access the Respa Admin.
 When accessing the Respa Admin without being logged in, the login
 happens with Tunnistamo.  To test the Tunnistamo login flow in local
 development environment this needs either real Respa app client id and
-client secret in the production Tunnistamo or modifying helusers to use
+client secret in the production Tunnistamo or modifying tkusers to use
 local Tunnistamo.  The client id and client secret should be configured
 in Django Admin or shell within a socialaccount.SocialApp instance with
 id "turku".  When adding the app to Tunnistamo, the OAuth2 callback
