@@ -103,8 +103,8 @@ def test_reservation_created_notification(order_with_products):
 
 
 @pytest.mark.parametrize('order_state, notification_expected', (
-    (Order.REJECTED, True),
-    (Order.EXPIRED, True),
+    (Order.REJECTED, False),
+    (Order.EXPIRED, False),
     (Order.CANCELLED, True),
 ))
 @pytest.mark.django_db
@@ -127,3 +127,5 @@ def test_reservation_cancelled_notification(order_with_products, order_state, no
             order_with_products.reservation.user.email,
             get_expected_strings(order_with_products),
         )
+    else:
+        assert len(mail.outbox) == 0

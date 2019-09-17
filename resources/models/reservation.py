@@ -8,6 +8,7 @@ import django.contrib.postgres.fields as pgfields
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.utils import translation
+from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from django.db.models import Q
@@ -30,7 +31,8 @@ DEFAULT_TZ = pytz.timezone(settings.TIME_ZONE)
 logger = logging.getLogger(__name__)
 
 RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_address_street', 'reserver_address_zip',
-                            'reserver_address_city', 'billing_address_street', 'billing_address_zip',
+                            'reserver_address_city', 'billing_first_name', 'billing_last_name', 'billing_phone_number',
+                            'billing_email_address', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
                             'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'host_name',
                             'reservation_extra_questions')
@@ -245,7 +247,7 @@ class Reservation(ModifiableModel):
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
-            Reservation.CANCELLED
+            Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT
         )
 
         old_state = self.state
@@ -286,10 +288,15 @@ class Reservation(ModifiableModel):
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
             if self.user:
-                if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
-                    self.send_reservation_cancelled_mail(action_by_official=True)
+                order = self.get_order()
+                if order:
+                    if order.state == order.CANCELLED:
+                        self.send_reservation_cancelled_mail()
                 else:
-                    self.send_reservation_cancelled_mail()
+                    if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
+                        self.send_reservation_cancelled_mail(action_by_official=True)
+                    else:
+                        self.send_reservation_cancelled_mail()
             else:
                 reservation_cancelled.send(sender=self.__class__, instance=self,
                                     user=user)
