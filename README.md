@@ -120,7 +120,7 @@ Settings are done either by setting environment variables named after the settin
 - `MAIL_ENABLED`: Whether sending emails to users is enabled or not.
 - `MAIL_DEFAULT_FROM`: Specifies the from-address for emails sent to users.
 - `MAIL_MAILGUN_KEY`: Mailgun can be used to send emails to end users. Specify Mailgun API key here. See [Mailgun API documentation](https://documentation.mailgun.com/en/latest/user_manual.html).
-- `MAIL_MAILGUN_DOMAIN`: Specifies Mailgun domain. Mailgun requires verification for domains via DNS. Example value `'mail.hel.ninja'`.
+- `MAIL_MAILGUN_DOMAIN`: Specifies Mailgun domain. Mailgun requires verification for domains via DNS. Example value `'imap.turku.fi'`.
 - `MAIL_MAILGUN_API`: Specifies which Mailgun API server is used.
 - `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://turku.fi'`.
 - `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin. Example value `'https://asiointi.hel.fi/kapaesteettomyys/'`.
