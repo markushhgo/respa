@@ -4,9 +4,9 @@
 
 Respa – Resource reservation and management service
 ===================
-Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland. You can explore the API at [api.hel.fi](https://api.hel.fi/respa/v1/) and view the API documentation at [dev.hel.fi](https://dev.hel.fi/apis/respa/).
+Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland.
 
-User interfaces for Respa developed by the City of Helsinki are [Varaamo](https://github.com/City-of-Helsinki/varaamo), [Huvaja](https://github.com/City-of-Helsinki/huvaja), [Reservation screen](https://github.com/City-of-Helsinki/reservation-screen-ui) and [Tilapankki](https://github.com/City-of-Helsinki/tilapankki). The City of Hämeenlinna has developed a [Berth Reservation UI](https://github.com/CityOfHameenlinna/hmlvaraus-frontend) and [backend](https://github.com/CityOfHameenlinna/hmlvaraus-backend) on top of Respa.
+User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamoTku)
 
 There are two user interfaces for editing data: Admins may use the more powerful Django Admin UI - other users with less privileges may use the more restricted but easier-to-use and nicer-looking Respa Admin UI.
 
@@ -302,7 +302,7 @@ as expected, commit the changes.
 Documentation
 -------------
 
-Documentation can be found in this GitHub repository (in English) and on [GitLab](https://gitlab.com/City-of-Helsinki/ohjelmistokehitys/wikis/respa) (in Finnish). Interactive API documentation at [dev.hel.fi](https://dev.hel.fi/apis/respa/).
+Documentation can be found in this GitHub repository (in English) and on [Gitbook](https://digipoint-turku.gitbook.io/varaamo-turku/yllapitoliittyma/aloitus) (in Finnish).
 
 License
 ------------
