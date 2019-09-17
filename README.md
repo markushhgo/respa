@@ -31,7 +31,7 @@ Contributing
 
 Your contributions are always welcome!
 
-Our main issue tracking is in [Jira](https://helsinkisolutionoffice.atlassian.net/projects/RESPA/issues). However, we also monitor this repository's issues and import them to Jira. If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/City-of-Helsinki/respa/issues/new) on GitHub or discuss it with us on [Gitter](https://gitter.im/City-of-Helsinki/heldev). Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
+Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respaTku/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
 
 Who is using Respa
 ------------
@@ -96,18 +96,6 @@ INTERNAL_IPS='127.0.0.1'
 DATABASE_URL='postgis://respa:password@localhost:5432/respa'
 ```
 
-### Run Django migrations and import data
-
-```shell
-python manage.py migrate
-python manage.py createsuperuser  # etc...
-python manage.py geo_import --municipalities finland
-python manage.py geo_import --divisions helsinki
-python manage.py resources_import --all tprek
-python manage.py resources_import --all kirjastot
-```
-
-
 ### Settings
 
 Settings are done either by setting environment variables named after the setting or adding them to a `.env` file in the project root. The .env file syntax is similar to TOML files (INI files), ie. key-value pairs. The project root is the directory where this README is found. You can also set settings in a local_settings.py, which allows you to set any variables whatsoever. However, some of the settings documented here are named differently in settings.py, especially authentication variables.
@@ -134,11 +122,11 @@ Settings are done either by setting environment variables named after the settin
 - `MAIL_MAILGUN_KEY`: Mailgun can be used to send emails to end users. Specify Mailgun API key here. See [Mailgun API documentation](https://documentation.mailgun.com/en/latest/user_manual.html).
 - `MAIL_MAILGUN_DOMAIN`: Specifies Mailgun domain. Mailgun requires verification for domains via DNS. Example value `'mail.hel.ninja'`.
 - `MAIL_MAILGUN_API`: Specifies which Mailgun API server is used.
-- `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://api.hel.fi'`.
+- `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://turku.fi'`.
 - `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin. Example value `'https://asiointi.hel.fi/kapaesteettomyys/'`.
 - `ACCESSIBILITY_API_SYSTEM_ID`: Accessibility API system ID. If left empty, the input link remains hidden in Respa Admin.
 - `ACCESSIBILITY_API_SECRET`: Secret for the Accessibility API. If left empty, the input link remains hidden in Respa Admin.
-- `RESPA_ADMIN_INSTRUCTIONS_URL`: URL for the user instructions link visible in Respa Admin. Example value: `'https://cityofhelsinki.gitbook.io/varaamo/'`.
+- `RESPA_ADMIN_INSTRUCTIONS_URL`: URL for the user instructions link visible in Respa Admin. Example value: `'https://digipoint-turku.gitbook.io/varaamo-turku/yllapitoliittyma/aloitus'`.
 - `RESPA_ADMIN_SUPPORT_EMAIL`: Email address for user support link visible in Respa Admin.
 - `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.hel.fi/resource/'`.
 - `RESPA_ADMIN_LOGO`: Name of the logo file to be displayed in Respa Admin UI. Logo file is assumed to be located in `respa_admin/static_src/img/`. Example value: `ra-logo.svg`.
@@ -166,9 +154,9 @@ development environment this needs either real Respa app client id and
 client secret in the production Tunnistamo or modifying helusers to use
 local Tunnistamo.  The client id and client secret should be configured
 in Django Admin or shell within a socialaccount.SocialApp instance with
-id "helsinki".  When adding the app to Tunnistamo, the OAuth2 callback
+id "turku".  When adding the app to Tunnistamo, the OAuth2 callback
 URL for the app should be something like:
-http://localhost:8000/accounts/helsinki/login/callback/
+http://localhost:8000/accounts/turku/login/callback/
 
 When the Tunnistamo registration is configured and the login is working,
 then go to Django Admin and set the `is_staff` flag on for the user that
