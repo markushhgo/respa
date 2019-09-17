@@ -95,6 +95,12 @@ DEBUG=1
 INTERNAL_IPS='127.0.0.1'
 DATABASE_URL='postgis://respa:password@localhost:5432/respa'
 ```
+### Run Django migrations and import data
+
+```shell
+python manage.py migrate
+python manage.py createsuperuser
+```
 
 ### Settings
 
@@ -118,10 +124,6 @@ Settings are done either by setting environment variables named after the settin
 - `COOKIE_PREFIX`: Cookie prefix is added to the every cookie set by Respa. These are mostly used when accessing the internal Django admin site. This applies to django session cookie and csrf cookie. Django setting: prepended to `CSRF_COOKIE_NAME` and `SESSION_COOKIE_NAME`.
 - `INTERNAL_IPS`: Django INTERNAL_IPS setting allows some debugging aids for the addresses specified here. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#internal-ips). Example value `'127.0.0.1'`.
 - `MAIL_ENABLED`: Whether sending emails to users is enabled or not.
-- `MAIL_DEFAULT_FROM`: Specifies the from-address for emails sent to users.
-- `MAIL_MAILGUN_KEY`: Mailgun can be used to send emails to end users. Specify Mailgun API key here. See [Mailgun API documentation](https://documentation.mailgun.com/en/latest/user_manual.html).
-- `MAIL_MAILGUN_DOMAIN`: Specifies Mailgun domain. Mailgun requires verification for domains via DNS. Example value `'imap.turku.fi'`.
-- `MAIL_MAILGUN_API`: Specifies which Mailgun API server is used.
 - `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://turku.fi'`.
 - `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin. Example value `'https://asiointi.hel.fi/kapaesteettomyys/'`.
 - `ACCESSIBILITY_API_SYSTEM_ID`: Accessibility API system ID. If left empty, the input link remains hidden in Respa Admin.
@@ -162,22 +164,6 @@ When the Tunnistamo registration is configured and the login is working,
 then go to Django Admin and set the `is_staff` flag on for the user that
 got created when testing the login.  This allows the user to use the
 Respa Admin.
-
-Installation with Docker
-------------------------
-
-```shell
-# Setup multicontainer environment
-docker-compose up
-
-# Start development server
-docker exec -it respa-api python manage.py runserver 0:8000
-
-# Import database dump
-cat <name_of_the_sanitized_respa_dump>.sql | docker exec -i respa-db psql -U postgres -d respa
-```
-
-Try: http://localhost:8000/ra/resource/
 
 
 Database
