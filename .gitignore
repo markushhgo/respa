@@ -23,3 +23,4 @@ env/
 Lib/
 scripts/
 pyvenv*
+pytest_cache*
