@@ -412,6 +412,7 @@ class Reservation(ModifiableModel):
                 'reserver_name': reserver_name,
                 'reserver_email_address': reserver_email_address,
                 'require_assistance': self.require_assistance,
+                'extra_question': self.reservation_extra_questions
             }
             directly_included_fields = (
                 'number_of_participants',

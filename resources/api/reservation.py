@@ -284,7 +284,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 'end': instance.end,  # datetime object
                 'user': instance.user.email if instance.user else '',  # just email
                 'created_at': instance.created_at,
-                'require_assistance': instance.require_assistance
+                'require_assistance': instance.require_assistance,
             })
         # Show the comments field and the user object only for staff
         if not resource.is_admin(user):
