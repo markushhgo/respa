@@ -1477,3 +1477,6 @@ msgstr "Kuva pitää olla isompi kuin 5x5"
 
 msgid "Image has to be less than 1920x1280"
 msgstr "Kuva pitää olla pienempi kuin 1920x1280"
+
+msgid "Reservation additional information"
+msgstr "Varauksen lisäinfo"
