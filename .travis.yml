@@ -38,7 +38,7 @@ before_install:
 before_script:
   - ./build-resources
   - ls -l respa_admin/static/respa_admin/main.css  # Check main.css got built
-  - ./manage.py compilemessages
+  - ./manage.py compilemessages --locale fi --locale en --locale sv
   - ./manage.py makemigrations account admin auth authtoken caterings contenttypes easy_thumbnails guardian kulkunen munigeo notifications resources respa_exchange reversion sessions sites socialaccount tkusers users #comments app fails because lambda cannot be serialized.
   - ./manage.py migrate
 

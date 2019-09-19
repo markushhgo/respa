@@ -66,6 +66,7 @@ class UserSerializer(TranslatedModelSerializer):
     class Meta:
         model = get_user_model()
         fields = ('id', 'display_name', 'email')
+        ref_name = 'ReservationUserSerializer'
 
 
 class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoModelSerializer):
