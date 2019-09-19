@@ -165,6 +165,19 @@ then go to Django Admin and set the `is_staff` flag on for the user that
 got created when testing the login.  This allows the user to use the
 Respa Admin.
 
+Installation with Docker
+------------------------
+
+```shell
+# Setup multicontainer environment
+docker-compose up
+
+# Import database dump
+cat <name_of_the_sanitized_respa_dump>.sql | docker exec -i respa-db psql -U postgres -d respa
+```
+
+Try: http://localhost:8000/ra/resource/
+
 
 Database
 -------------
