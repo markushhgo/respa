@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     'respa_admin',
 
     'sanitized_dump',
+    'drf_yasg',
 ]
 if env('SENTRY_DSN'):
     RAVEN_CONFIG = {
@@ -165,7 +166,7 @@ TEMPLATES = [
     },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [root],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
