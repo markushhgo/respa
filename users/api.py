@@ -49,7 +49,13 @@ class UserSerializer(serializers.ModelSerializer):
             return {}
         return {'unit': perms}
 
+    def to_representation(self, instance):
+        data = super(UserSerializer, self).to_representation(instance)
+        user = self.context['request'].user
 
+        if user.id != instance.id:
+            data.pop('birthday')
+        return data
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):
