@@ -649,6 +649,8 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         return [x.field_name for x in metadata_set.required_fields.all()]
 
     def clean(self):
+        if self.cooldown is None:
+            self.cooldown = datetime.timedelta(0)
         if self.min_price_per_hour is not None and self.max_price_per_hour is not None:
             if self.min_price_per_hour > self.max_price_per_hour:
                 raise ValidationError(
@@ -656,6 +658,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
                 )
         if self.min_period % self.slot_size != datetime.timedelta(0):
             raise ValidationError({'min_period': _('This value must be a multiple of slot_size')})
+
+        if self.cooldown % self.slot_size != datetime.timedelta(0):
+            raise ValidationError({'cooldown': _('This value must be a multiple of slot_size')})
 
         if self.need_manual_confirmation and self.products.current().exists():
             raise ValidationError(
