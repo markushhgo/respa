@@ -1481,6 +1481,9 @@ msgstr "Kuva pitää olla pienempi kuin 1920x1280"
 msgid "Reservation additional information"
 msgstr "Varauksen lisäinfo"
 
+msgid "Reservation cooldown"
+msgstr "Varaustauko"
+
 msgid "Age restriction (min)"
 msgstr "Alaikäraja"
 
