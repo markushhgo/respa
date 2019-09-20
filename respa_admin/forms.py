@@ -21,6 +21,7 @@ from resources.models import (
 from respa.settings import LANGUAGES
 
 hour_increment_choices = (
+    ('00:00:00', '0 h'),
     ('01:00:00', '1 h'),
     ('02:00:00', '2 h'),
     ('03:00:00', '3 h'),
