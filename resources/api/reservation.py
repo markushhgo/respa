@@ -85,7 +85,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
             'url', 'id', 'resource', 'user', 'begin', 'end', 'comments', 'is_own', 'state', 'need_manual_confirmation',
             'require_assistance', 'staff_event', 'access_code', 'user_permissions', 'preferred_language', 'type'
         ] + list(RESERVATION_EXTRA_FIELDS)
-        read_only_fields = list(RESERVATION_EXTRA_FIELDS)
+        read_only_fields = [] #list(RESERVATION_EXTRA_FIELDS)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
