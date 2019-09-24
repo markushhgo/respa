@@ -221,7 +221,7 @@ msgid "Reservation created with access code"
 msgstr "Varaus pääsykoodin kanssa tehty"
 
 msgid "Access code was created for a reservation"
-msgstr ""
+msgstr "Pääsykoodi varausta varten on luotu"
 
 msgid "Catering order created"
 msgstr "Tarjoilutilaus luotu"
@@ -1504,6 +1504,3 @@ msgstr "Varaus pääsykoodin kanssa tehty virkailija"
 
 msgid "Reservation created official"
 msgstr "Varaus luotu virkailija"
-
-msgid "Access code was created for a reservation"
-msgstr "Pääsykoodi varausta varten on luotu"
