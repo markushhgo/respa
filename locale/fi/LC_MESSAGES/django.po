@@ -221,7 +221,7 @@ msgid "Reservation created with access code"
 msgstr "Varaus pääsykoodin kanssa tehty"
 
 msgid "Access code was created for a reservation"
-msgstr ""
+msgstr "Pääsykoodi varausta varten on luotu"
 
 msgid "Catering order created"
 msgstr "Tarjoilutilaus luotu"
@@ -1489,3 +1489,18 @@ msgstr "Alaikäraja"
 
 msgid "Age restriction (max)"
 msgstr "Yläikäraja"
+
+msgid "Reservation cancelled official"
+msgstr "Varaus peruttu virkailija"
+
+msgid "Reservation modified"
+msgstr "Varaus muokattu"
+
+msgid "Reservation modified official"
+msgstr "Varaus muokattu virkailija"
+
+msgid "Reservation created with access code official"
+msgstr "Varaus pääsykoodin kanssa tehty virkailija"
+
+msgid "Reservation created official"
+msgstr "Varaus luotu virkailija"

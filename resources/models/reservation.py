@@ -132,7 +132,7 @@ class Reservation(ModifiableModel):
     event_subject = models.CharField(max_length=200, verbose_name=_('Event subject'), blank=True)
     event_description = models.TextField(verbose_name=_('Event description'), blank=True)
     number_of_participants = models.PositiveSmallIntegerField(verbose_name=_('Number of participants'), blank=True,
-                                                              null=True)
+                                                              null=True, default=1)
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
     require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
@@ -391,6 +391,10 @@ class Reservation(ModifiableModel):
 
         if self.access_code:
             validate_access_code(self.access_code, self.resource.access_code_type)
+
+        if self.resource.people_capacity:
+            if (self.number_of_participants > self.resource.people_capacity):
+                raise ValidationError(_("This resource has people capacity limit of %s" % self.resource.people_capacity))
 
     def get_notification_context(self, language_code, user=None, notification_type=None):
         if not user:

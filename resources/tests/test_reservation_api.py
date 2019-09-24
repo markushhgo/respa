@@ -905,7 +905,7 @@ def test_extra_fields_ignored_for_non_paid_reservations(user_api_client, list_ur
     assert response.status_code == 201
     reservation = Reservation.objects.latest('created_at')
     assert reservation.reserver_name == ''
-    assert reservation.number_of_participants is None
+    assert reservation.number_of_participants == 1
 
 
 @pytest.mark.django_db
