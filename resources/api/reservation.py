@@ -252,6 +252,21 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         return data
 
     def to_internal_value(self, data):
+        hotfix = []
+        for field_name in data:
+            if not data[field_name]:
+                hotfix.append(field_name)
+
+        for field in hotfix:
+            if isinstance(data[field], int):
+                data[field] = 0
+            elif isinstance(data[field], bool):
+                data[field] = False
+            elif isinstance(data[field], str):
+                data[field] = "-"
+            elif isinstance(data[field], dict):
+                data[field] = {}
+
         user_data = data.copy().pop('user', None)  # handle user manually
         deserialized_data = super().to_internal_value(data)
 
