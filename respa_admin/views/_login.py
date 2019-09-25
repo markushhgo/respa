@@ -96,4 +96,4 @@ def _logout_locally_and_in_tunnistamo(request, redirect_uri=None):
     next_param = urlencode({
         'next': request.build_absolute_uri(redirect_uri)
     })
-    return HttpResponseRedirect('https://turku.fi/') #+'/logout/?'+next_param)
+    return HttpResponseRedirect(settings.RESPA_ADMIN_LOGOUT_REDIRECT_URL if settings.RESPA_ADMIN_LOGOUT_REDIRECT_URL else 'https://turku.fi') #+'/logout/?'+next_param)

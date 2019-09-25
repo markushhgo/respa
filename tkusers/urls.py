@@ -13,5 +13,5 @@ urlpatterns = [
     path('login/', views.LoginView.as_view(), name='auth_login'),
 ]
 
-if not settings.LOGOUT_REDIRECT_URL:
-    raise ImproperlyConfigured("You must configure LOGOUT_REDIRECT_URL to use tkusers views.")
+if not settings.RESPA_ADMIN_LOGOUT_REDIRECT_URL:
+    raise ImproperlyConfigured("You must configure RESPA_ADMIN_LOGOUT_REDIRECT_URL to use tkusers views.")

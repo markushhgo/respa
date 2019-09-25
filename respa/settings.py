@@ -49,7 +49,8 @@ env = environ.Env(
     RESPA_PAYMENTS_ENABLED=(bool, False),
     RESPA_PAYMENTS_PROVIDER_CLASS=(str, ''),
     RESPA_PAYMENTS_PAYMENT_WAITING_TIME=(int, 15),
-    LOGOUT_REDIRECT_URL = (str, 'https://turku.fi'),
+    RESPA_ADMIN_LOGOUT_REDIRECT_URL=(str, ''),
+    DJANGO_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
@@ -244,10 +245,10 @@ SOCIALACCOUNT_PROVIDERS = {
     }
 }
 LOGIN_REDIRECT_URL = '/'
-LOGOUT_REDIRECT_URL = env('LOGOUT_REDIRECT_URL')
+LOGOUT_REDIRECT_URL = env('DJANGO_ADMIN_LOGOUT_REDIRECT_URL')
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_ADAPTER = 'tkusers.adapter.SocialAccountAdapter'
-
+RESPA_ADMIN_LOGOUT_REDIRECT_URL = env('RESPA_ADMIN_LOGOUT_REDIRECT_URL')
 
 # REST Framework
 # http://www.django-rest-framework.org
