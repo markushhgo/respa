@@ -265,6 +265,7 @@ class Reservation(ModifiableModel):
             self.approver = None
 
         user_is_staff = self.user is not None and self.user.is_staff
+
         # Notifications
         if new_state == Reservation.REQUESTED:
             self.send_reservation_requested_mail()
