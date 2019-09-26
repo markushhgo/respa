@@ -49,7 +49,7 @@ env = environ.Env(
     RESPA_PAYMENTS_ENABLED=(bool, False),
     RESPA_PAYMENTS_PROVIDER_CLASS=(str, ''),
     RESPA_PAYMENTS_PAYMENT_WAITING_TIME=(int, 15),
-    RESPA_ADMIN_LOGOUT_REDIRECT_URL=(str, ''),
+    RESPA_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
     DJANGO_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
 )
 environ.Env.read_env()
