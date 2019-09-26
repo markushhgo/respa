@@ -114,5 +114,5 @@ def test_logout(client):
     response = client.get(reverse('respa_admin:logout'))
     assert response.status_code == 302
     assert response.url == (
-        'https://turku.fi/')
+        'https://turku.fi')
     assert '_auth_user_id' not in client.session
