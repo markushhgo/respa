@@ -382,7 +382,7 @@ def test_reservable_in_advance_fields(api_client, resource_in_unit, test_unit, d
 
     # only the unit has days set, expect those on the resource
     assert response.data['reservable_max_days_in_advance'] == 6
-    before = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=6)
+    before = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=6)
     assert response.data['reservable_before'] == before
 
     resource_in_unit.reservable_max_days_in_advance = 11
@@ -393,7 +393,7 @@ def test_reservable_in_advance_fields(api_client, resource_in_unit, test_unit, d
 
     # both the unit and the resource have days set, expect the resource's days to override the unit's days
     assert response.data['reservable_max_days_in_advance'] == 11
-    before = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=11)
+    before = timezone.localtime(timezone.now()).replace(hour=0, minute=0, second=0, microsecond=0) + datetime.timedelta(days=11)
     assert response.data['reservable_before'] == before
 
 
