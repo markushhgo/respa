@@ -428,7 +428,7 @@ class Reservation(ModifiableModel):
                 context[field] = getattr(self, field)
             if self.resource.unit:
                 context['unit'] = self.resource.unit.name
-                context['unit_id'] = self.resource.unit.id,
+                context['unit_id'] = self.resource.unit.id
                 context['unit_map_service_id'] = self.resource.unit.map_service_id
             if self.can_view_access_code(user) and self.access_code:
                 context['access_code'] = self.access_code
