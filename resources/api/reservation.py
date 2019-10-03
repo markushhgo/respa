@@ -13,6 +13,7 @@ from django.core.exceptions import (
 from django.db.models import Q
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
+from notifications.models import NotificationType
 from rest_framework import viewsets, serializers, filters, exceptions, permissions
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
 from rest_framework.fields import BooleanField, IntegerField
@@ -644,5 +645,6 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_instance.send_reservation_modified_mail(action_by_official=True)
         else:
             new_instance.send_reservation_modified_mail()
+            new_instance.notify_staff_about_reservation(NotificationType.RESERVATION_MODIFIED_OFFICIAL)
 
 register_view(ReservationViewSet, 'reservation')

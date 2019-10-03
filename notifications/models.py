@@ -20,23 +20,28 @@ logger = logging.getLogger('respa.notifications')
 class NotificationType:
     RESERVATION_REQUESTED = 'reservation_requested'
     RESERVATION_REQUESTED_OFFICIAL = 'reservation_requested_official'
+    RESERVATION_REQUESTED_BY_OFFICIAL = 'reservation_requested_official_by_official'
 
     RESERVATION_CANCELLED = 'reservation_cancelled'
     RESERVATION_CANCELLED_OFFICIAL = 'reservation_cancelled_official'
-
-    RESERVATION_CONFIRMED = 'reservation_confirmed'
-    RESERVATION_DENIED = 'reservation_denied'
+    RESERVATION_CANCELLED_BY_OFFICIAL = 'reservation_cancelled_by_official'
 
     RESERVATION_CREATED = 'reservation_created'
     RESERVATION_CREATED_OFFICIAL = 'reservation_created_official'
+    RESERVATION_CREATED_BY_OFFICIAL = 'reservation_created_by_official'
 
     RESERVATION_MODIFIED = 'reservation_modified'
     RESERVATION_MODIFIED_OFFICIAL = 'reservation_modified_official'
+    RESERVATION_MODIFIED_BY_OFFICIAL = 'reservation_modified_by_official'
+
+    RESERVATION_CONFIRMED = 'reservation_confirmed'
+    RESERVATION_DENIED = 'reservation_denied'
 
     # If the access code is known at reservation time, this notification
     # type is used.
     RESERVATION_CREATED_WITH_ACCESS_CODE = 'reservation_created_with_access_code'
     RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL = 'reservation_created_with_access_code_official'
+    RESERVATION_CREATED_WITH_ACCESS_CODE_BY_OFFICIAL = 'reservation_created_with_access_code_by_official'
     # In some cases, the access code is known only some time after the
     # reservation is made. A separate notification type is used so that
     # we don't confuse the user with "new reservation created"-style
@@ -45,34 +50,41 @@ class NotificationType:
     CATERING_ORDER_CREATED = 'catering_order_created'
     CATERING_ORDER_MODIFIED = 'catering_order_modified'
     CATERING_ORDER_DELETED = 'catering_order_deleted'
+    CATERING_ORDER_COMMENT_CREATED = 'catering_order_comment_created'
 
     RESERVATION_COMMENT_CREATED = 'reservation_comment_created'
-    CATERING_ORDER_COMMENT_CREATED = 'catering_order_comment_created'
+    RESERVATION_COMMENT_CREATED_BY_OFFICIAL = 'reservation_comment_created_by_official'
 
 
 class NotificationTemplateException(Exception):
     pass
 
 
+
 class NotificationTemplate(TranslatableModel):
     NOTIFICATION_TYPE_CHOICES = (
         (NotificationType.RESERVATION_REQUESTED, _('Reservation requested')),
         (NotificationType.RESERVATION_REQUESTED_OFFICIAL, _('Reservation requested official')),
+        (NotificationType.RESERVATION_REQUESTED_BY_OFFICIAL, _('Reservation requested by official')),
 
         (NotificationType.RESERVATION_CANCELLED, _('Reservation cancelled')),
         (NotificationType.RESERVATION_CANCELLED_OFFICIAL, _('Reservation cancelled official')),
-
-        (NotificationType.RESERVATION_CONFIRMED, _('Reservation confirmed')),
-        (NotificationType.RESERVATION_DENIED, _('Reservation denied')),
+        (NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL, _('Reservation cancelled by official')),
 
         (NotificationType.RESERVATION_CREATED, _('Reservation created')),
         (NotificationType.RESERVATION_CREATED_OFFICIAL, _('Reservation created official')),
+        (NotificationType.RESERVATION_CREATED_BY_OFFICIAL, _('Reservation created by official')),
 
         (NotificationType.RESERVATION_MODIFIED, _('Reservation modified')),
         (NotificationType.RESERVATION_MODIFIED_OFFICIAL, _('Reservation modified official')),
+        (NotificationType.RESERVATION_MODIFIED_BY_OFFICIAL, _('Reservation modified by official')),
 
         (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE, _('Reservation created with access code')),
         (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL, _('Reservation created with access code official')),
+        (NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_BY_OFFICIAL, _('Reservation created with access code by official')),
+
+        (NotificationType.RESERVATION_CONFIRMED, _('Reservation confirmed')),
+        (NotificationType.RESERVATION_DENIED, _('Reservation denied')),
         (NotificationType.RESERVATION_ACCESS_CODE_CREATED, _('Access code was created for a reservation')),
 
         (NotificationType.CATERING_ORDER_CREATED, _('Catering order created')),

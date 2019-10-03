@@ -267,20 +267,26 @@ class Reservation(ModifiableModel):
         user_is_staff = self.user is not None and self.user.is_staff
         # Notifications
         if new_state == Reservation.REQUESTED:
-            self.send_reservation_requested_mail()
-            self.send_reservation_requested_mail_to_officials()
+            if not user_is_staff:
+                self.send_reservation_requested_mail()
+                self.notify_staff_about_reservation(NotificationType.RESERVATION_REQUESTED_OFFICIAL)
+            else:
+                if self.reserver_email_address != self.user.email:
+                    self.send_reservation_requested_mail(action_by_official=True)
         elif new_state == Reservation.CONFIRMED:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
             elif self.access_code:
                 if not user_is_staff:
                     self.send_reservation_created_with_access_code_mail()
+                    self.notify_staff_about_reservation(NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL)
                 else:
                     if self.reserver_email_address != self.user.email:
                         self.send_reservation_created_with_access_code_mail(action_by_official=True)
             else:
                 if not user_is_staff:
                     self.send_reservation_created_mail()
+                    self.notify_staff_about_reservation(NotificationType.RESERVATION_CREATED_OFFICIAL)
                 else:
                     if self.reserver_email_address != self.user.email:
                         self.send_reservation_created_mail(action_by_official=True)
@@ -297,6 +303,7 @@ class Reservation(ModifiableModel):
                         self.send_reservation_cancelled_mail(action_by_official=True)
                     else:
                         self.send_reservation_cancelled_mail()
+                        self.notify_staff_about_reservation(NotificationType.RESERVATION_CANCELLED_OFFICIAL)
             else:
                 reservation_cancelled.send(sender=self.__class__, instance=self,
                                     user=user)
@@ -509,18 +516,19 @@ class Reservation(ModifiableModel):
         )
         print(ret[1])
 
-    def send_reservation_requested_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED)
-
-    def send_reservation_requested_mail_to_officials(self):
+    def notify_staff_about_reservation(self, notification):
         notify_users = self.resource.get_users_with_perm('can_approve_reservation')
         if len(notify_users) > 100:
             raise Exception("Refusing to notify more than 100 users (%s)" % self)
         for user in notify_users:
-            self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED_OFFICIAL, user=user)
+            self.send_reservation_mail(notification, user=user)
+
+    def send_reservation_requested_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_REQUESTED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_REQUESTED
+        self.send_reservation_mail(notification)
 
     def send_reservation_modified_mail(self, action_by_official=False):
-        notification = NotificationType.RESERVATION_MODIFIED_OFFICIAL if action_by_official else NotificationType.RESERVATION_MODIFIED
+        notification = NotificationType.RESERVATION_MODIFIED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_MODIFIED
         self.send_reservation_mail(notification, action_by_official=action_by_official)
 
     def send_reservation_denied_mail(self):
@@ -534,14 +542,14 @@ class Reservation(ModifiableModel):
                                    attachments=[attachment])
 
     def send_reservation_cancelled_mail(self, action_by_official=False):
-        notification = NotificationType.RESERVATION_CANCELLED_OFFICIAL if action_by_official else NotificationType.RESERVATION_CANCELLED
+        notification = NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CANCELLED
         self.send_reservation_mail(notification, action_by_official=action_by_official)
 
     def send_reservation_created_mail(self, action_by_official=False):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
-        notification = NotificationType.RESERVATION_CREATED_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED
+        notification = NotificationType.RESERVATION_CREATED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED
         self.send_reservation_mail(notification,
                                    attachments=[attachment], action_by_official=action_by_official)
 
@@ -549,7 +557,7 @@ class Reservation(ModifiableModel):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
-        notification = NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE
+        notification = NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE,
                                    attachments=[attachment], action_by_official=action_by_official)
 
