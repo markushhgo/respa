@@ -235,37 +235,22 @@ class Reservation(ModifiableModel):
         return self.resource.can_view_access_codes(user)
 
     def set_state(self, new_state, user):
-        """ Available states
-
-            CREATED
-            CANCELLED
-            CONFIRME
-            DENIED
-            REQUESTED
-        """
-
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
             Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT
         )
-
         old_state = self.state
         if new_state == old_state:
             if old_state == Reservation.CONFIRMED:
-                reservation_modified.send(sender=self.__class__, instance=self,
-                                          user=user)
+                reservation_modified.send(sender=self.__class__, instance=self, user=user)
             return
-
         if new_state == Reservation.CONFIRMED:
             self.approver = user
-            reservation_confirmed.send(sender=self.__class__, instance=self,
-                                       user=user)
+            reservation_confirmed.send(sender=self.__class__, instance=self, user=user)
         elif old_state == Reservation.CONFIRMED:
             self.approver = None
-
         user_is_staff = self.user is not None and self.user.is_staff
-
         # Notifications
         if new_state == Reservation.REQUESTED:
             if not user_is_staff:
@@ -306,8 +291,7 @@ class Reservation(ModifiableModel):
                         self.send_reservation_cancelled_mail()
                         self.notify_staff_about_reservation(NotificationType.RESERVATION_CANCELLED_OFFICIAL)
             else:
-                reservation_cancelled.send(sender=self.__class__, instance=self,
-                                    user=user)
+                reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         self.state = new_state
         self.save()
 
@@ -444,7 +428,8 @@ class Reservation(ModifiableModel):
                 context[field] = getattr(self, field)
             if self.resource.unit:
                 context['unit'] = self.resource.unit.name
-                context['unit_id'] = self.resource.unit.id
+                context['unit_id'] = self.resource.unit.id,
+                context['unit_map_service_id'] = self.resource.unit.map_service_id
             if self.can_view_access_code(user) and self.access_code:
                 context['access_code'] = self.access_code
 
