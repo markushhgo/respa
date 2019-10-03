@@ -433,6 +433,9 @@ class Reservation(ModifiableModel):
             if self.can_view_access_code(user) and self.access_code:
                 context['access_code'] = self.access_code
 
+            if self.user.is_staff:
+                context['staff_name'] = self.user.get_display_name()
+
             if notification_type == NotificationType.RESERVATION_CONFIRMED:
                 if self.resource.reservation_confirmed_notification_extra:
                     context['extra_content'] = self.resource.reservation_confirmed_notification_extra
