@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import permissions, serializers, generics, mixins, viewsets
 
@@ -24,7 +25,8 @@ class UserSerializer(serializers.ModelSerializer):
         fields = [
             'last_login', 'username', 'email', 'date_joined',
             'first_name', 'last_name', 'uuid', 'department_name',
-            'is_staff', 'display_name', 'ical_feed_url', 'staff_perms', 'favorite_resources'
+            'is_staff', 'display_name', 'ical_feed_url', 'staff_perms', 'favorite_resources',
+            'preferred_language', 'birthday'
         ]
         model = get_user_model()
 
@@ -46,6 +48,14 @@ class UserSerializer(serializers.ModelSerializer):
         if not perms:
             return {}
         return {'unit': perms}
+
+    def to_representation(self, instance):
+        data = super(UserSerializer, self).to_representation(instance)
+        user = self.context['request'].user
+
+        if user.id != instance.id:
+            data.pop('birthday')
+        return data
 
 
 class UserViewSet(viewsets.ReadOnlyModelViewSet):

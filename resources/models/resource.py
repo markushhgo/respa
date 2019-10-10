@@ -5,6 +5,7 @@ import pytz
 from collections import OrderedDict
 from decimal import Decimal
 
+
 import arrow
 import django.db.models as dbm
 from django.db.models import Q
@@ -29,7 +30,7 @@ from PIL import Image
 from guardian.shortcuts import get_objects_for_user, get_users_with_perms
 from guardian.core import ObjectPermissionChecker
 
-from ..auth import is_authenticated_user, is_general_admin
+from ..auth import is_authenticated_user, is_general_admin, is_underage, is_overage
 from ..errors import InvalidImage
 from ..fields import EquipmentField
 from .accessibility import AccessibilityValue, AccessibilityViewpoint, ResourceAccessibility
@@ -178,6 +179,8 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     purposes = models.ManyToManyField(Purpose, verbose_name=_('Purposes'))
     name = models.CharField(verbose_name=_('Name'), max_length=200)
     description = models.TextField(verbose_name=_('Description'), null=True, blank=True)
+    min_age = models.PositiveIntegerField(verbose_name=_('Age restriction (min)'), null=True, blank=True, default=0)
+    max_age = models.PositiveIntegerField(verbose_name=_('Age restriction (max)'), null=True, blank=True, default=0)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
@@ -190,7 +193,10 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     min_period = models.DurationField(verbose_name=_('Minimum reservation time'),
                                       default=datetime.timedelta(minutes=30))
     max_period = models.DurationField(verbose_name=_('Maximum reservation time'), null=True, blank=True)
-    slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'),
+
+    cooldown = models.DurationField(verbose_name=_('Reservation cooldown'), null=True, blank=True, default=datetime.timedelta(minutes=0))
+
+    slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'), null=True, blank=True,
                                      default=datetime.timedelta(minutes=30))
 
     equipment = EquipmentField(Equipment, through='ResourceEquipment', verbose_name=_('Equipment'))
@@ -206,6 +212,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         'Extra content to "reservation requested" notification'), blank=True)
     reservation_confirmed_notification_extra = models.TextField(verbose_name=_(
         'Extra content to "reservation confirmed" notification'), blank=True)
+    reservation_additional_information = models.TextField(verbose_name=_('Reservation additional information'), blank=True)
+
+
     min_price_per_hour = models.DecimalField(verbose_name=_('Min price per hour'), max_digits=8, decimal_places=2,
                                              blank=True, null=True, validators=[MinValueValidator(Decimal('0.00'))])
     max_price_per_hour = models.DecimalField(verbose_name=_('Max price per hour'), max_digits=8, decimal_places=2,
@@ -233,7 +242,6 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         verbose_name=_('External reservation URL'),
         help_text=_('A link to an external reservation system if this resource is managed elsewhere'),
         null=True, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
 
     objects = ResourceQuerySet.as_manager()
 
@@ -332,6 +340,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         if reservation:
             overlapping = overlapping.exclude(pk=reservation.pk)
         return overlapping.exists()
+
 
     def get_available_hours(self, start=None, end=None, duration=None, reservation=None, during_closing=False):
         """
@@ -540,6 +549,13 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         # Admins are almighty.
         if self.is_admin(user) and allow_admin:
             return True
+
+        if self.min_age and is_underage(user, self.min_age):
+                return False
+
+        if self.max_age and is_underage(user, self.max_age):
+                return False
+
         if hasattr(self, '_permission_checker'):
             checker = self._permission_checker
         else:
@@ -559,6 +575,11 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         return users
 
     def can_make_reservations(self, user):
+        if self.min_age and is_underage(user, self.min_age):
+            return False
+        if self.max_age and is_overage(user, self.max_age):
+            return False
+
         return self.reservable or self._has_perm(user, 'can_make_reservations')
 
     def can_modify_reservations(self, user):
@@ -628,6 +649,8 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         return [x.field_name for x in metadata_set.required_fields.all()]
 
     def clean(self):
+        if self.cooldown is None:
+            self.cooldown = datetime.timedelta(0)
         if self.min_price_per_hour is not None and self.max_price_per_hour is not None:
             if self.min_price_per_hour > self.max_price_per_hour:
                 raise ValidationError(
@@ -636,11 +659,13 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         if self.min_period % self.slot_size != datetime.timedelta(0):
             raise ValidationError({'min_period': _('This value must be a multiple of slot_size')})
 
+        if self.cooldown % self.slot_size != datetime.timedelta(0):
+            raise ValidationError({'cooldown': _('This value must be a multiple of slot_size')})
+
         if self.need_manual_confirmation and self.products.current().exists():
             raise ValidationError(
                 {'need_manual_confirmation': _('This cannot be enabled because the resource has product(s).')}
             )
-
 
 class ResourceImage(ModifiableModel):
     TYPES = (
@@ -699,8 +724,15 @@ class ResourceImage(ModifiableModel):
         try:
             img = Image.open(self.image)
             img.load()
+            if (img.size[0] < 5 or img.size[1] < 5):
+                raise ValidationError(_("Image has to be larger than 5x5"))
+            elif (img.size[0] > 1920 or img.size[1] > 1280):
+                raise ValidationError(_("Image has to be less than 1920x1280"))
         except Exception as exc:
-            raise InvalidImage("Image %s not valid (%s)" % (self.image, exc)) from exc
+            if isinstance(exc, AttributeError):
+                raise ValidationError ("Picture must be bigger than 5x5 or smaller than 1920x1280")
+            else:
+                raise InvalidImage("Image %s not valid (%s)" % (self.image, exc)) from exc
 
         if img.format not in ("JPEG", "PNG"):  # Needs transcoding.
             if self.type in ("map", "ground_plan"):

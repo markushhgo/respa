@@ -3,19 +3,19 @@ services:
   db:
     container_name: respa-db
     build: ./docker/postgres/
-    restart: on-failure
+    restart: always
     environment:
         POSTGRES_USER: respa
         POSTGRES_PASSWORD: respa
         POSTGRES_DB: respa
     volumes:
-      - db_data:/var/lib/postgresql/data
+      - db_data:/var/lib/postgresql
   api:
     container_name: respa-api
     build:
       context: ./
       dockerfile: ./docker/dev/Dockerfile
-    command: python manage.py runserver 0:8000
+    command: bash -c 'tail -f /dev/null'
     volumes:
       - .:/usr/src/app
     environment:

@@ -221,7 +221,7 @@ msgid "Reservation created with access code"
 msgstr "Varaus pääsykoodin kanssa tehty"
 
 msgid "Access code was created for a reservation"
-msgstr ""
+msgstr "Pääsykoodi varausta varten on luotu"
 
 msgid "Catering order created"
 msgstr "Tarjoilutilaus luotu"
@@ -1254,8 +1254,8 @@ msgstr ""
 msgid "Login failed"
 msgstr "Kirjautuminen epäonnistui"
 
-msgid "Log in with Helsinki account"
-msgstr "Kirjaudu Helsinki-tunnuksella"
+msgid "Log in with Turku account"
+msgstr "Kirjaudu Turku-tunnuksella"
 
 msgid "Username"
 msgstr "Käyttäjätunnus"
@@ -1531,3 +1531,38 @@ msgid ""
 msgstr ""
 "Määrää onko käyttäjä yleinen ylläpitäjä, jolla on erityisoikeuksia moniin "
 "Respan kohteisiin. Tämä on lähes yhtä vaikutusvaltainen kuin pääkäyttäjä."
+
+
+
+msgid "Image has to be larger than 5x5"
+msgstr "Kuva pitää olla isompi kuin 5x5"
+
+msgid "Image has to be less than 1920x1280"
+msgstr "Kuva pitää olla pienempi kuin 1920x1280"
+
+msgid "Reservation additional information"
+msgstr "Varauksen lisäinfo"
+
+msgid "Reservation cooldown"
+msgstr "Varaustauko"
+
+msgid "Age restriction (min)"
+msgstr "Alaikäraja"
+
+msgid "Age restriction (max)"
+msgstr "Yläikäraja"
+
+msgid "Reservation cancelled official"
+msgstr "Varaus peruttu virkailija"
+
+msgid "Reservation modified"
+msgstr "Varaus muokattu"
+
+msgid "Reservation modified official"
+msgstr "Varaus muokattu virkailija"
+
+msgid "Reservation created with access code official"
+msgstr "Varaus pääsykoodin kanssa tehty virkailija"
+
+msgid "Reservation created official"
+msgstr "Varaus luotu virkailija"

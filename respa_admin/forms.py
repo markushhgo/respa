@@ -27,6 +27,20 @@ from users.models import User
 
 from respa.settings import LANGUAGES
 
+hour_increment_choices = (
+    ('00:00:00', '0 h'),
+    ('01:00:00', '1 h'),
+    ('02:00:00', '2 h'),
+    ('03:00:00', '3 h'),
+    ('04:00:00', '4 h'),
+    ('05:00:00', '5 h'),
+    ('06:00:00', '6 h'),
+    ('07:00:00', '7 h'),
+    ('08:00:00', '8 h'),
+    ('09:00:00', '9 h'),
+    ('10:00:00', '10 h'),
+)
+
 thirty_minute_increment_choices = (
     ('00:30:00', '0,5 h'),
     ('01:00:00', '1 h'),
@@ -199,7 +213,9 @@ class ResourceForm(forms.ModelForm):
             'responsible_contact_info_fi',
             'responsible_contact_info_en',
             'responsible_contact_info_sv',
-            'reservation_extra_questions',
+            'reservation_additional_information_fi',
+            'reservation_additional_information_en',
+            'reservation_additional_information_sv',
         ]
 
         fields = [
@@ -209,10 +225,13 @@ class ResourceForm(forms.ModelForm):
             'equipment',
             'external_reservation_url',
             'people_capacity',
+            'min_age',
+            'max_age',
             'area',
             'min_period',
             'max_period',
             'slot_size',
+            'cooldown',
             'reservable_max_days_in_advance',
             'reservable_min_days_in_advance',
             'max_reservations_per_user',
@@ -236,6 +255,9 @@ class ResourceForm(forms.ModelForm):
             ),
             'slot_size': forms.Select(
                 choices=(thirty_minute_increment_choices)
+            ),
+            'cooldown': forms.Select(
+                choices=(hour_increment_choices)
             ),
             'need_manual_confirmation': RespaRadioSelect(
                 choices=((True, _('Yes')), (False, _('No')))

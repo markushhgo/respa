@@ -103,8 +103,8 @@ class ResourceAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, Transla
         ResourceGroupInline,
     ]
 
-    default_lon = 2776460  # Central Railway Station in EPSG:3857
-    default_lat = 8438120
+    default_lon = 2478871  # Central Railway Station in EPSG:3857
+    default_lat = 8501259
     default_zoom = 12
 
     list_display = ('name', 'unit', 'public', 'reservable')
@@ -126,8 +126,8 @@ class UnitAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, FixedGuarde
     change_list_template = 'admin/units/import_buttons.html'
     import_template = 'admin/units/import_template.html'
 
-    default_lon = 2776460  # Central Railway Station in EPSG:3857
-    default_lat = 8438120
+    default_lon = 2478871  # Central Railway Station in EPSG:3857
+    default_lat = 8501259
     default_zoom = 12
 
     def save_related(self, request, form, formsets, change):
@@ -224,9 +224,9 @@ class ResourceEquipmentAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin
 
 class ReservationAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, ExtraReadonlyFieldsOnUpdateMixin,
                        admin.ModelAdmin):
-    extra_readonly_fields_on_update = ('access_code',)
     list_display = ('__str__', 'type')
     list_filter = ('type',)
+    extra_readonly_fields_on_update = ('access_code',)
     search_fields = ('user__first_name', 'user__last_name', 'user__username', 'user__email')
     raw_id_fields = ('user', 'resource')
 

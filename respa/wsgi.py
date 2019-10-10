@@ -8,8 +8,27 @@ https://docs.djangoproject.com/en/1.8/howto/deployment/wsgi/
 """
 
 import os
+import sys
 
 from django.core.wsgi import get_wsgi_application
+
+project_path = None
+app_path = None
+
+
+if os.path.exists(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env')):
+    for line in open(os.path.join(os.path.dirname(os.path.abspath(__file__)), '.env'), 'r').read().split('\n'):
+        if line.split('=')[0].strip() == 'RESPA_PROJECT_PATH':
+            project_path = line.split('=')[1].replace('\'','').strip()       # TODO
+        elif line.split('=')[0].strip() == 'RESPA_APP_PATH':
+            app_path = line.split('=')[1].replace('\'','').strip()
+
+if project_path and project_path not in sys.path:
+    sys.path.append(project_path)
+
+if app_path and app_path not in sys.path:
+    sys.path.append(app_path)
+
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "respa.settings")
 

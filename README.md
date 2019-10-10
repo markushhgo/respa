@@ -1,12 +1,12 @@
-[![Build Status](https://api.travis-ci.org/City-of-Helsinki/respa.svg?branch=master)](https://travis-ci.org/City-of-Helsinki/respa)
-[![codecov](https://codecov.io/gh/City-of-Helsinki/respa/branch/master/graph/badge.svg)](https://codecov.io/gh/City-of-Helsinki/respa)
-[![Requirements Status](https://requires.io/github/City-of-Helsinki/respa/requirements.svg?branch=master)](https://requires.io/github/City-of-Helsinki/respa/requirements/?branch=master)
+[![Build Status](https://travis-ci.com/digipointtku/respaTku.svg?branch=master)](https://travis-ci.com/digipointtku/respaTku)
+[![codecov](https://codecov.io/gh/digipointtku/respaTku/branch/master/graph/badge.svg)](https://codecov.io/gh/digipointtku/respaTku)
+[![Requirements Status](https://requires.io/github/digipointtku/respaTku/requirements.svg?branch=master)](https://requires.io/github/digipointtku/respaTku/requirements/?branch=master)
 
 Respa – Resource reservation and management service
 ===================
-Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland. You can explore the API at [api.hel.fi](https://api.hel.fi/respa/v1/) and view the API documentation at [dev.hel.fi](https://dev.hel.fi/apis/respa/).
+Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland.
 
-User interfaces for Respa developed by the City of Helsinki are [Varaamo](https://github.com/City-of-Helsinki/varaamo), [Huvaja](https://github.com/City-of-Helsinki/huvaja), [Reservation screen](https://github.com/City-of-Helsinki/reservation-screen-ui) and [Tilapankki](https://github.com/City-of-Helsinki/tilapankki). The City of Hämeenlinna has developed a [Berth Reservation UI](https://github.com/CityOfHameenlinna/hmlvaraus-frontend) and [backend](https://github.com/CityOfHameenlinna/hmlvaraus-backend) on top of Respa.
+User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamoTku)
 
 There are two user interfaces for editing data: Admins may use the more powerful Django Admin UI - other users with less privileges may use the more restricted but easier-to-use and nicer-looking Respa Admin UI.
 
@@ -29,15 +29,11 @@ Table of Contents
 Contributing
 ------------
 
-Your contributions are always welcome! 
+Your contributions are always welcome!
 
-Our main issue tracking is in [Jira](https://helsinkisolutionoffice.atlassian.net/projects/RESPA/issues). However, we also monitor this repository's issues and import them to Jira. If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/City-of-Helsinki/respa/issues/new) on GitHub or discuss it with us on [Gitter](https://gitter.im/City-of-Helsinki/heldev). Alternatively, you can create a pull request (develop branch). Your PR will be reviewed by the project tech lead.
-
-Who is using Respa
-------------
+Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respaTku/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
 
 - [City of Helsinki](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.hel.fi/) & [Huvaja UI](https://huonevaraus.hel.fi/)
-- [City of Tampere](https://respa.tampere.fi/v1/) - for [Varaamo UI](https://varaamo.tampere.fi/) - [GitHub repo](https://github.com/Tampere/respa)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
 - City of Turku - for [Varaamo UI](https://varaamo.turku.fi/) - [GitHub repo](https://github.com/digipointtku/respaTku)
 - [City of Hämeenlinna](https://varaukset.hameenlinna.fi/v1) - for [Varaamo UI](https://varaukset.hameenlinna.fi/varaamo/) and [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
@@ -47,6 +43,10 @@ Who is using Respa
 - [City of Mikkeli](https://mikkeli-respa.metatavu.io/v1/) - for [Varaamo UI](https://varaamo.mikkeli.fi/)
 - [City of Raahe](https://varaamo-api.raahe.fi/v1/) - for [Varaamo UI](https://varaamo.raahe.fi/)
 - [The Libraries of Lapland](https://varaamo-api.lapinkirjasto.fi/v1) - for [Varaamo UI](https://varaamo.lapinkirjasto.fi/)
+- [City of Tampere](https://respa.tampere.fi/v1/) - for [Varaamo UI](https://varaamo.tampere.fi/) - [GitHub repo](https://github.com/Tampere/respa)
+- [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
+- [City of Turku](https://varaamo.turku.fi:8000/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respaTku)
+- City of Hämeenlinna - for [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 
 FAQ
 ------------
@@ -96,24 +96,19 @@ DEBUG=1
 INTERNAL_IPS='127.0.0.1'
 DATABASE_URL='postgis://respa:password@localhost:5432/respa'
 ```
-
 ### Run Django migrations and import data
 
 ```shell
 python manage.py migrate
-python manage.py createsuperuser  # etc...
-python manage.py geo_import --municipalities finland
-python manage.py geo_import --divisions helsinki
-python manage.py resources_import --all tprek
-python manage.py resources_import --all kirjastot
+python manage.py createsuperuser
 ```
-
 
 ### Settings
 
 Settings are done either by setting environment variables named after the setting or adding them to a `.env` file in the project root. The .env file syntax is similar to TOML files (INI files), ie. key-value pairs. The project root is the directory where this README is found. You can also set settings in a local_settings.py, which allows you to set any variables whatsoever. However, some of the settings documented here are named differently in settings.py, especially authentication variables.
 
 - `DEBUG`: Whether to run Django in debug mode. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#debug).
+- `GDAL_LIBRARY_PATH`: When GeoDjango can’t find the GDAL library, configure your Library environment settings or set GDAL_LIBRARY_PATH in your settings. [Django setting](https://docs.djangoproject.com/en/2.2/ref/contrib/gis/install/geolibs/#gdal-library-path)
 - `SECRET_KEY`: Secret used for various functions within Django. This setting is mandatory for Django. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#secret-key).
 - `ALLOWED_HOSTS`: List of Host-values, that Respa will accept in requests. This setting is a Django protection measure against HTTP [Host-header attacks](https://docs.djangoproject.com/en/2.2/topics/security/#host-headers-virtual-hosting). Specified as a comma separated list of allowed values. Note that this does NOT matter if you are running with DEBUG. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#allowed-hosts).
 - `ADMINS`: List of tuples (or just e-mail addresses) specifying Administrators of this Respa instance. Django uses this only when logging is configured to send exceptions to admins. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#admins).
@@ -127,23 +122,18 @@ Settings are done either by setting environment variables named after the settin
 - `STATIC_URL`: Static URL is address (URL) where users can access files in STATIC_ROOT through http. Same factors apply as to MEDIA_URL. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#static-url).
 - `SENTRY_DSN`: Sentry is an error tracking sentry (sentry.io) that can be self hosted or purchased as PaaS. SENTRY_DSN setting specifies the URL where reports for this Respa instance should be sent. You can find this in your Sentry interface (or through its API). Example value `'http://your.sentry.here/fsdafads/13'`.
 - `SENTRY_ENVIRONMENT`: Sentry environment is an optional tag that can be included in sentry reports. It is used to separate deployments within Sentry UI.
-- `COOKIE_PREFIX`: Cookie prefix is added to the every cookie set by Respa. These are mostly used when accessing the internal Django admin site. This applies to django session cookie and csrf cookie. Django setting: prepended to `CSRF_COOKIE_NAME` and `SESSION_COOKIE_NAME`. 
+- `COOKIE_PREFIX`: Cookie prefix is added to the every cookie set by Respa. These are mostly used when accessing the internal Django admin site. This applies to django session cookie and csrf cookie. Django setting: prepended to `CSRF_COOKIE_NAME` and `SESSION_COOKIE_NAME`.
 - `INTERNAL_IPS`: Django INTERNAL_IPS setting allows some debugging aids for the addresses specified here. [Django setting](https://docs.djangoproject.com/en/2.2/ref/settings/#internal-ips). Example value `'127.0.0.1'`.
 - `MAIL_ENABLED`: Whether sending emails to users is enabled or not.
-- `MAIL_DEFAULT_FROM`: Specifies the from-address for emails sent to users.
-- `MAIL_MAILGUN_KEY`: Mailgun can be used to send emails to end users. Specify Mailgun API key here. See [Mailgun API documentation](https://documentation.mailgun.com/en/latest/user_manual.html).
-- `MAIL_MAILGUN_DOMAIN`: Specifies Mailgun domain. Mailgun requires verification for domains via DNS. Example value `'mail.hel.ninja'`.
-- `MAIL_MAILGUN_API`: Specifies which Mailgun API server is used.
-- `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://api.hel.fi'`.
-- `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin. Example value `'https://asiointi.hel.fi/kapaesteettomyys/'`.
+- `RESPA_IMAGE_BASE_URL`: Base URL used when building image URLs in email notifications. Example value: `'https://turku.fi'`.
+- `ACCESSIBILITY_API_BASE_URL`: Base URL used for Respa Admin Accessibility data input link. If left empty, the input link remains hidden in Respa Admin.
 - `ACCESSIBILITY_API_SYSTEM_ID`: Accessibility API system ID. If left empty, the input link remains hidden in Respa Admin.
 - `ACCESSIBILITY_API_SECRET`: Secret for the Accessibility API. If left empty, the input link remains hidden in Respa Admin.
-- `RESPA_ADMIN_INSTRUCTIONS_URL`: URL for the user instructions link visible in Respa Admin. Example value: `'https://cityofhelsinki.gitbook.io/varaamo/'`.
+- `RESPA_ADMIN_INSTRUCTIONS_URL`: URL for the user instructions link visible in Respa Admin. Example value: `'https://digipoint-turku.gitbook.io/varaamo-turku/yllapitoliittyma/aloitus'`.
 - `RESPA_ADMIN_SUPPORT_EMAIL`: Email address for user support link visible in Respa Admin.
-- `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.hel.fi/resource/'`.
+- `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.turku.fi/resources/'`.
 - `RESPA_ADMIN_LOGO`: Name of the logo file to be displayed in Respa Admin UI. Logo file is assumed to be located in `respa_admin/static_src/img/`. Example value: `ra-logo.svg`.
 - `RESPA_ADMIN_KORO_STYLE`: Defines the style of koro-shape used in login page and resources page. Accepts values: `koro-basic`, `koro-pulse`, `koro-beat`, `koro-storm`, `koro-wave`.
-
 
 ### Setting up PostGIS/GEOS/GDAL on Windows (x64) / Python 3
 
@@ -164,12 +154,12 @@ with staff privileges and use that session to access the Respa Admin.
 When accessing the Respa Admin without being logged in, the login
 happens with Tunnistamo.  To test the Tunnistamo login flow in local
 development environment this needs either real Respa app client id and
-client secret in the production Tunnistamo or modifying helusers to use
+client secret in the production Tunnistamo or modifying tkusers to use
 local Tunnistamo.  The client id and client secret should be configured
 in Django Admin or shell within a socialaccount.SocialApp instance with
-id "helsinki".  When adding the app to Tunnistamo, the OAuth2 callback
+id "turku".  When adding the app to Tunnistamo, the OAuth2 callback
 URL for the app should be something like:
-http://localhost:8000/accounts/helsinki/login/callback/
+http://localhost:8000/accounts/turku/login/callback/
 
 When the Tunnistamo registration is configured and the login is working,
 then go to Django Admin and set the `is_staff` flag on for the user that
@@ -300,7 +290,7 @@ as expected, commit the changes.
 Documentation
 -------------
 
-Documentation can be found in this GitHub repository (in English) and on [GitLab](https://gitlab.com/City-of-Helsinki/ohjelmistokehitys/wikis/respa) (in Finnish). Interactive API documentation at [dev.hel.fi](https://dev.hel.fi/apis/respa/).
+Documentation can be found in this GitHub repository (in English) and on [Gitbook](https://digipoint-turku.gitbook.io/varaamo-turku/yllapitoliittyma/aloitus) (in Finnish).
 
 License
 ------------

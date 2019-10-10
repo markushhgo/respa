@@ -48,6 +48,7 @@ class Unit(ModifiableModel, AutoIdentifiedModel):
     description = models.TextField(verbose_name=_('Description'), null=True, blank=True)
 
     location = models.PointField(verbose_name=_('Location'), null=True, srid=settings.DEFAULT_SRID)
+    map_service_id = models.IntegerField(verbose_name=_('Map service ID'), null=True, blank=True)
     time_zone = models.CharField(verbose_name=_('Time zone'), max_length=50,
                                  default=_get_default_timezone)
 

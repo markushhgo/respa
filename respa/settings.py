@@ -2,44 +2,19 @@
 Django settings for respa project.
 """
 
+# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-import subprocess
 import environ
-import sentry_sdk
-from sentry_sdk.integrations.django import DjangoIntegration
+import raven
+from sys import platform
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ImproperlyConfigured
 
+
 root = environ.Path(__file__) - 2  # two folders back
-# Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = root()
-
-# Location of the fallback version file, used when no repository is available.
-# This is hardcoded as reading it from configuration does not really make
-# sense. It is supposed to be a fallback after all.
-VERSION_FILE = os.path.join(BASE_DIR, '../service_state/deployed_version')
-
-def get_git_revision_hash():
-    """
-    We need a way to retrieve git revision hash for sentry reports
-    """
-    try:
-        # We are not interested in gits complaints, stderr -> null
-        git_hash = subprocess.check_output(['git', 'describe', '--tags', '--long', '--always'], stderr=subprocess.DEVNULL, encoding='utf8')
-    # First is "git not found", second is most likely "no repository"
-    except (FileNotFoundError, subprocess.CalledProcessError):
-        try:
-            # fall back to hardcoded file location
-            with open(VERSION_FILE) as f:
-                git_hash = f.readline()
-        except FileNotFoundError:
-            git_hash = "revision_not_available"
-
-    return git_hash.rstrip()
-
-
 env = environ.Env(
     DEBUG=(bool, False),
+    GDAL_LIBRARY_PATH=(str, ''),
     SECRET_KEY=(str, ''),
     ALLOWED_HOSTS=(list, []),
     ADMINS=(list, []),
@@ -60,30 +35,37 @@ env = environ.Env(
     MAIL_MAILGUN_KEY=(str, ''),
     MAIL_MAILGUN_DOMAIN=(str, ''),
     MAIL_MAILGUN_API=(str, ''),
+    USE_DJANGO_DEFAULT_EMAIL=(bool, False),
     RESPA_IMAGE_BASE_URL=(str, ''),
-    ACCESSIBILITY_API_BASE_URL=(str, 'https://asiointi.hel.fi/kapaesteettomyys/'),
+    ACCESSIBILITY_API_BASE_URL=(str, 'https://asiointi.turku.fi/kapaesteettomyys/'),
     ACCESSIBILITY_API_SYSTEM_ID=(str, ''),
     ACCESSIBILITY_API_SECRET=(str, ''),
     RESPA_ADMIN_INSTRUCTIONS_URL=(str, ''),
     RESPA_ADMIN_SUPPORT_EMAIL=(str, ''),
     RESPA_ADMIN_VIEW_RESOURCE_URL=(str, ''),
-    RESPA_ADMIN_VIEW_UNIT_URL=(str, ''),
+    RESPA_ERROR_EMAIL=(str,''),
     RESPA_ADMIN_LOGO=(str, ''),
     RESPA_ADMIN_KORO_STYLE=(str, ''),
     RESPA_PAYMENTS_ENABLED=(bool, False),
     RESPA_PAYMENTS_PROVIDER_CLASS=(str, ''),
     RESPA_PAYMENTS_PAYMENT_WAITING_TIME=(int, 15),
+    RESPA_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
+    DJANGO_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
 )
 environ.Env.read_env()
-
 # used for generating links to images, when no request context is available
 # reservation confirmation emails use this
 RESPA_IMAGE_BASE_URL = env('RESPA_IMAGE_BASE_URL')
-
+BASE_DIR = root()
 DEBUG_TOOLBAR_CONFIG = {
     'RESULTS_CACHE_SIZE': 100,
 }
 DEBUG = env('DEBUG')
+
+if platform == 'win32':
+    if env('GDAL_LIBRARY_PATH'):
+        GDAL_LIBRARY_PATH = env('GDAL_LIBRARY_PATH')
+
 ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 ADMINS = env('ADMINS')
 INTERNAL_IPS = env.list('INTERNAL_IPS',
@@ -96,10 +78,9 @@ DATABASES['default']['ATOMIC_REQUESTS'] = True
 SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 
 SITE_ID = 1
-
 # Application definition
 INSTALLED_APPS = [
-    'helusers',
+    'tkusers',
     'modeltranslation',
     'parler',
     'grappelli',
@@ -129,7 +110,7 @@ INSTALLED_APPS = [
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
-    'helusers.providers.helsinki',
+    'tkusers.providers.turku',
 
     'munigeo',
 
@@ -146,15 +127,15 @@ INSTALLED_APPS = [
     'respa_admin',
 
     'sanitized_dump',
+    'drf_yasg',
 ]
-
 if env('SENTRY_DSN'):
-    sentry_sdk.init(
-        dsn=env('SENTRY_DSN'),
-        environment=env('SENTRY_ENVIRONMENT'),
-        release=get_git_revision_hash(),
-        integrations=[DjangoIntegration()]
-    )
+    RAVEN_CONFIG = {
+        'dsn': env('SENTRY_DSN'),
+        'environment': env('SENTRY_ENVIRONMENT'),
+        'release': raven.fetch_git_sha(BASE_DIR),
+    }
+    INSTALLED_APPS.append('raven.contrib.django.raven_compat')
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -186,7 +167,7 @@ TEMPLATES = [
     },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [root],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -259,14 +240,15 @@ AUTHENTICATION_BACKENDS = (
 )
 
 SOCIALACCOUNT_PROVIDERS = {
-    'helsinki': {
+    'turku': {
         'VERIFIED_EMAIL': True
     }
 }
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = env('DJANGO_ADMIN_LOGOUT_REDIRECT_URL')
 ACCOUNT_LOGOUT_ON_GET = True
-SOCIALACCOUNT_ADAPTER = 'helusers.adapter.SocialAccountAdapter'
-
+SOCIALACCOUNT_ADAPTER = 'tkusers.adapter.SocialAccountAdapter'
+RESPA_ADMIN_LOGOUT_REDIRECT_URL = env('RESPA_ADMIN_LOGOUT_REDIRECT_URL')
 
 # REST Framework
 # http://www.django-rest-framework.org
@@ -276,7 +258,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'helusers.jwt.JWTAuthentication',
+        'tkusers.jwt.JWTAuthentication',
     ] + ([
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication",
@@ -286,7 +268,7 @@ REST_FRAMEWORK = {
 }
 
 JWT_AUTH = {
-    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'helusers.jwt.get_user_id_from_payload_handler',
+    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'tkusers.jwt.get_user_id_from_payload_handler',
     'JWT_AUDIENCE': env('TOKEN_AUTH_ACCEPTED_AUDIENCE'),
     'JWT_SECRET_KEY': env('TOKEN_AUTH_SHARED_SECRET')
 }
@@ -340,14 +322,24 @@ RESPA_ADMIN_VIEW_RESOURCE_URL = env('RESPA_ADMIN_VIEW_RESOURCE_URL')
 RESPA_ADMIN_VIEW_UNIT_URL = env('RESPA_ADMIN_VIEW_UNIT_URL')
 RESPA_ADMIN_INSTRUCTIONS_URL = env('RESPA_ADMIN_INSTRUCTIONS_URL')
 RESPA_ADMIN_SUPPORT_EMAIL = env('RESPA_ADMIN_SUPPORT_EMAIL')
+SERVER_EMAIL = env('RESPA_ERROR_EMAIL')
 
-if env('MAIL_MAILGUN_KEY'):
+USE_DJANGO_DEFAULT_EMAIL = env('USE_DJANGO_DEFAULT_EMAIL')
+
+if env('MAIL_MAILGUN_KEY') and not USE_DJANGO_DEFAULT_EMAIL:
     ANYMAIL = {
         'MAILGUN_API_KEY': env('MAIL_MAILGUN_KEY'),
         'MAILGUN_SENDER_DOMAIN': env('MAIL_MAILGUN_DOMAIN'),
         'MAILGUN_API_URL': env('MAIL_MAILGUN_API'),
     }
     EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+elif USE_DJANGO_DEFAULT_EMAIL:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp.turku.fi'
+    EMAIL_PORT = 25
+    EMAIL_HOST_USER = env('MAIL_DEFAULT_FROM')
+    EMAIL_USE_TLS = True
+    DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 RESPA_ADMIN_USERNAME_LOGIN = env.bool(
     'RESPA_ADMIN_USERNAME_LOGIN', default=True)

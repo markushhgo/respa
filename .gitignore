@@ -3,9 +3,7 @@ __pycache__
 db.sqlite3
 *.mo
 *.sqlite
-data/
 media/
-static/
 .django_secret
 ./local_settings.py
 /venv*
@@ -21,3 +19,9 @@ perf*csv
 /src
 .env
 /.vscode
+env/
+Lib/
+scripts/
+pyvenv*
+.pytest_cache
+pytest_cache

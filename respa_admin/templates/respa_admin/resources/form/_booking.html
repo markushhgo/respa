@@ -5,6 +5,10 @@
         <h2>{% trans "Booking information" %}</h2>
         <span class="pull-right">{% trans "*Mandatory fields" %}</span>
     </div>
+     <div class="input-row">
+        {% include "respa_admin/forms/_input.html" with field=form.min_age %}
+        {% include "respa_admin/forms/_input.html" with field=form.max_age %}
+    </div>
     <div class="input-row">
         {% include "respa_admin/forms/_input.html" with field=form.people_capacity %}
         {% include "respa_admin/forms/_input.html" with field=form.area %}
@@ -13,6 +17,7 @@
         {% include "respa_admin/forms/_select.html" with field=form.min_period inline=True %}
         {% include "respa_admin/forms/_select.html" with field=form.max_period inline=True %}
         {% include "respa_admin/forms/_select.html" with field=form.slot_size inline=True %}
+        {% include "respa_admin/forms/_select.html" with field=form.cooldown inline=True %}
     </div>
     <div class="input-row">
         {% include "respa_admin/forms/_input.html" with field=form.reservable_max_days_in_advance %}
@@ -44,8 +49,10 @@
     </div>
     <div class="form-group">
         <div class="textarea-wrapper">
-            <h4>{% trans "Extra questions for reservation" %}</h4>
-            {% include "respa_admin/forms/_textarea_input.html" with field=form.reservation_extra_questions %}
+            <h4>{% trans "Reservation additional information" %}</h4>
+            {% include "respa_admin/forms/_textarea_input.html" with field=form.reservation_additional_information_fi %}
+            {% include "respa_admin/forms/_textarea_input.html" with field=form.reservation_additional_information_en %}
+            {% include "respa_admin/forms/_textarea_input.html" with field=form.reservation_additional_information_sv %}
         </div>
     </div>
 </div>

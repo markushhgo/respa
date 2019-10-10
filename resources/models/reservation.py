@@ -34,7 +34,7 @@ RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_
                             'reserver_address_city', 'billing_first_name', 'billing_last_name', 'billing_phone_number',
                             'billing_email_address', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
-                            'number_of_participants', 'participants', 'reserver_email_address', 'host_name',
+                            'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'host_name',
                             'reservation_extra_questions')
 
 
@@ -113,6 +113,9 @@ class Reservation(ModifiableModel):
     comments = models.TextField(null=True, blank=True, verbose_name=_('Comments'))
     user = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('User'), null=True,
                              blank=True, db_index=True, on_delete=models.PROTECT)
+
+    preferred_language = models.CharField(choices=settings.LANGUAGES, verbose_name='Preferred Language', null=True, default=settings.LANGUAGES[0][0], max_length=8)
+
     state = models.CharField(max_length=32, choices=STATE_CHOICES, verbose_name=_('State'), default=CREATED)
     approver = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('Approver'),
                                  related_name='approved_reservations', null=True, blank=True,
@@ -129,10 +132,12 @@ class Reservation(ModifiableModel):
     event_subject = models.CharField(max_length=200, verbose_name=_('Event subject'), blank=True)
     event_description = models.TextField(verbose_name=_('Event description'), blank=True)
     number_of_participants = models.PositiveSmallIntegerField(verbose_name=_('Number of participants'), blank=True,
-                                                              null=True)
+                                                              null=True, default=1)
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
-    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+    require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
+
+    # extra detail fields for manually confirmed reservations
 
     reserver_name = models.CharField(verbose_name=_('Reserver name'), max_length=100, blank=True)
     reserver_id = models.CharField(verbose_name=_('Reserver ID (business or person)'), max_length=30, blank=True)
@@ -141,6 +146,8 @@ class Reservation(ModifiableModel):
     reserver_address_street = models.CharField(verbose_name=_('Reserver address street'), max_length=100, blank=True)
     reserver_address_zip = models.CharField(verbose_name=_('Reserver address zip'), max_length=30, blank=True)
     reserver_address_city = models.CharField(verbose_name=_('Reserver address city'), max_length=100, blank=True)
+    reservation_extra_questions = models.TextField(verbose_name=_('Reservation extra questions'), blank=True)
+
     company = models.CharField(verbose_name=_('Company'), max_length=100, blank=True)
     billing_first_name = models.CharField(verbose_name=_('Billing first name'), max_length=100, blank=True)
     billing_last_name = models.CharField(verbose_name=_('Billing last name'), max_length=100, blank=True)
@@ -203,7 +210,8 @@ class Reservation(ModifiableModel):
         return self._get_dt("end", tz)
 
     def is_active(self):
-        return self.end >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED)
+        print(self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED))
+        return self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED)
 
     def is_own(self, user):
         if not (user and user.is_authenticated):
@@ -232,49 +240,58 @@ class Reservation(ModifiableModel):
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
             Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT
         )
-
         old_state = self.state
         if new_state == old_state:
             if old_state == Reservation.CONFIRMED:
-                reservation_modified.send(sender=self.__class__, instance=self,
-                                          user=user)
+                reservation_modified.send(sender=self.__class__, instance=self, user=user)
             return
-
         if new_state == Reservation.CONFIRMED:
             self.approver = user
-            reservation_confirmed.send(sender=self.__class__, instance=self,
-                                       user=user)
+            reservation_confirmed.send(sender=self.__class__, instance=self, user=user)
         elif old_state == Reservation.CONFIRMED:
             self.approver = None
-
         user_is_staff = self.user is not None and self.user.is_staff
-
         # Notifications
         if new_state == Reservation.REQUESTED:
-            self.send_reservation_requested_mail()
-            self.send_reservation_requested_mail_to_officials()
+            if not user_is_staff:
+                self.send_reservation_requested_mail()
+                self.notify_staff_about_reservation(NotificationType.RESERVATION_REQUESTED_OFFICIAL)
+            else:
+                if self.reserver_email_address != self.user.email:
+                    self.send_reservation_requested_mail(action_by_official=True)
         elif new_state == Reservation.CONFIRMED:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
             elif self.access_code:
-                self.send_reservation_created_with_access_code_mail()
+                if not user_is_staff:
+                    self.send_reservation_created_with_access_code_mail()
+                    self.notify_staff_about_reservation(NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL)
+                else:
+                    if self.reserver_email_address != self.user.email:
+                        self.send_reservation_created_with_access_code_mail(action_by_official=True)
             else:
                 if not user_is_staff:
-                    # notifications are not sent from staff created reservations to avoid spam
                     self.send_reservation_created_mail()
+                    self.notify_staff_about_reservation(NotificationType.RESERVATION_CREATED_OFFICIAL)
+                else:
+                    if self.reserver_email_address != self.user.email:
+                        self.send_reservation_created_mail(action_by_official=True)
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
-            order = self.get_order()
-            if order:
-                if order.state == order.CANCELLED:
-                    self.send_reservation_cancelled_mail()
+            if self.user:
+                order = self.get_order()
+                if order:
+                    if order.state == order.CANCELLED:
+                        self.send_reservation_cancelled_mail()
+                else:
+                    if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
+                        self.send_reservation_cancelled_mail(action_by_official=True)
+                    else:
+                        self.send_reservation_cancelled_mail()
+                        self.notify_staff_about_reservation(NotificationType.RESERVATION_CANCELLED_OFFICIAL)
             else:
-                if user != self.user:
-                    self.send_reservation_cancelled_mail()
-            reservation_cancelled.send(sender=self.__class__, instance=self,
-                                       user=user)
-
+                reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         self.state = new_state
         self.save()
 
@@ -367,6 +384,10 @@ class Reservation(ModifiableModel):
         if self.access_code:
             validate_access_code(self.access_code, self.resource.access_code_type)
 
+        if self.resource.people_capacity:
+            if (self.number_of_participants > self.resource.people_capacity):
+                raise ValidationError(_("This resource has people capacity limit of %s" % self.resource.people_capacity))
+
     def get_notification_context(self, language_code, user=None, notification_type=None):
         if not user:
             user = self.user
@@ -386,6 +407,8 @@ class Reservation(ModifiableModel):
                 'time_range': self.format_time(),
                 'reserver_name': reserver_name,
                 'reserver_email_address': reserver_email_address,
+                'require_assistance': self.require_assistance,
+                'extra_question': self.reservation_extra_questions
             }
             directly_included_fields = (
                 'number_of_participants',
@@ -406,8 +429,12 @@ class Reservation(ModifiableModel):
             if self.resource.unit:
                 context['unit'] = self.resource.unit.name
                 context['unit_id'] = self.resource.unit.id
+                context['unit_map_service_id'] = self.resource.unit.map_service_id
             if self.can_view_access_code(user) and self.access_code:
                 context['access_code'] = self.access_code
+
+            if self.user.is_staff:
+                context['staff_name'] = self.user.get_display_name()
 
             if notification_type == NotificationType.RESERVATION_CONFIRMED:
                 if self.resource.reservation_confirmed_notification_extra:
@@ -437,7 +464,7 @@ class Reservation(ModifiableModel):
 
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False):
         """
         Stuff common to all reservation related mails.
 
@@ -453,35 +480,45 @@ class Reservation(ModifiableModel):
         else:
             if not (self.reserver_email_address or self.user):
                 return
-            email_address = self.reserver_email_address or self.user.email
+            if action_by_official:
+                email_address = self.reserver_email_address
+            else:
+                email_address = self.reserver_email_address or self.user.email
             user = self.user
 
-        language = user.get_preferred_language() if user else DEFAULT_LANG
+        language = self.preferred_language if not user.is_staff else DEFAULT_LANG
         context = self.get_notification_context(language, notification_type=notification_type)
 
         try:
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
             logger.error(e, exc_info=True, extra={'user': user.uuid})
+            print("Notification template exception")
             return
-
-        send_respa_mail(
+        print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (email_address, rendered_notification['subject'], language))
+        ret = send_respa_mail(
             email_address,
             rendered_notification['subject'],
             rendered_notification['body'],
             rendered_notification['html_body'],
             attachments
         )
+        print(ret[1])
 
-    def send_reservation_requested_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED)
-
-    def send_reservation_requested_mail_to_officials(self):
+    def notify_staff_about_reservation(self, notification):
         notify_users = self.resource.get_users_with_perm('can_approve_reservation')
         if len(notify_users) > 100:
             raise Exception("Refusing to notify more than 100 users (%s)" % self)
         for user in notify_users:
-            self.send_reservation_mail(NotificationType.RESERVATION_REQUESTED_OFFICIAL, user=user)
+            self.send_reservation_mail(notification, user=user)
+
+    def send_reservation_requested_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_REQUESTED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_REQUESTED
+        self.send_reservation_mail(notification)
+
+    def send_reservation_modified_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_MODIFIED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_MODIFIED
+        self.send_reservation_mail(notification, action_by_official=action_by_official)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)
@@ -493,22 +530,25 @@ class Reservation(ModifiableModel):
         self.send_reservation_mail(NotificationType.RESERVATION_CONFIRMED,
                                    attachments=[attachment])
 
-    def send_reservation_cancelled_mail(self):
-        self.send_reservation_mail(NotificationType.RESERVATION_CANCELLED)
+    def send_reservation_cancelled_mail(self, action_by_official=False):
+        notification = NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CANCELLED
+        self.send_reservation_mail(notification, action_by_official=action_by_official)
 
-    def send_reservation_created_mail(self):
+    def send_reservation_created_mail(self, action_by_official=False):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
-        self.send_reservation_mail(NotificationType.RESERVATION_CREATED,
-                                   attachments=[attachment])
+        notification = NotificationType.RESERVATION_CREATED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED
+        self.send_reservation_mail(notification,
+                                   attachments=[attachment], action_by_official=action_by_official)
 
-    def send_reservation_created_with_access_code_mail(self):
+    def send_reservation_created_with_access_code_mail(self, action_by_official=False):
         reservations = [self]
         ical_file = build_reservations_ical_file(reservations)
         attachment = 'reservation.ics', ical_file, 'text/calendar'
+        notification = NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_OFFICIAL_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE
         self.send_reservation_mail(NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE,
-                                   attachments=[attachment])
+                                   attachments=[attachment], action_by_official=action_by_official)
 
     def send_access_code_created_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_ACCESS_CODE_CREATED)

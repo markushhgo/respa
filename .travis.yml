@@ -29,14 +29,18 @@ addons:
       - postgresql-9.6-postgis-2.4
 
 before_install:
+  - chmod -R +x .
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS hstore;'
   - psql template1 -c 'CREATE EXTENSION IF NOT EXISTS postgis;'
+  - psql -c 'create database respa;' -U postgres
   - pip install codecov -r requirements.txt
 
 before_script:
   - ./build-resources
   - ls -l respa_admin/static/respa_admin/main.css  # Check main.css got built
-  - ./manage.py compilemessages
+  - ./manage.py compilemessages --locale fi --locale en --locale sv
+  - ./manage.py makemigrations account admin auth authtoken caterings contenttypes easy_thumbnails guardian kulkunen munigeo notifications resources respa_exchange reversion sessions sites socialaccount tkusers users #comments app fails because lambda cannot be serialized.
+  - ./manage.py migrate
 
 script: pytest --cov . --doctest-modules
 
@@ -46,4 +50,4 @@ after_success:
 
 notifications:
   slack:
-    secure: gm6+6ekPIw0WcNuul94MoAzsAJ1/rlP0++UdnB01uf5boXIJiQjKZn+BVyhpMX1CN3KQFyf2tXEsMj2AY8IEF0YzJJXc9+ae70p+5OQXInLUcea7SZJ/7q7Tuw2AJoXUxbDmoto83N828waEIdWjCKW5qCxM248+FG9wKNipkjswv/obASOBzlhGQ67kzRaUpCsCHYlpbgxhlg1lPZs32vKL9YOtjCjyCerxnE+SIomANE+djpd8eGFUz90SEcfR5ypGHeuIic4xsX6VhGHyzevfgEix5aq3QDiNSbH8GWClyMeiU82ov3dEsRvMheRH9vRYl6xzdKuAgWRfW61biApki8sPn2w7W6AMtD0MaHMNi3QsQVW4z0saKNICtvi7ZQXtw8DvajEYLn1GuyF6hBUh9LEoqFXN52HlBVjZ/0XnCPyCdyQy03u3pOxz/OQ1/9gOH2SQMkQUqMYbiHeELXg4KHnPpvfgNBmFAA8WybbAzLXAqF2/67nMiNOi1a0oHOMfHlEAFnxITzYcU4eQxfapHHzXdfObZXwcna7T6RXdCVEX5LmOUN35oJkKe4y4T3ngumD8thbVX07HDYrbAaeE85JoT5ok5xe7WHimf2XTuOUNogNALnsop19EROrHcRB6d88BluVoS5S3e6uS7SliUCjH2HqMkDMR0T5zRy0=
+    secure: ZKyHnLucb1UKKSIG0fQQnsVjk7P4IcxyHIoNtUqK5/3vPAUe4DFlLVeCzKZewVmhbXfK9tmZ3Go2dFgwVaZCUAzNZEqUq306YS9otFmzbSdfv6kweJSKuL9Vf7qSHf1m9M0wFja8t80lDkVFbnQCC3S866q7/BYzGxduLzL063RRB6TtAwg0lPdLxGthv/9sOdcF6SQAZ+xySAjDcBlN4lCMD8IG2iMNE1doA9r43dr+ylNXUO1L6oxRRINODqW1ek9A4TiU9yMQ7Raf6Y+cPtLsDadTWXaooBOkvSERzVfFxjNu9EV8hUgLO25azXrP8VAy1f3vPVs9cggi7j93KCMJjfXrh3YPj2AviiUCiX0aRh4Y+V7fez797iwJzsfhlfhiHK9Twj30JoHX9dGqcgS2F+tG+uOnaC2BfzLf0TO/kePQ1L/TRN0slldKTSR03Nd6wxb7Zr8HtjC8PU50oTvsLJHSGUUr6Yw7tppgzCBzlgjhATHw1DXlUnLQz00np+Z8fzDChbsos0PiPtQrc4Kqn74j6al8ggzEWrXUnrTlFUsQCRdli9gNfqkgSBfm058fV8mckOsRegLs/qLSFzKOv4MpF2/VyPvWCtxl+9Ixhs5mjDPKYOwKetk212EKAR89e13MmyjGN4szvBFZcGnXoDPFvxxEtepG6ix40no=

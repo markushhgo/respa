@@ -29,6 +29,9 @@ if getattr(settings, 'RESPA_CATERINGS_ENABLED', False):
 def get_commentable_content_types():
     return ContentType.objects.get_for_models(*COMMENTABLE_MODELS.values()).values()
 
+def limit_choices():
+    return  {'id__in': (ct.id for ct in get_commentable_content_types())}
+
 
 class CommentQuerySet(models.QuerySet):
     def can_view(self, user):
@@ -64,7 +67,7 @@ class Comment(models.Model):
     content_type = models.ForeignKey(
         ContentType,
         on_delete=models.CASCADE,
-        limit_choices_to=lambda: {'id__in': (ct.id for ct in get_commentable_content_types())}
+        limit_choices_to=limit_choices
     )
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')

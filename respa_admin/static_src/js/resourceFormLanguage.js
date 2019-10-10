@@ -91,13 +91,30 @@ function hideLanguage(language, input = null) {
   $languageLabels.each((i, input) => input.classList.add('hidden'));
 }
 
+
+export function showLanguage(language, input = null) {
+  let $languageInputs = null;
+  let $languageLabels = null;
+  let $languageButtons = $('[name$="language-' + language + '"]');
+  if (input) {
+    $languageInputs = $(input).find('[name$="_' + language + '"]');
+    $languageLabels = $(input).find('[for$="_' + language + '"]');
+  } else {
+    $languageInputs = $('[name$="_' + language + '"]');
+    $languageLabels = $('[for$="_' + language + '"]');
+  }
+  $languageInputs.each((i, input) => input.classList.remove('hidden'));
+  $languageLabels.each((i, input) => input.classList.remove('hidden'));
+  $languageButtons.each((i, input) => input.classList.add('language-item-selected'));
+}
+
 /*
 * Returns string value of User's current
 * browser language setting.
 *
 * Ex; 'fi', 'sv' or 'en' etc.
 * */
-function getCurrentLanguage() {
+export function getCurrentLanguage() {
   let languages = getAllLanguages();
   let currentLanguage = document.documentElement.lang;
 

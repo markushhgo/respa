@@ -5,7 +5,7 @@ from django.contrib import auth as django_auth
 from django.http import HttpResponseBadRequest, HttpResponseRedirect
 from django.urls import reverse
 from django.views.generic.base import TemplateView
-from helusers.providers.helsinki.views import HelsinkiOAuth2Adapter
+from tkusers.providers.turku.views import TurkuOAuth2Adapter
 from respa_admin.views.base import ExtraContextMixin
 
 from ..auth import is_allowed_user
@@ -61,7 +61,7 @@ def tunnistamo_login(request):
         if not is_allowed_user(request.user):
             return _logout_locally_and_in_tunnistamo(request)
 
-    url = _get_url_with_next(request, 'helsinki_login')
+    url = _get_url_with_next(request, 'turku_login')
     return HttpResponseRedirect(url)
 
 
@@ -92,8 +92,8 @@ def _logout_locally_and_in_tunnistamo(request, redirect_uri=None):
 
     # Then logout from Tunnistamo with a redirect which points
     # back to this view with a given next parameter
-    tunnistamo_url = HelsinkiOAuth2Adapter.profile_url.replace('/user/', '')
+    tunnistamo_url = TurkuOAuth2Adapter.profile_url.replace('/user/', '')
     next_param = urlencode({
         'next': request.build_absolute_uri(redirect_uri)
     })
-    return HttpResponseRedirect(tunnistamo_url + '/logout/?' + next_param)
+    return HttpResponseRedirect(settings.RESPA_ADMIN_LOGOUT_REDIRECT_URL if settings.RESPA_ADMIN_LOGOUT_REDIRECT_URL else 'https://turku.fi') #+'/logout/?'+next_param)
