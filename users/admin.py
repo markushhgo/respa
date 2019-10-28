@@ -41,7 +41,7 @@ class UserAdmin(admin.ModelAdmin):
     change_user_password_template = None
     fieldsets = _add_general_admin_to_fieldsets((
         (None, {'fields': ('username', 'password')}),
-        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'birthday')}),
+        (_('Personal info'), {'fields': ('first_name', 'last_name', 'email', 'birthdate')}),
         (_('Permissions'), {'fields': ('is_active', 'is_staff', 'is_superuser',
                                        'groups', 'user_permissions')}),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
