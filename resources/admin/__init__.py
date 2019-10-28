@@ -52,7 +52,6 @@ class CustomUserManage(forms.Form):
     )
     def validate(self, user):
         super().validate(user)
-        print(user.username)
 
 
 class CustomGroupManage(forms.Form):
