@@ -6,7 +6,6 @@ from oidc_auth.authentication import JSONWebTokenAuthentication
 from oidc_auth.util import cache
 from rest_framework.authentication import get_authorization_header
 from rest_framework.exceptions import AuthenticationFailed
-from django.http import HttpResponseRedirect, JsonResponse
 
 from .authz import UserAuthorization
 from .settings import api_token_auth_settings

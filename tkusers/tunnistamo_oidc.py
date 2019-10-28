@@ -7,7 +7,7 @@ from django.urls.exceptions import NoReverseMatch
 
 class TunnistamoOIDCAuth(OpenIdConnectAuth):
     name = 'tunnistamo'
-    OIDC_ENDPOINT = 'https://testitunnistamo.turku.fi/sso/openid'
+    OIDC_ENDPOINT = 'https://testitunnistamo.turku.fi/openid'
     END_SESSION_URL = ''
 
     def __init__(self, *args, **kwargs):
