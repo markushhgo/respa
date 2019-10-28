@@ -16,7 +16,7 @@ env = environ.Env(
     DEBUG=(bool, False),
     GDAL_LIBRARY_PATH=(str, ''),
     SECRET_KEY=(str, ''),
-    ALLOWED_HOSTS=(list, []),
+    ALLOWED_HOSTS=(list, ['*']),
     ADMINS=(list, []),
     DATABASE_URL=(str, 'postgis:///respa'),
     SECURE_PROXY_SSL_HEADER=(tuple, None),
@@ -51,6 +51,13 @@ env = environ.Env(
     RESPA_PAYMENTS_PAYMENT_WAITING_TIME=(int, 15),
     RESPA_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
     DJANGO_ADMIN_LOGOUT_REDIRECT_URL=(str, 'https://turku.fi'),
+    TUNNISTAMO_BASE_URL=(str, ''),
+    SOCIAL_AUTH_TUNNISTAMO_KEY=(str, ''),
+    SOCIAL_AUTH_TUNNISTAMO_SECRET=(str, ''),
+    OIDC_AUDIENCE=(str,''),
+    OIDC_API_SCOPE_PREFIX=(str,''),
+    OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION=(bool, False),
+    OIDC_ISSUER=(str,'')
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
@@ -106,7 +113,7 @@ INSTALLED_APPS = [
     'anymail',
     'reversion',
     'django_admin_json_editor',
-
+    'social_django',
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
@@ -175,6 +182,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'tkusers.context_processors.settings'
             ],
         },
     },
@@ -234,21 +242,30 @@ CORS_ORIGIN_ALLOW_ALL = True
 #
 AUTH_USER_MODEL = 'users.User'
 AUTHENTICATION_BACKENDS = (
+    'tkusers.tunnistamo_oidc.TunnistamoOIDCAuth',
     'django.contrib.auth.backends.ModelBackend',
     'allauth.account.auth_backends.AuthenticationBackend',
     'guardian.backends.ObjectPermissionBackend',
 )
-
+SOCIAL_AUTH_TUNNISTAMO_AUTH_EXTRA_ARGUMENTS = {'ui_locales': 'fi'}
 SOCIALACCOUNT_PROVIDERS = {
     'turku': {
         'VERIFIED_EMAIL': True
     }
 }
+
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = env('DJANGO_ADMIN_LOGOUT_REDIRECT_URL')
+RESPA_ADMIN_LOGOUT_REDIRECT_URL = env('RESPA_ADMIN_LOGOUT_REDIRECT_URL')
 ACCOUNT_LOGOUT_ON_GET = True
 SOCIALACCOUNT_ADAPTER = 'tkusers.adapter.SocialAccountAdapter'
-RESPA_ADMIN_LOGOUT_REDIRECT_URL = env('RESPA_ADMIN_LOGOUT_REDIRECT_URL')
+
+TUNNISTAMO_BASE_URL = env('TUNNISTAMO_BASE_URL')
+SOCIAL_AUTH_TUNNISTAMO_KEY = env('SOCIAL_AUTH_TUNNISTAMO_KEY')
+SOCIAL_AUTH_TUNNISTAMO_SECRET = env('SOCIAL_AUTH_TUNNISTAMO_SECRET')
+SOCIAL_AUTH_TUNNISTAMO_OIDC_ENDPOINT = TUNNISTAMO_BASE_URL + '/openid'
+
+SESSION_SERIALIZER = 'django.contrib.sessions.serializers.PickleSerializer'
 
 # REST Framework
 # http://www.django-rest-framework.org
@@ -258,6 +275,7 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticatedOrReadOnly',
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
+        'tkusers.oidc.ApiTokenAuthentication',
         'tkusers.jwt.JWTAuthentication',
     ] + ([
         "rest_framework.authentication.SessionAuthentication",
@@ -271,6 +289,14 @@ JWT_AUTH = {
     'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'tkusers.jwt.get_user_id_from_payload_handler',
     'JWT_AUDIENCE': env('TOKEN_AUTH_ACCEPTED_AUDIENCE'),
     'JWT_SECRET_KEY': env('TOKEN_AUTH_SHARED_SECRET')
+}
+
+
+OIDC_API_TOKEN_AUTH = {
+    'AUDIENCE': env('OIDC_AUDIENCE'),
+    'API_SCOPE_PREFIX': env('OIDC_API_SCOPE_PREFIX'),
+    'REQUIRE_API_SCOPE_FOR_AUTHENTICATION': env('OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION'),
+    'ISSUER': env('OIDC_ISSUER')
 }
 
 

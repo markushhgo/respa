@@ -1,5 +1,6 @@
 from django.conf import settings
 from rest_framework.settings import APISettings
+from .defaults import SOCIAL_AUTH_PIPELINE
 
 
 _user_settings = getattr(settings, 'OIDC_API_TOKEN_AUTH', None)
@@ -24,10 +25,10 @@ _defaults = dict(
     REQUIRE_API_SCOPE_FOR_AUTHENTICATION=False,
 
     # Field name containing the API scopes authorized by the user
-    API_AUTHORIZATION_FIELD='https://tkuapp159.adturku.fi:8010/auth',
+    API_AUTHORIZATION_FIELD='',
 
     # URL of the OpenID Provider
-    ISSUER='https://tunnistamo.turku.fi',
+    ISSUER='https://testitunnistamo.turku.fi',
 
     # Auth scheme used in the Authorization header
     AUTH_SCHEME='Bearer',

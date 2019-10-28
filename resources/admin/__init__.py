@@ -50,6 +50,9 @@ class CustomUserManage(forms.Form):
             Q(auth_token__isnull=False) | Q(is_staff=True)
         ).distinct().order_by('email', 'username')
     )
+    def validate(self, user):
+        super().validate(user)
+        print(user.username)
 
 
 class CustomGroupManage(forms.Form):

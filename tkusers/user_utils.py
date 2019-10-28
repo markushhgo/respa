@@ -104,6 +104,7 @@ def get_or_create_user(payload, oidc=False):
                 email = EmailAddress.objects.get(email__iexact=user.email)
                 assert email.user == user
             except EmailAddress.DoesNotExist:
-                email = EmailAddress(email=user.email.lower(), primary=True, user=user, verified=True)
-                email.save()
+                if user.email:
+                    email = EmailAddress(email=user.email.lower(), primary=True, user=user, verified=True)
+                    email.save()
     return user

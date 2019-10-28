@@ -23,7 +23,7 @@ class AdminSite(admin.AdminSite):
 
     def __init__(self, *args, **kwargs):
         super(AdminSite, self).__init__(*args, **kwargs)
-    
+
     @property
     def site_header(self):
         if 'django.contrib.sites' in settings.INSTALLED_APPS:
@@ -64,7 +64,6 @@ class AdminSite(admin.AdminSite):
             ret['base_site_template'] = 'admin/base_site_default.html'
 
         ret['password_login_disabled'] = getattr(settings, 'TKUSERS_PASSWORD_LOGIN_DISABLED', False)
-
         return ret
 
 site = AdminSite()
