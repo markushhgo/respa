@@ -2,7 +2,7 @@ import uuid
 import logging
 from django.db import models, transaction
 from django.contrib.auth.models import Group, AbstractUser as DjangoAbstractUser
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext_lazy as _
 
 from .utils import uuid_to_username
 
@@ -18,6 +18,9 @@ class TurkuADGroup(models.Model):
 
     def __str__(self):
         return self.display_name
+
+    class Meta:
+        verbose_name = _('AD Group')
 
 
 

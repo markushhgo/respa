@@ -5,7 +5,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy
 from django.core.exceptions import ImproperlyConfigured
 from django.utils.module_loading import autodiscover_modules
-from .models import TurkuADGroupMapping
+from .models import TurkuADGroupMapping, TurkuADGroup
 
 if hasattr(settings, 'SITE_TYPE'):
     if settings.SITE_TYPE not in ('dev', 'test', 'production'):
@@ -23,7 +23,7 @@ class AdminSite(admin.AdminSite):
 
     def __init__(self, *args, **kwargs):
         super(AdminSite, self).__init__(*args, **kwargs)
-    
+
     @property
     def site_header(self):
         if 'django.contrib.sites' in settings.INSTALLED_APPS:
@@ -64,7 +64,6 @@ class AdminSite(admin.AdminSite):
             ret['base_site_template'] = 'admin/base_site_default.html'
 
         ret['password_login_disabled'] = getattr(settings, 'TKUSERS_PASSWORD_LOGIN_DISABLED', False)
-
         return ret
 
 site = AdminSite()
@@ -82,4 +81,6 @@ def autodiscover():
 
 class TurkuADGroupMappingAdmin(admin.ModelAdmin):
     pass
-site.register(TurkuADGroupMapping, TurkuADGroupMappingAdmin)
+
+
+site.register([TurkuADGroupMapping, TurkuADGroup], TurkuADGroupMappingAdmin)

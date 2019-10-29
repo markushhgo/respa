@@ -34,10 +34,8 @@ class ApiTokenAuthentication(JSONWebTokenAuthentication):
         jwt_value = self.get_jwt_value(request)
         if jwt_value is None:
             return None
-
         payload = self.decode_jwt(jwt_value)
         self.validate_claims(payload)
-
         user_resolver = self.settings.USER_RESOLVER  # Default: resolve_user
         user = user_resolver(request, payload)
         auth = UserAuthorization(user, payload, self.settings)

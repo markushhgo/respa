@@ -285,7 +285,7 @@ class Reservation(ModifiableModel):
                     if order.state == order.CANCELLED:
                         self.send_reservation_cancelled_mail()
                 else:
-                    if (self.reserver_email_address != self.user.email) and user_is_staff: # Assuming staff cancelled it
+                    if user.is_staff and (user.email != self.user.email): # Assume staff cancelled it
                         self.send_reservation_cancelled_mail(action_by_official=True)
                     else:
                         self.send_reservation_cancelled_mail()

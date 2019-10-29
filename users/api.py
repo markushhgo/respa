@@ -26,7 +26,7 @@ class UserSerializer(serializers.ModelSerializer):
             'last_login', 'username', 'email', 'date_joined',
             'first_name', 'last_name', 'uuid', 'department_name',
             'is_staff', 'display_name', 'ical_feed_url', 'staff_perms', 'favorite_resources',
-            'preferred_language', 'birthday'
+            'preferred_language', 'birthdate'
         ]
         model = get_user_model()
 
@@ -54,7 +54,7 @@ class UserSerializer(serializers.ModelSerializer):
         user = self.context['request'].user
 
         if user.id != instance.id:
-            data.pop('birthday')
+            data.pop('birthdate')
         return data
 
 

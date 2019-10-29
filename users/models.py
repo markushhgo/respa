@@ -11,7 +11,7 @@ class User(AbstractUser):
     first_name = models.CharField(verbose_name=_('First name'), max_length=100, null=True, blank=True)
     last_name = models.CharField(verbose_name=_('Last name'), max_length=100, null=True, blank=True)
     email = models.CharField(verbose_name=('Email'), null=True, max_length=100)
-    birthday = models.DateField(null=True, blank=True, verbose_name=_('Birthday'))
+    birthdate = models.DateField(null=True, blank=True, verbose_name=_('Birthdate'))
 
     ical_token = models.SlugField(
         max_length=16, null=True, blank=True, unique=True, db_index=True, verbose_name="iCal token"
@@ -71,4 +71,4 @@ class User(AbstractUser):
             return self.preferred_language
 
     def get_user_age(self):
-        return int((datetime.date.today() - self.birthday).days / 365.25)
+        return int((datetime.date.today() - self.birthdate).days / 365.25)
