@@ -184,7 +184,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     max_age = models.PositiveIntegerField(verbose_name=_('Age restriction (max)'), null=True, blank=True, default=0)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
 
-    resource_staff_emails = MultiEmailField(null=True, blank=True)
+    resource_staff_emails = MultiEmailField(verbose_name=_('E-mail addresses for client correspondence'), null=True, blank=True)
 
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
