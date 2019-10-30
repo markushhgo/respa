@@ -490,6 +490,8 @@ class Reservation(ModifiableModel):
         context = self.get_notification_context(language, notification_type=notification_type)
 
         try:
+            if staff_email:
+                language = DEFAULT_LANG
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
             logger.error(e, exc_info=True, extra={'user': user.uuid})
