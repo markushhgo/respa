@@ -113,6 +113,7 @@ INSTALLED_APPS = [
     'anymail',
     'reversion',
     'django_admin_json_editor',
+    'multi_email_field',
     'social_django',
     'allauth',
     'allauth.account',

@@ -464,7 +464,7 @@ class Reservation(ModifiableModel):
 
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
         """
         Stuff common to all reservation related mails.
 
@@ -495,22 +495,38 @@ class Reservation(ModifiableModel):
             logger.error(e, exc_info=True, extra={'user': user.uuid})
             print("Notification template exception")
             return
-        print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (email_address, rendered_notification['subject'], language))
-        ret = send_respa_mail(
-            email_address,
-            rendered_notification['subject'],
-            rendered_notification['body'],
-            rendered_notification['html_body'],
-            attachments
-        )
-        print(ret[1])
+        if staff_email:
+            print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (staff_email, rendered_notification['subject'], language))
+            ret = send_respa_mail(
+                staff_email,
+                rendered_notification['subject'],
+                rendered_notification['body'],
+                rendered_notification['html_body'],
+                attachments
+            )
+            print(ret[1])
+        else:
+            print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (email_address, rendered_notification['subject'], language))
+            ret = send_respa_mail(
+                email_address,
+                rendered_notification['subject'],
+                rendered_notification['body'],
+                rendered_notification['html_body'],
+                attachments
+            )
+            print(ret[1])
 
     def notify_staff_about_reservation(self, notification):
-        notify_users = self.resource.get_users_with_perm('can_approve_reservation')
-        if len(notify_users) > 100:
-            raise Exception("Refusing to notify more than 100 users (%s)" % self)
-        for user in notify_users:
-            self.send_reservation_mail(notification, user=user)
+        if self.resource.resource_staff_emails:
+            for email in self.resource.resource_staff_emails:
+                self.send_reservation_mail(notification, staff_email=email)
+        else:
+            notify_users = self.resource.get_users_with_perm('can_approve_reservation')
+            if len(notify_users) > 100:
+                raise Exception("Refusing to notify more than 100 users (%s)" % self)
+                return
+            for user in notify_users:
+                self.send_reservation_mail(notification, user=user)
 
     def send_reservation_requested_mail(self, action_by_official=False):
         notification = NotificationType.RESERVATION_REQUESTED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_REQUESTED

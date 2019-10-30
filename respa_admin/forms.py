@@ -238,6 +238,7 @@ class ResourceForm(forms.ModelForm):
             'reservable',
             'need_manual_confirmation',
             'authentication',
+            'resource_staff_emails',
             'access_code_type',
             'max_price_per_hour',
             'min_price_per_hour',

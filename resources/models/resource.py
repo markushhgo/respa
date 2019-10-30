@@ -23,6 +23,7 @@ from django.utils.six import BytesIO
 from django.utils.translation import ugettext_lazy as _
 from django.utils.translation import pgettext_lazy
 from django.contrib.postgres.fields import HStoreField, DateTimeRangeField
+from multi_email_field.fields import MultiEmailField
 from .gistindex import GistIndex
 from psycopg2.extras import DateTimeTZRange
 from image_cropping import ImageRatioField
@@ -182,6 +183,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
     min_age = models.PositiveIntegerField(verbose_name=_('Age restriction (min)'), null=True, blank=True, default=0)
     max_age = models.PositiveIntegerField(verbose_name=_('Age restriction (max)'), null=True, blank=True, default=0)
     need_manual_confirmation = models.BooleanField(verbose_name=_('Need manual confirmation'), default=False)
+
+    resource_staff_emails = MultiEmailField(null=True, blank=True)
+
     authentication = models.CharField(blank=False, verbose_name=_('Authentication'),
                                       max_length=20, choices=AUTHENTICATION_TYPES)
     people_capacity = models.PositiveIntegerField(verbose_name=_('People capacity'), null=True, blank=True)
