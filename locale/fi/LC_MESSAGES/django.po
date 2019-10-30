@@ -1566,3 +1566,6 @@ msgstr "Varaus pääsykoodin kanssa tehty virkailija"
 
 msgid "Reservation created official"
 msgstr "Varaus luotu virkailija"
+
+msgid "E-mail addresses for client correspondence"
+msgstr "Sähköpostiosoitteet asiakasvarausten muutoksille"
