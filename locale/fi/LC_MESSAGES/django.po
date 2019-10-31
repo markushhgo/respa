@@ -540,9 +540,6 @@ msgstr "Muokkausaika"
 msgid "accessibility viewpoint"
 msgstr ""
 
-msgid "accessibility viewpoints"
-msgstr ""
-
 msgid "Accessibility summary value"
 msgstr ""
 
@@ -550,9 +547,6 @@ msgid "Ordering priority"
 msgstr ""
 
 msgid "accessibility value"
-msgstr ""
-
-msgid "accessibility values"
 msgstr ""
 
 msgid "Resource Accessibility"
@@ -1569,3 +1563,30 @@ msgstr "Varaus luotu virkailija"
 
 msgid "E-mail addresses for client correspondence"
 msgstr "Sähköpostiosoitteet asiakasvarausten muutoksille"
+
+msgid "Municipalitys"
+msgstr "Kunnat"
+
+msgid "Accessibility values"
+msgstr "Esteettömyysarvot"
+
+msgid "Accessibility viewpoints"
+msgstr "Esteettömyysnäkymät"
+
+msgid "Require assistance"
+msgstr "Tarvitsee avustusta"
+
+msgid "Require workstation"
+msgstr "Tarvitsee työaseman"
+
+msgid "Users"
+msgstr "Käyttäjät"
+
+msgid "Turku Users"
+msgstr "Turku käyttäjät"
+
+msgid "AD Group Mappings"
+msgstr "AD Ryhmä kartoitukset"
+
+msgid "AD Groups"
+msgid "AD Ryhmät"
