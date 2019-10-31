@@ -1589,4 +1589,4 @@ msgid "AD Group Mappings"
 msgstr "AD Ryhmä kartoitukset"
 
 msgid "AD Groups"
-msgid "AD Ryhmät"
+msgstr "AD Ryhmät"
