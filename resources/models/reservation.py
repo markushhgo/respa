@@ -251,7 +251,10 @@ class Reservation(ModifiableModel):
             reservation_confirmed.send(sender=self.__class__, instance=self, user=user)
         elif old_state == Reservation.CONFIRMED:
             self.approver = None
+
+
         user_is_staff = self.user is not None and self.user.is_staff
+
         # Notifications
         if new_state == Reservation.REQUESTED:
             if not user_is_staff:
@@ -277,6 +280,7 @@ class Reservation(ModifiableModel):
                 else:
                     if self.reserver_email_address != self.user.email:
                         self.send_reservation_created_mail(action_by_official=True)
+                        self.notify_staff_about_reservation(NotificationType.RESERVATION_CREATED_OFFICIAL)
         elif new_state == Reservation.DENIED:
             self.send_reservation_denied_mail()
         elif new_state == Reservation.CANCELLED:
