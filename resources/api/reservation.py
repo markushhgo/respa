@@ -84,7 +84,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         model = Reservation
         fields = [
             'url', 'id', 'resource', 'user', 'begin', 'end', 'comments', 'is_own', 'state', 'need_manual_confirmation',
-            'require_assistance', 'staff_event', 'access_code', 'user_permissions', 'preferred_language', 'type'
+            'require_assistance', 'require_workstation', 'staff_event', 'access_code', 'user_permissions', 'preferred_language', 'type'
         ] + list(RESERVATION_EXTRA_FIELDS)
         read_only_fields = list(RESERVATION_EXTRA_FIELDS)
 
@@ -301,6 +301,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 'user': instance.user.email if instance.user else '',  # just email
                 'created_at': instance.created_at,
                 'require_assistance': instance.require_assistance,
+                'require_workstation': instance.require_workstation,
             })
         # Show the comments field and the user object only for staff
         if not resource.is_admin(user):
@@ -309,6 +310,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
 
         if not is_authenticated_user(user):
             del data['require_assistance']
+            del data['require_workstation']
 
         if instance.are_extra_fields_visible(user):
             cache = self.context.get('reservation_metadata_set_cache')

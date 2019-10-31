@@ -34,8 +34,8 @@ RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_
                             'reserver_address_city', 'billing_first_name', 'billing_last_name', 'billing_phone_number',
                             'billing_email_address', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
-                            'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'host_name',
-                            'reservation_extra_questions')
+                            'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'require_workstation',
+                            'host_name', 'reservation_extra_questions')
 
 
 class ReservationQuerySet(models.QuerySet):
@@ -136,6 +136,7 @@ class Reservation(ModifiableModel):
     participants = models.TextField(verbose_name=_('Participants'), blank=True)
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
     require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
+    require_workstation = models.BooleanField(verbose_name=_('Require workstation'), default=False)
 
     # extra detail fields for manually confirmed reservations
 
@@ -408,6 +409,7 @@ class Reservation(ModifiableModel):
                 'reserver_name': reserver_name,
                 'reserver_email_address': reserver_email_address,
                 'require_assistance': self.require_assistance,
+                'require_workstation': self.require_workstation,
                 'extra_question': self.reservation_extra_questions
             }
             directly_included_fields = (
