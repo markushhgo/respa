@@ -3,9 +3,9 @@ from rest_framework.settings import APISettings
 from .defaults import SOCIAL_AUTH_PIPELINE
 
 
-_user_settings = getattr(settings, 'OIDC_API_TOKEN_AUTH', None)
+USER_SETTINGS = getattr(settings, 'OIDC_AUTH', None)
 
-_defaults = dict(
+DEFAULTS = dict(
     # Accepted audience, the API Token must have this in its aud field
     AUDIENCE=None,
 
@@ -38,11 +38,12 @@ _defaults = dict(
 
     # OIDC config expiration time
     OIDC_CONFIG_EXPIRATION_TIME=24 * 60 * 60,
+    OIDC_LEEWAY=24 * 60 * 60,
 )
-_import_strings = [
+IMPORT_STRINGS = [
     'USER_RESOLVER',
 ]
 
 
 api_token_auth_settings = APISettings(
-    _user_settings, _defaults, _import_strings)
+    USER_SETTINGS, DEFAULTS, IMPORT_STRINGS)
