@@ -57,7 +57,8 @@ env = environ.Env(
     OIDC_AUDIENCE=(str,''),
     OIDC_API_SCOPE_PREFIX=(str,''),
     OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION=(bool, False),
-    OIDC_ISSUER=(str,'')
+    OIDC_ISSUER=(str,'https://tunnistamo.turku.fi'),
+    OIDC_LEEWAY=(int, 0)
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
@@ -293,11 +294,12 @@ JWT_AUTH = {
 }
 
 
-OIDC_API_TOKEN_AUTH = {
+OIDC_AUTH = {
     'AUDIENCE': env('OIDC_AUDIENCE'),
     'API_SCOPE_PREFIX': env('OIDC_API_SCOPE_PREFIX'),
     'REQUIRE_API_SCOPE_FOR_AUTHENTICATION': env('OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION'),
-    'ISSUER': env('OIDC_ISSUER')
+    'ISSUER': env('OIDC_ISSUER'),
+    'OIDC_LEEWAY': env('OIDC_LEEWAY')
 }
 
 
