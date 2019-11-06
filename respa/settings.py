@@ -56,6 +56,7 @@ env = environ.Env(
     SOCIAL_AUTH_TUNNISTAMO_KEY=(str, ''),
     SOCIAL_AUTH_TUNNISTAMO_SECRET=(str, ''),
     OIDC_AUDIENCE=(str,''),
+    OIDC_SECRET=(str, ''),
     OIDC_API_SCOPE_PREFIX=(str,''),
     OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION=(bool, False),
     OIDC_ISSUER=(str,'https://tunnistamo.turku.fi'),
@@ -121,6 +122,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'tkusers.providers.turku',
+    'tkusers.providers.turku_oidc',
 
     'munigeo',
 
@@ -300,7 +302,8 @@ OIDC_AUTH = {
     'API_SCOPE_PREFIX': env('OIDC_API_SCOPE_PREFIX'),
     'REQUIRE_API_SCOPE_FOR_AUTHENTICATION': env('OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION'),
     'ISSUER': env('OIDC_ISSUER'),
-    'OIDC_LEEWAY': env('OIDC_LEEWAY')
+    'OIDC_LEEWAY': env('OIDC_LEEWAY'),
+    'OIDC_SECRET': env('OIDC_SECRET')
 }
 
 
