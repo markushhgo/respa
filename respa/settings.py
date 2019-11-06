@@ -43,6 +43,7 @@ env = environ.Env(
     RESPA_ADMIN_INSTRUCTIONS_URL=(str, ''),
     RESPA_ADMIN_SUPPORT_EMAIL=(str, ''),
     RESPA_ADMIN_VIEW_RESOURCE_URL=(str, ''),
+    RESPA_ADMIN_VIEW_UNIT_URL=(str, ''),
     RESPA_ERROR_EMAIL=(str,''),
     RESPA_ADMIN_LOGO=(str, ''),
     RESPA_ADMIN_KORO_STYLE=(str, ''),
