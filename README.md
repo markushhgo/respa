@@ -1,6 +1,6 @@
-[![Build Status](https://travis-ci.com/digipointtku/respaTku.svg?branch=master)](https://travis-ci.com/digipointtku/respaTku)
-[![codecov](https://codecov.io/gh/digipointtku/respaTku/branch/master/graph/badge.svg)](https://codecov.io/gh/digipointtku/respaTku)
-[![Requirements Status](https://requires.io/github/digipointtku/respaTku/requirements.svg?branch=master)](https://requires.io/github/digipointtku/respaTku/requirements/?branch=master)
+[![Build Status](https://travis-ci.com/digipointtku/respaTku.svg?branch=master)](https://travis-ci.com/digipointtku/respa)
+[![codecov](https://codecov.io/gh/digipointtku/respaTku/branch/master/graph/badge.svg)](https://codecov.io/gh/digipointtku/respa)
+[![Requirements Status](https://requires.io/github/digipointtku/respaTku/requirements.svg?branch=master)](https://requires.io/github/digipointtku/respa/requirements/?branch=master)
 
 Respa – Resource reservation and management service
 ===================
