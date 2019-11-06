@@ -1171,9 +1171,17 @@ def test_reservation_mails(
     assert 'this resource rocks' in str(mail.outbox[0].message())
     mail.outbox = []
 
+    with translation.override('en'):
+        NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL,
+            subject='Reservation cancelled',
+            body='Reservation has been cancelled.',
+        )
+
     # test CANCELLED
     reservation_data_extra['state'] = Reservation.CANCELLED
     response = api_client.delete(detail_url, format='json')
+
     assert response.status_code == 204
     assert len(mail.outbox) == 1
     check_received_mail_exists(
@@ -1269,6 +1277,13 @@ def test_reservation_mails_in_finnish(
     )
     assert 'this resource rocks' in str(mail.outbox[0].message())
     mail.outbox = []
+
+    with translation.override('fi'):
+        NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL,
+            subject='Varaus peruttu',
+            body='Varauksesi on peruttu.',
+        )
 
     # test CANCELLED
     reservation_data_extra['state'] = Reservation.CANCELLED
