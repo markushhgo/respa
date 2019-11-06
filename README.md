@@ -157,9 +157,9 @@ development environment this needs either real Respa app client id and
 client secret in the production Tunnistamo or modifying tkusers to use
 local Tunnistamo.  The client id and client secret should be configured
 in Django Admin or shell within a socialaccount.SocialApp instance with
-id "turku".  When adding the app to Tunnistamo, the OAuth2 callback
+id "turku".  When adding the app to Tunnistamo, the OIDC callback
 URL for the app should be something like:
-http://localhost:8000/accounts/turku/login/callback/
+http://localhost:8000/accounts/turku_oidc/login/callback/
 
 When the Tunnistamo registration is configured and the login is working,
 then go to Django Admin and set the `is_staff` flag on for the user that
