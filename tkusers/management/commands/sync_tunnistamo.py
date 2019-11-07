@@ -2,7 +2,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 from django.core.management.base import BaseCommand
 from allauth.socialaccount.models import SocialApp
-from tkusers.providers.turku_oidc.provider import TurkuOIDCProvider
+from tkusers.providers.tunnistamo.provider import TurkuOIDCProvider
 
 
 class Command(BaseCommand):

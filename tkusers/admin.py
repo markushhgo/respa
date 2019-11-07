@@ -14,7 +14,7 @@ if hasattr(settings, 'SITE_TYPE'):
 
 PROVIDERS = (
     ('tkusers.providers.turku', 'turku_login'),
-    ('tkusers.providers.turku_oidc', 'turku_oidc_login')
+    ('tkusers.providers.tunnistamo', 'tunnistamo_login')
 )
 
 
