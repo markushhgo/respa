@@ -12,7 +12,7 @@ tunnistamo_login_url = reverse('respa_admin:tunnistamo-login')
 def test_tunnistamo_login_redirects_to_turku_login(client):
     response = client.get(tunnistamo_login_url)
     assert response.status_code == 302
-    assert response.url in ('/accounts/turku_oidc/login/', '/accounts/turku/login/')
+    assert response.url == '/accounts/tunnistamo/login/'
 
 
 @pytest.mark.django_db

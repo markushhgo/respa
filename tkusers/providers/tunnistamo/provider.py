@@ -19,9 +19,9 @@ class TurkuOIDCAccount(ProviderAccount):
 
 
 class TurkuOIDCProvider(OAuth2Provider):
-    id = 'turku_oidc'
+    id = 'tunnistamo'
     name = 'City of Turku employees (OIDC)'
-    package = 'tkusers.providers.turku_oidc'
+    package = 'tkusers.providers.tunnistamo'
     account_class = TurkuOIDCAccount
 
     def extract_uid(self, data):

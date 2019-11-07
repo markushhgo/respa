@@ -122,7 +122,7 @@ INSTALLED_APPS = [
     'allauth.account',
     'allauth.socialaccount',
     'tkusers.providers.turku',
-    'tkusers.providers.turku_oidc',
+    'tkusers.providers.tunnistamo',
 
     'munigeo',
 

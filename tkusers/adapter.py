@@ -6,9 +6,9 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         user = sociallogin.user
         if not user.pk:
             return
-        
+
         data = sociallogin.account.extra_data
-        oidc = sociallogin.account.provider == 'turku_oidc'
+        oidc = sociallogin.account.provider == 'tunnistamo'
         update_user(user, data, oidc)
 
     def populate_user(self, request, sociallogin, data):
@@ -26,7 +26,7 @@ class SocialAccountAdapter(DefaultSocialAccountAdapter):
         sociallogin.save(request)
 
         data = sociallogin.account.extra_data
-        oidc = sociallogin.account.provider == 'turku_oidc'
+        oidc = sociallogin.account.provider == 'tunnistamo'
 
         update_user(user, data, oidc)
         return user

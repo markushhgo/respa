@@ -88,7 +88,7 @@ def get_or_create_user(payload, oidc=False):
         from allauth.socialaccount.models import SocialAccount, EmailAddress
 
         if oidc:
-            provider_name = 'turku_oidc'
+            provider_name = 'tunnistamo'
         else:
             provider_name = 'turku'
         args = {'provider': provider_name, 'uid': user_id}
