@@ -8,9 +8,9 @@ from .provider import TurkuProvider
 
 class TurkuOAuth2Adapter(OAuth2Adapter):
     provider_id = TurkuProvider.id
-    access_token_url = 'https://testitunnistamo.turku.fi/oauth2/token/'
-    authorize_url = 'https://testitunnistamo.turku.fi/oauth2/authorize/'
-    profile_url = 'https://testitunnistamo.turku.fi/user/'
+    access_token_url = 'https://tunnistamo.turku.fi/oauth2/token/'
+    authorize_url = 'https://tunnistamo.turku.fi/oauth2/authorize/'
+    profile_url = 'https://tunnistamo.turku.fi/user/'
 
     def complete_login(self, request, app, token, **kwargs):
         headers = {'Authorization': 'Bearer {0}'.format(token.token)}
