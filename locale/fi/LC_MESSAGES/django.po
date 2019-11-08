@@ -221,7 +221,7 @@ msgid "Reservation created with access code"
 msgstr "Varaus pääsykoodin kanssa tehty"
 
 msgid "Access code was created for a reservation"
-msgstr ""
+msgstr "Pääsykoodi varausta varten on luotu"
 
 msgid "Catering order created"
 msgstr "Tarjoilutilaus luotu"
@@ -540,9 +540,6 @@ msgstr "Muokkausaika"
 msgid "accessibility viewpoint"
 msgstr ""
 
-msgid "accessibility viewpoints"
-msgstr ""
-
 msgid "Accessibility summary value"
 msgstr ""
 
@@ -550,9 +547,6 @@ msgid "Ordering priority"
 msgstr ""
 
 msgid "accessibility value"
-msgstr ""
-
-msgid "accessibility values"
 msgstr ""
 
 msgid "Resource Accessibility"
@@ -1190,6 +1184,15 @@ msgstr "Varattavissa"
 msgid "Please check the opening hours."
 msgstr "Tarkista aukioloajat."
 
+msgid "Staff account"
+msgstr "Henkilökunnan tili"
+
+msgid "Allows user to grant permissions to units"
+msgstr "Antaa käyttäjän myöntää käyttöoikeuksia toimipisteille"
+
+msgid "You can't add permissions to unit you are not admin of"
+msgstr "Et voi antaa käyttöoikeuksia toimipisteelle, jonka ylläpitäjä et ole"
+
 msgid "Log out"
 msgstr "Kirjaudu ulos"
 
@@ -1245,8 +1248,8 @@ msgstr ""
 msgid "Login failed"
 msgstr "Kirjautuminen epäonnistui"
 
-msgid "Log in with Helsinki account"
-msgstr "Kirjaudu Helsinki-tunnuksella"
+msgid "Log in with Turku account"
+msgstr "Kirjaudu Turku-tunnuksella"
 
 msgid "Username"
 msgstr "Käyttäjätunnus"
@@ -1307,6 +1310,12 @@ msgstr "Käyttäjät haulla"
 
 msgid "Clear search"
 msgstr "Tyhjennä haku"
+
+msgid "Cancel"
+msgstr "Peruuta"
+
+msgid "Add permissions"
+msgstr "Lisää käyttöoikeuksia"
 
 msgid "Accessibility"
 msgstr "Esteettömyys"
@@ -1380,6 +1389,12 @@ msgstr "Lisää uusi aikajakso"
 msgid "Add general time period"
 msgstr "Lisää yleinen kausi"
 
+msgid "Permissions"
+msgstr "Käyttöoikeudet"
+
+msgid "Manager/admin of unit"
+msgstr "Toimipisteen ylläpitäjä/hoitaja"
+
 msgid "Pricing"
 msgstr "Hinnoittelu"
 
@@ -1395,8 +1410,19 @@ msgstr "Tallenna"
 msgid "View resource"
 msgstr "Tarkastele resurssia"
 
+msgid "User profile"
+msgstr "Käyttäjäprofiili"
+
 msgid "Search for users"
 msgstr "Hae käyttäjiä"
+
+msgid "You can't remove staff status from user with existing permissions"
+msgstr ""
+"Ei voida poistaa henkilökunnan tili -merkintää käyttäjältä, jolla on "
+"käyttöoikeuksia toimipisteelle"
+
+msgid "Failed to save. Please check the form for errors."
+msgstr "Tallennus epäonnistui. Tarkista lomakkeen virheet."
 
 msgid "Edit resource"
 msgstr "Muokkaa resurssia"
@@ -1499,3 +1525,68 @@ msgid ""
 msgstr ""
 "Määrää onko käyttäjä yleinen ylläpitäjä, jolla on erityisoikeuksia moniin "
 "Respan kohteisiin. Tämä on lähes yhtä vaikutusvaltainen kuin pääkäyttäjä."
+
+
+
+msgid "Image has to be larger than 5x5"
+msgstr "Kuva pitää olla isompi kuin 5x5"
+
+msgid "Image has to be less than 1920x1280"
+msgstr "Kuva pitää olla pienempi kuin 1920x1280"
+
+msgid "Reservation additional information"
+msgstr "Varauksen lisäinfo"
+
+msgid "Reservation cooldown"
+msgstr "Varaustauko"
+
+msgid "Age restriction (min)"
+msgstr "Alaikäraja"
+
+msgid "Age restriction (max)"
+msgstr "Yläikäraja"
+
+msgid "Reservation cancelled official"
+msgstr "Varaus peruttu virkailija"
+
+msgid "Reservation modified"
+msgstr "Varaus muokattu"
+
+msgid "Reservation modified official"
+msgstr "Varaus muokattu virkailija"
+
+msgid "Reservation created with access code official"
+msgstr "Varaus pääsykoodin kanssa tehty virkailija"
+
+msgid "Reservation created official"
+msgstr "Varaus luotu virkailija"
+
+msgid "E-mail addresses for client correspondence"
+msgstr "Sähköpostiosoitteet asiakasvarausten muutoksille"
+
+msgid "Municipalitys"
+msgstr "Kunnat"
+
+msgid "Accessibility values"
+msgstr "Esteettömyysarvot"
+
+msgid "Accessibility viewpoints"
+msgstr "Esteettömyysnäkymät"
+
+msgid "Require assistance"
+msgstr "Tarvitsee avustusta"
+
+msgid "Require workstation"
+msgstr "Tarvitsee työaseman"
+
+msgid "Users"
+msgstr "Käyttäjät"
+
+msgid "Turku Users"
+msgstr "Turku käyttäjät"
+
+msgid "AD Group Mappings"
+msgstr "AD Ryhmä kartoitukset"
+
+msgid "AD Groups"
+msgstr "AD Ryhmät"

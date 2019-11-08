@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
+        migrations.AlterField(
             model_name='reservation',
             name='type',
             field=models.CharField(choices=[('normal', 'Normal reservation'), ('blocked', 'Resource blocked')], default='normal', max_length=32, verbose_name='Type'),

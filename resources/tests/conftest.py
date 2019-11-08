@@ -234,7 +234,6 @@ def staff_user():
         preferred_language='en'
     )
 
-
 @pytest.mark.django_db
 @pytest.fixture
 def unit_manager_user(resource_in_unit):
@@ -248,7 +247,6 @@ def unit_manager_user(resource_in_unit):
     )
     user.unit_authorizations.create(subject=resource_in_unit.unit, level=UnitAuthorizationLevel.manager)
     return user
-
 
 @pytest.mark.django_db
 @pytest.fixture

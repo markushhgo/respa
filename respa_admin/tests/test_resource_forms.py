@@ -54,12 +54,12 @@ def test_create_resource_with_invalid_data_returns_errors(admin_client, empty_re
     data = empty_resource_form_data
     with translation.override('fi'):
         response = admin_client.post(NEW_RESOURCE_URL, data=data)
+
     assert response.context['form'].errors == {
         'access_code_type': ['Tämä kenttä vaaditaan.'],
         'authentication': ['Tämä kenttä vaaditaan.'],
         'equipment': ['Valitse oikea vaihtoehto.  ei ole vaihtoehtojen joukossa.'],
         'min_period': ['Tämä kenttä vaaditaan.'],
-        'slot_size': ['Tämä kenttä vaaditaan.'],
         'name_fi': ['Tämä kenttä vaaditaan.'],
         'purposes': ['Valitse oikea vaihtoehto.  ei ole vaihtoehtojen joukossa.'],
         'type': ['Tämä kenttä vaaditaan.'],

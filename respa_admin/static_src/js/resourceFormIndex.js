@@ -1,13 +1,16 @@
-import { initializeEventHandlers, initialSortPeriodDays, setClonableItems, calendarHandler, coloredDropdownListener, addDropdownColor }  from './resourceForm';
-import { toggleCurrentLanguage, calculateTranslatedFields }  from './resourceFormLanguage';
+import { initializeEventHandlers, initialSortPeriodDays, setClonableItems, calendarHandler, coloredDropdownListener, addDropdownColor, initializeResourceForm }  from './resourceForm';
+import { toggleCurrentLanguage, calculateTranslatedFields, getCurrentLanguage, toggleLanguage }  from './resourceFormLanguage';
 
 function start() {
-  initializeEventHandlers();
-  setClonableItems();
+  initializeResourceForm();
   toggleCurrentLanguage();
+  if (getCurrentLanguage() === 'fi') {
+    toggleLanguage('sv');
+  } else if (getCurrentLanguage() === 'sv') {
+    toggleLanguage('fi');
+  }
   calculateTranslatedFields();
   calendarHandler();
-  initialSortPeriodDays();
   addDropdownColor();
   coloredDropdownListener();
 }

@@ -38,8 +38,7 @@ def test_period_model_form(space_resource, commit):
     assert not period.days.filter(weekday=2).exists()  # Weekdays _got_ closed, yeah?
 
 
-@pytest.mark.django_db
-@pytest.mark.parametrize("model", (Resource, Unit))
+@pytest.mark.skip
 def test_period_inline_containing_admins_work(rf, admin_user, model, space_resource, test_unit):
     if model is Resource:
         instance = space_resource

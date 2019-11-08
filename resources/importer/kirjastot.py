@@ -3,10 +3,12 @@ import delorean
 import requests
 from django.conf import settings
 from django.db import transaction
-from sentry_sdk import capture_message
+from raven import Client
 from resources.models import Unit
 from typing import Dict, List
 from .base import Importer, register_importer
+
+IMPORTER_NAME = "kirjastot"
 
 CLOSED_HOURS = 0
 STAFFED_HOURS = 1
@@ -18,7 +20,7 @@ REQUESTS_TIMEOUT = 10
 
 @register_importer
 class KirjastotImporter(Importer):
-    name = "kirjastot"
+    name = IMPORTER_NAME
 
     def import_units(self):
         process_varaamo_libraries()
@@ -54,14 +56,18 @@ def process_varaamo_libraries():
                 import traceback
                 print("Problem in processing data of library ", varaamo_unit, traceback.format_exc())
                 problems.append(" ".join(["Problem in processing data of library ", str(varaamo_unit), str(e)]))
+            if varaamo_unit.data_source_hours != IMPORTER_NAME:
+                varaamo_unit.data_source_hours = IMPORTER_NAME
+                varaamo_unit.save()
         else:
             print("Failed data fetch on library: ", varaamo_unit)
             problems.append(" ".join(["Failed data fetch on library: ", str(varaamo_unit)]))
 
     try:
-        if problems:
-            # without Sentry, this will gracefully file the message to /dev/null
-            capture_message("\n".join(problems))
+        if problems and settings.RAVEN_DSN:
+            # Report problems to Raven/Sentry
+            client = Client(settings.RAVEN_DSN)
+            client.captureMessage("\n".join(problems))
     except AttributeError:
         pass
 

@@ -1,9 +1,10 @@
 from rest_framework import serializers, viewsets
-
+from django.contrib.auth.models import AnonymousUser
 import django_filters
 from munigeo import api as munigeo_api
 from resources.api.base import NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget
 from resources.models import Unit
+from resources.models.resource import Resource
 from .accessibility import UnitAccessibilitySerializer
 from .base import ExtraDataMixin
 
@@ -30,11 +31,12 @@ class UnitSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoM
         )
     )
     # depracated, available for backwards compatibility
-    reservable_days_in_advance = serializers.ReadOnlyField(source='reservable_max_days_in_advance')
-    reservable_max_days_in_advance = serializers.ReadOnlyField()
-    reservable_before = serializers.SerializerMethodField()
-    reservable_min_days_in_advance = serializers.ReadOnlyField()
-    reservable_after = serializers.SerializerMethodField()
+    reservable_days_in_advance      = serializers.ReadOnlyField(source='reservable_max_days_in_advance')
+    reservable_max_days_in_advance  = serializers.ReadOnlyField()
+    reservable_before               = serializers.SerializerMethodField()
+    reservable_min_days_in_advance  = serializers.ReadOnlyField()
+    reservable_after                = serializers.SerializerMethodField()
+    hidden                          = serializers.SerializerMethodField()
 
     def get_extra_fields(self, includes, context):
         """ Define extra fields that can be included via query parameters. Method from ExtraDataMixin."""
@@ -62,6 +64,18 @@ class UnitSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoM
             return None
         else:
             return obj.get_reservable_after()
+
+    def get_hidden(self, obj):
+        request = self.context.get('request')
+        user = request.user
+        if not isinstance(user, AnonymousUser):
+            if (user.is_staff and user.has_perm('unit:can_view_unit', obj)) or user.is_general_admin or user.is_superuser:
+                return False
+        x = True
+        for ob in Resource.objects.filter(unit=obj).all():
+            if ob.public:
+                x = False
+        return x
 
     class Meta:
         model = Unit

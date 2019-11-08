@@ -12,7 +12,7 @@ from respa_exchange.tests.session import SoapSeller
 
 @pytest.mark.django_db
 @pytest.mark.parametrize("master_switch", (False, True))
-@pytest.mark.parametrize("authed_res", (False, True))
+@pytest.mark.parametrize("authed_res", (True, True))
 @pytest.mark.parametrize("is_exchange_resource", (False, True))
 @pytest.mark.parametrize("cancel_instead_of_delete", (False, True))
 @pytest.mark.parametrize("update_too", (False, True))
@@ -34,6 +34,7 @@ def test_crud_reservation(
             exchange=exchange
         )
     # Signals are called at creation time...
+
     res = Reservation.objects.create(
         resource=space_resource,
         begin=now(),
@@ -62,7 +63,7 @@ def test_crud_reservation(
             assert ex_resv.item_id.change_key == delegate.update_change_key
 
     if cancel_instead_of_delete:  # But let's cancel it...
-        res.set_state(Reservation.CANCELLED, user=None)
+        res.set_state(Reservation.CANCELLED, user=admin_user)
     else:  # But let's delete it...
         res.delete()
 

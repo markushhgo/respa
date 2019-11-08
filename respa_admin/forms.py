@@ -3,10 +3,13 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 
+from guardian.core import ObjectPermissionChecker
+
 from .widgets import (
-    RespaRadioSelect,
     RespaCheckboxSelect,
     RespaCheckboxInput,
+    RespaGenericCheckboxInput,
+    RespaRadioSelect,
 )
 
 from resources.models import (
@@ -16,9 +19,27 @@ from resources.models import (
     Purpose,
     Resource,
     ResourceImage,
+    Unit,
+    UnitAuthorization
 )
 
+from users.models import User
+
 from respa.settings import LANGUAGES
+
+hour_increment_choices = (
+    ('00:00:00', '0 h'),
+    ('01:00:00', '1 h'),
+    ('02:00:00', '2 h'),
+    ('03:00:00', '3 h'),
+    ('04:00:00', '4 h'),
+    ('05:00:00', '5 h'),
+    ('06:00:00', '6 h'),
+    ('07:00:00', '7 h'),
+    ('08:00:00', '8 h'),
+    ('09:00:00', '9 h'),
+    ('10:00:00', '10 h'),
+)
 
 thirty_minute_increment_choices = (
     ('00:30:00', '0,5 h'),
@@ -192,7 +213,9 @@ class ResourceForm(forms.ModelForm):
             'responsible_contact_info_fi',
             'responsible_contact_info_en',
             'responsible_contact_info_sv',
-            'reservation_extra_questions',
+            'reservation_additional_information_fi',
+            'reservation_additional_information_en',
+            'reservation_additional_information_sv',
         ]
 
         fields = [
@@ -202,16 +225,20 @@ class ResourceForm(forms.ModelForm):
             'equipment',
             'external_reservation_url',
             'people_capacity',
+            'min_age',
+            'max_age',
             'area',
             'min_period',
             'max_period',
             'slot_size',
+            'cooldown',
             'reservable_max_days_in_advance',
             'reservable_min_days_in_advance',
             'max_reservations_per_user',
             'reservable',
             'need_manual_confirmation',
             'authentication',
+            'resource_staff_emails',
             'access_code_type',
             'max_price_per_hour',
             'min_price_per_hour',
@@ -230,6 +257,9 @@ class ResourceForm(forms.ModelForm):
             'slot_size': forms.Select(
                 choices=(thirty_minute_increment_choices)
             ),
+            'cooldown': forms.Select(
+                choices=(hour_increment_choices)
+            ),
             'need_manual_confirmation': RespaRadioSelect(
                 choices=((True, _('Yes')), (False, _('No')))
             ),
@@ -240,6 +270,37 @@ class ResourceForm(forms.ModelForm):
                 choices=((False, _('Can not be reserved')), (True, _('Bookable')))
             ),
         }
+
+
+class UnitForm(forms.ModelForm):
+    name_fi = forms.CharField(
+        required=True,
+        label='Nimi [fi]',
+    )
+
+    class Meta:
+        model = Unit
+
+        translated_fields = [
+            'description_en',
+            'description_fi',
+            'description_sv',
+            'name_en',
+            'name_fi',
+            'name_sv',
+            'street_address_en',
+            'street_address_fi',
+            'street_address_sv',
+            'www_url_en',
+            'www_url_fi',
+            'www_url_sv',
+        ]
+
+        fields = [
+            'address_zip',
+            'municipality',
+            'phone',
+        ] + translated_fields
 
 
 class PeriodFormset(forms.BaseInlineFormSet):
@@ -292,11 +353,11 @@ class PeriodFormset(forms.BaseInlineFormSet):
         return saved_form
 
 
-def get_period_formset(request=None, extra=1, instance=None):
+def get_period_formset(request=None, extra=1, instance=None, parent_class=Resource):
     period_formset_with_days = inlineformset_factory(
-        Resource,
+        parent_class,
         Period,
-        fk_name='resource',
+        fk_name=parent_class._meta.model_name,
         form=PeriodForm,
         formset=PeriodFormset,
         extra=extra,
@@ -326,7 +387,7 @@ def get_resource_image_formset(request=None, extra=1, instance=None):
         return resource_image_formset(data=request.POST, files=request.FILES, instance=instance)
 
 
-def get_translated_field_count(image_formset):
+def get_translated_field_count(image_formset=None):
     """
     Serve a count of how many fields are possible to translate with the translate
     buttons in the UI. The image formset is passed as a parameter since it can hold
@@ -350,6 +411,8 @@ def get_translated_field_count(image_formset):
 
 
 def _get_images_formset_translated_fields(images_formset, lang_postfix):
+    if images_formset is None:
+        return 0
     image_forms = images_formset.forms
     images_translation_count = 0
 
@@ -358,3 +421,84 @@ def _get_images_formset_translated_fields(images_formset, lang_postfix):
             images_translation_count += len([x for x in form.initial if x.endswith(lang_postfix)])
 
     return images_translation_count
+
+
+class UserForm(forms.ModelForm):
+
+    class Meta:
+        model = User
+
+        fields = [
+            'is_staff',
+        ]
+
+        widgets = {
+            'is_staff': RespaGenericCheckboxInput(attrs={
+                'label': _('Staff account'),
+                'help_text': _('Allows user to grant permissions to units')
+            })
+        }
+
+
+class UnitAuthorizationForm(forms.ModelForm):
+    can_approve_reservation = forms.BooleanField(widget=RespaGenericCheckboxInput, required=False)
+
+    def __init__(self, *args, **kwargs):
+        permission_checker = kwargs.pop('permission_checker')
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        can_approve_initial_value = False
+        if self.instance.pk:
+            can_approve_initial_value = permission_checker.has_perm(
+                "unit:can_approve_reservation", self.instance.subject
+            )
+        self.fields['can_approve_reservation'].initial = can_approve_initial_value
+
+    def clean(self):
+        cleaned_data = super().clean()
+        unit = cleaned_data.get('subject')
+        if not self.request.user.unit_authorizations.to_unit(unit).admin_level().exists() \
+           and not self.request.user.unit_group_authorizations.to_unit(unit).admin_level().exists():
+            self.add_error('subject', _('You can\'t add permissions to unit you are not admin of'))
+        return cleaned_data
+
+    class Meta:
+        model = UnitAuthorization
+
+        fields = [
+            'subject',
+            'level',
+            'authorized',
+        ]
+
+
+class UnitAuthorizationFormSet(forms.BaseInlineFormSet):
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request', None)
+        super().__init__(*args, **kwargs)
+        self.permission_checker = ObjectPermissionChecker(kwargs['instance'])
+        self.permission_checker.prefetch_perms(Unit.objects.filter(authorizations__authorized=kwargs['instance']))
+
+    def get_form_kwargs(self, index):
+        kwargs = super().get_form_kwargs(index)
+        kwargs['permission_checker'] = self.permission_checker
+        kwargs['request'] = self.request
+        return kwargs
+
+
+def get_unit_authorization_formset(request=None, extra=1, instance=None):
+    unit_authorization_formset = inlineformset_factory(
+        User,
+        UnitAuthorization,
+        form=UnitAuthorizationForm,
+        formset=UnitAuthorizationFormSet,
+        extra=extra,
+    )
+
+    if not request:
+        return unit_authorization_formset(instance=instance)
+    if request.method == 'GET':
+        return unit_authorization_formset(instance=instance)
+    else:
+        return unit_authorization_formset(request=request, data=request.POST, instance=instance)

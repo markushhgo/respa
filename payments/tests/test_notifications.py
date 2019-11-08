@@ -111,7 +111,7 @@ def test_reservation_created_notification(order_with_products):
 @override_settings(RESPA_MAILS_ENABLED=True)
 def test_reservation_cancelled_notification(order_with_products, order_state, notification_expected):
     user = order_with_products.reservation.user
-    user.preferred_language = 'fi'
+    order_with_products.preferred_language = user.preferred_language = 'fi'
     user.save()
     if order_state == Order.CANCELLED:
         Reservation.objects.filter(id=order_with_products.reservation.id).update(state=Reservation.CONFIRMED)

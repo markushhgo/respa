@@ -905,7 +905,7 @@ def test_extra_fields_ignored_for_non_paid_reservations(user_api_client, list_ur
     assert response.status_code == 201
     reservation = Reservation.objects.latest('created_at')
     assert reservation.reserver_name == ''
-    assert reservation.number_of_participants is None
+    assert reservation.number_of_participants == 1
 
 
 @pytest.mark.django_db
@@ -1123,6 +1123,7 @@ def test_reservation_mails(
 
     # test REQUESTED
     reservation_data_extra['state'] = Reservation.REQUESTED
+    reservation_data_extra['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data_extra, format='json')
     assert response.status_code == 201
 
@@ -1135,10 +1136,11 @@ def test_reservation_mails(
         ('made a preliminary reservation', 'Starts: April 4, 2115, 11 a.m.'),
         clear_outbox=False
     )
+    # Staff will use fallback language
     check_received_mail_exists(
-        'Reservation requested',
+        'Alustava varaus tehty',
         general_admin.email,
-        'A new preliminary reservation has been made'
+        'Uusi alustava varaus on tehty'
     )
 
     detail_url = '%s%s/' % (list_url, response.data['id'])
@@ -1169,9 +1171,17 @@ def test_reservation_mails(
     assert 'this resource rocks' in str(mail.outbox[0].message())
     mail.outbox = []
 
+    with translation.override('en'):
+        NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL,
+            subject='Reservation cancelled',
+            body='Reservation has been cancelled.',
+        )
+
     # test CANCELLED
     reservation_data_extra['state'] = Reservation.CANCELLED
     response = api_client.delete(detail_url, format='json')
+
     assert response.status_code == 204
     assert len(mail.outbox) == 1
     check_received_mail_exists(
@@ -1187,6 +1197,8 @@ def test_reservation_mails(
 def test_reservation_mails_in_finnish(
         api_client, general_admin, user_api_client, test_unit2,
         list_url, reservation_data_extra, perm_type, user):
+    reservation_data_extra['preferred_language'] = 'fi'
+
     resource = Resource.objects.get(id=reservation_data_extra['resource'])
     resource.need_manual_confirmation = True
     resource.reservation_metadata_set = ReservationMetadataSet.objects.get(name='default')
@@ -1266,6 +1278,13 @@ def test_reservation_mails_in_finnish(
     assert 'this resource rocks' in str(mail.outbox[0].message())
     mail.outbox = []
 
+    with translation.override('fi'):
+        NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_CANCELLED_BY_OFFICIAL,
+            subject='Varaus peruttu',
+            body='Varauksesi on peruttu.',
+        )
+
     # test CANCELLED
     reservation_data_extra['state'] = Reservation.CANCELLED
     response = api_client.delete(detail_url, format='json')
@@ -1281,6 +1300,8 @@ def test_reservation_mails_in_finnish(
 @override_settings(RESPA_MAILS_ENABLED=True)
 @pytest.mark.django_db
 def test_reservation_created_mail(user_api_client, list_url, reservation_data, user, reservation_created_notification):
+    reservation_data['preferred_language'] = 'en'
+
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     file_name, ical_file, mimetype = mail.outbox[0].attachments[0]
     assert response.status_code == 201
@@ -1310,6 +1331,7 @@ def test_reservation_html_mail(user_api_client, list_url, reservation_data, user
         reservation_created_notification.html_body = '<b>HTML</b> body'
         reservation_created_notification.save()
 
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1331,7 +1353,7 @@ def test_reservation_mail_empty_text_body_should_become_html_body_without_tags(u
         reservation_created_notification.body = ''
         reservation_created_notification.html_body = '<b>HTML</b> body'
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1352,7 +1374,7 @@ def test_reservation_mail_can_have_subject_only(user_api_client, list_url, reser
         reservation_created_notification.body = ''
         reservation_created_notification.html_body = ''
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     response = user_api_client.post(list_url, data=reservation_data, format='json')
     assert response.status_code == 201
 
@@ -1386,7 +1408,7 @@ def test_reservation_mail_images(user_api_client, user, list_url, reservation_da
         reservation_created_notification.body = 'image url: {{ resource_main_image_url }}'
         reservation_created_notification.html_body = 'image: <img src="{{ resource_ground_plan_image_url }}">'
         reservation_created_notification.save()
-
+    reservation_data['preferred_language'] = 'en'
     main_image = ResourceImage.objects.create(resource=resource_in_unit, type='main')
     ResourceImage.objects.create(resource=resource_in_unit, type='ground_plan')
     last_ground_plan_image = ResourceImage.objects.create(resource=resource_in_unit, type='ground_plan')
@@ -1528,6 +1550,8 @@ def test_access_code_visibility(
 @override_settings(RESPA_MAILS_ENABLED=True)
 @pytest.mark.django_db
 def test_reservation_created_with_access_code_mail(user_api_client, user, resource_in_unit, list_url, reservation_data):
+    reservation_data['preferred_language'] = 'en'
+
 
     # The mail should not be sent if access code type is none
     response = user_api_client.post(list_url, data=reservation_data)
@@ -1966,48 +1990,6 @@ def test_resource_filter(resource_in_unit, resource_in_unit2, other_resource, re
     assert_response_objects(response, (reservation, reservation2))
 
 
-@pytest.mark.django_db
-def test_include_resource_detail(api_client, resource_in_unit, reservation, list_url):
-    response = api_client.get(list_url + '?include=resource_detail')
-    assert response.status_code == 200
-    assert response.json()['results'][0]['resource']['name']['fi'] == resource_in_unit.name
-
-
-@pytest.mark.parametrize('filtering', (
-    'reserver_info_search=',
-    'reserver_info_search=martta',
-    'reserver_info_search=brendan',
-    'reserver_info_search=neutra',
-    'reserver_info_search=brendan@neutra.com',
-))
-@pytest.mark.django_db
-def test_reserver_info_search_filter(staff_api_client, staff_user, reservation, reservation2,
-                                     reservation3, resource_in_unit2, list_url, filtering):
-    assign_perm('unit:can_view_reservation_extra_fields', staff_user, resource_in_unit2.unit)
-
-    # without filters all reservations should be returned
-    response = staff_api_client.get(list_url)
-    assert response.status_code == 200
-    assert_response_objects(response, [reservation, reservation2, reservation3])
-
-    url_with_filters = list_url + '?' + filtering
-
-    response = staff_api_client.get(url_with_filters)
-    assert response.status_code == 200
-
-    # if no value given for the filter, it should return all reservations
-    if filtering == 'reserver_info_search=':
-        assert_response_objects(response, [reservation, reservation2, reservation3])
-
-    # martta is reserver_name in first reservation fixture, which has another unit assigned,
-    # hence our staff_user should not have permissions to view reservations' users' info
-    elif filtering == 'reserver_info_search=martta':
-        assert_response_objects(response, [])
-
-    # with the given value, only the third reservation should be returned,
-    # as the filter value has info of this reservation's user
-    else:
-        assert_response_objects(response, reservation3)
 
 
 @pytest.mark.django_db
@@ -2060,3 +2042,10 @@ def test_reservation_cannot_add_bogus_type(resource_in_unit, reservation_data, a
     reservation_data['type'] = 'foobar'
     response = api_client.post(list_url, data=reservation_data)
     assert response.status_code == 400
+
+
+@pytest.mark.django_db
+def test_include_resource_detail(api_client, resource_in_unit, reservation, list_url):
+    response = api_client.get(list_url + '?include=resource_detail')
+    assert response.status_code == 200
+    assert response.json()['results'][0]['resource']['name']['fi'] == resource_in_unit.name
