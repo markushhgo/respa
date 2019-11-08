@@ -28,7 +28,7 @@ DEFAULTS = dict(
     API_AUTHORIZATION_FIELD='',
 
     # URL of the OpenID Provider
-    ISSUER='https://testitunnistamo.turku.fi',
+    ISSUER='https://tunnistamo.turku.fi',
 
     # Auth scheme used in the Authorization header
     AUTH_SCHEME='Bearer',
