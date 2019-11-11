@@ -59,7 +59,7 @@ env = environ.Env(
     OIDC_SECRET=(str, ''),
     OIDC_API_SCOPE_PREFIX=(str,''),
     OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION=(bool, False),
-    OIDC_ISSUER=(str,'https://tunnistamo.turku.fi'),
+    OIDC_ISSUER=(str, ''),
     OIDC_LEEWAY=(int, 0)
 )
 environ.Env.read_env()

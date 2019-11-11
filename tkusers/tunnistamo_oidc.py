@@ -3,11 +3,11 @@ import urllib.parse as urlparse
 from social_core.backends.open_id_connect import OpenIdConnectAuth
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
-
+from . import settings
 
 class TunnistamoOIDCAuth(OpenIdConnectAuth):
     name = 'tunnistamo'
-    OIDC_ENDPOINT = 'https://tunnistamo.turku.fi/openid'
+    OIDC_ENDPOINT = '%s/openid' % getattr(settings, 'OIDC_AUTH')['ISSUER']
     END_SESSION_URL = ''
 
     def __init__(self, *args, **kwargs):
