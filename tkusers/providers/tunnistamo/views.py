@@ -4,7 +4,7 @@ from allauth.socialaccount.providers.oauth2.views import (
     OAuth2Adapter, OAuth2LoginView, OAuth2CallbackView
 )
 from .provider import TurkuOIDCProvider
-from tkusers.settings import settings
+from django.conf import settings
 
 class TurkuOIDCOAuth2Adapter(OAuth2Adapter):
     provider_id = TurkuOIDCProvider.id

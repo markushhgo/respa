@@ -3,7 +3,7 @@ import urllib.parse as urlparse
 from social_core.backends.open_id_connect import OpenIdConnectAuth
 from django.urls import reverse
 from django.urls.exceptions import NoReverseMatch
-from . import settings
+from django.conf import settings
 
 class TunnistamoOIDCAuth(OpenIdConnectAuth):
     name = 'tunnistamo'
