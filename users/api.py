@@ -20,15 +20,34 @@ class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField(source='get_display_name')
     ical_feed_url = serializers.SerializerMethodField()
     staff_perms = serializers.SerializerMethodField()
+    staff_status = serializers.SerializerMethodField()
 
     class Meta:
         fields = [
             'last_login', 'username', 'email', 'date_joined',
             'first_name', 'last_name', 'uuid', 'department_name',
-            'is_staff', 'display_name', 'ical_feed_url', 'staff_perms', 'favorite_resources',
-            'preferred_language', 'birthdate'
+            'is_staff', 'display_name', 'ical_feed_url', 'staff_status',
+            'staff_perms', 'favorite_resources', 'preferred_language', 'birthdate'
         ]
         model = get_user_model()
+
+
+    def get_staff_status(self, obj):
+        x = {}
+        if obj.is_staff:
+            x.update({
+                'is_staff':True
+            })
+
+        if obj.is_general_admin:
+            x.update({
+                'is_general_admin':True
+            })
+        if obj.is_superuser:
+            x.update({
+                'is_superuser':True
+            })
+        return x
 
     def get_ical_feed_url(self, obj):
         return build_ical_feed_url(obj.get_or_create_ical_token(), self.context['request'])
