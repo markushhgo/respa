@@ -33,6 +33,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 
     def get_staff_status(self, obj):
+        units = Unit.objects.all()
         x = {}
         if obj.is_staff:
             x.update({
@@ -47,6 +48,16 @@ class UserSerializer(serializers.ModelSerializer):
             x.update({
                 'is_superuser':True
             })
+        x.update({
+            'is_manager_for': []
+        })
+        for unit in units:
+            if unit.is_manager(obj):
+                x['is_manager_for'].append(unit.id)
+
+        if len(x['is_manager_for']) == 0:
+            del x['is_manager_for']
+
         return x
 
     def get_ical_feed_url(self, obj):
