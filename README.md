@@ -6,7 +6,7 @@ Respa – Resource reservation and management service
 ===================
 Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland.
 
-User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamoTku)
+User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamo)
 
 There are two user interfaces for editing data: Admins may use the more powerful Django Admin UI - other users with less privileges may use the more restricted but easier-to-use and nicer-looking Respa Admin UI.
 
@@ -177,7 +177,7 @@ docker-compose up
 cat <name_of_the_sanitized_respa_dump>.sql | docker exec -i respa-db psql -U postgres -d respa
 ```
 
-Try: http://localhost:8000/ra/resource/
+Try: http://localhost:8000/ra/
 
 
 Database
@@ -286,6 +286,11 @@ pinned versions for updates.
 To remove a dependency, remove it from `requirements.in`,
 run `pip-compile` and then `pip-sync`. If everything works
 as expected, commit the changes.
+
+
+Also uses [django_multi_email_field](https://github.com/Christophe31/django-multi-email-field.git)
+
+Installation via `pip install -U git+https://github.com/Christophe31/django-multi-email-field.git`
 
 Documentation
 -------------
