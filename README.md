@@ -31,11 +31,11 @@ Contributing
 
 Your contributions are always welcome!
 
-Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respaTku/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
+Our main issue tracking is on [Github](https://github.com/digipointtku/respa/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respa/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
 
 - [City of Helsinki](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.hel.fi/) & [Huvaja UI](https://huonevaraus.hel.fi/)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
-- City of Turku - for [Varaamo UI](https://varaamo.turku.fi/) - [GitHub repo](https://github.com/digipointtku/respaTku)
+- [City of Turku](https://respa.turku.fi/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respa)
 - [City of Hämeenlinna](https://varaukset.hameenlinna.fi/v1) - for [Varaamo UI](https://varaukset.hameenlinna.fi/varaamo/) and [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 - [City of Espoo](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.espoo.fi/)
 - [City of Vantaa](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.vantaa.fi/)
@@ -45,7 +45,6 @@ Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/
 - [The Libraries of Lapland](https://varaamo-api.lapinkirjasto.fi/v1) - for [Varaamo UI](https://varaamo.lapinkirjasto.fi/)
 - [City of Tampere](https://respa.tampere.fi/v1/) - for [Varaamo UI](https://varaamo.tampere.fi/) - [GitHub repo](https://github.com/Tampere/respa)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
-- [City of Turku](https://varaamo.turku.fi:8000/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respaTku)
 - City of Hämeenlinna - for [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 
 FAQ
