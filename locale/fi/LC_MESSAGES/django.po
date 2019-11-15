@@ -810,7 +810,7 @@ msgid "You must end the reservation after it has begun"
 msgstr "Varauksen loppuaika ei voi olla ennen alkuaikaa"
 
 msgid "Begin and end time must match time slots"
-msgstr "Alku- ja loppuajan täytyy osua aikaikkunoihin"
+msgstr "Tarkista aikarajoitteet"
 
 msgid "The resource is already reserved for some of the period"
 msgstr "Tila on jo varattu ainakin osan ajanjaksosta"
