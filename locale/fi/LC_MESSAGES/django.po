@@ -1590,3 +1590,15 @@ msgstr "AD Ryhmä kartoitukset"
 
 msgid "AD Groups"
 msgstr "AD Ryhmät"
+
+msgid "All units I manage"
+msgstr "Kaikki hallitsemani toimipisteet"
+
+msgid "All units"
+msgstr "Kaikki toimipisteet"
+
+msgid "Editable"
+msgstr "Muokattavissa"
+
+msgid "Can be edited"
+msgstr "Voi muokata"

@@ -34,31 +34,31 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_staff_status(self, obj):
         units = Unit.objects.all()
-        x = {}
+        staff_perm = {}
         if obj.is_staff:
-            x.update({
+            staff_perm.update({
                 'is_staff':True
             })
 
         if obj.is_general_admin:
-            x.update({
+            staff_perm.update({
                 'is_general_admin':True
             })
         if obj.is_superuser:
-            x.update({
+            staff_perm.update({
                 'is_superuser':True
             })
-        x.update({
+        staff_perm.update({
             'is_manager_for': []
         })
         for unit in units:
             if unit.is_manager(obj):
-                x['is_manager_for'].append(unit.id)
+                staff_perm['is_manager_for'].append(unit.id)
 
-        if len(x['is_manager_for']) == 0:
-            del x['is_manager_for']
+        if len(staff_perm['is_manager_for']) == 0:
+            del staff_perm['is_manager_for']
 
-        return x
+        return staff_perm
 
     def get_ical_feed_url(self, obj):
         return build_ical_feed_url(obj.get_or_create_ical_token(), self.context['request'])
