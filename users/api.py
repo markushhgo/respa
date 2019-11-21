@@ -20,15 +20,45 @@ class UserSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField(source='get_display_name')
     ical_feed_url = serializers.SerializerMethodField()
     staff_perms = serializers.SerializerMethodField()
+    staff_status = serializers.SerializerMethodField()
 
     class Meta:
         fields = [
             'last_login', 'username', 'email', 'date_joined',
             'first_name', 'last_name', 'uuid', 'department_name',
-            'is_staff', 'display_name', 'ical_feed_url', 'staff_perms', 'favorite_resources',
-            'preferred_language', 'birthdate'
+            'is_staff', 'display_name', 'ical_feed_url', 'staff_status',
+            'staff_perms', 'favorite_resources', 'preferred_language', 'birthdate'
         ]
         model = get_user_model()
+
+
+    def get_staff_status(self, obj):
+        units = Unit.objects.all()
+        staff_perm = {}
+        if obj.is_staff:
+            staff_perm.update({
+                'is_staff':True
+            })
+
+        if obj.is_general_admin:
+            staff_perm.update({
+                'is_general_admin':True
+            })
+        if obj.is_superuser:
+            staff_perm.update({
+                'is_superuser':True
+            })
+        staff_perm.update({
+            'is_manager_for': []
+        })
+        for unit in units:
+            if unit.is_manager(obj):
+                staff_perm['is_manager_for'].append(unit.id)
+
+        if len(staff_perm['is_manager_for']) == 0:
+            del staff_perm['is_manager_for']
+
+        return staff_perm
 
     def get_ical_feed_url(self, obj):
         return build_ical_feed_url(obj.get_or_create_ical_token(), self.context['request'])

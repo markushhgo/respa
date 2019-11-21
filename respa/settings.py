@@ -59,7 +59,7 @@ env = environ.Env(
     OIDC_SECRET=(str, ''),
     OIDC_API_SCOPE_PREFIX=(str,''),
     OIDC_REQUIRE_API_SCOPE_FOR_AUTHENTICATION=(bool, False),
-    OIDC_ISSUER=(str,'https://tunnistamo.turku.fi'),
+    OIDC_ISSUER=(str, ''),
     OIDC_LEEWAY=(int, 0)
 )
 environ.Env.read_env()
@@ -116,7 +116,7 @@ INSTALLED_APPS = [
     'anymail',
     'reversion',
     'django_admin_json_editor',
-    'multi_email_field',
+    'multi_email_field',            #https://github.com/Christophe31/django-multi-email-field.git
     'social_django',
     'allauth',
     'allauth.account',

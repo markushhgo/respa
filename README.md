@@ -6,7 +6,7 @@ Respa – Resource reservation and management service
 ===================
 Respa is a backend service for reserving and managing resources (e.g. meeting rooms, equipment, personnel). The open two-way REST API is interoperable with the [6Aika Resource reservation API specification](https://github.com/6aika/api-resurssienvaraus) created by the six largest cities in Finland.
 
-User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamoTku)
+User interface for Respa developed by the City of Turku is [Varaamo](https://github.com/digipointTku/varaamo)
 
 There are two user interfaces for editing data: Admins may use the more powerful Django Admin UI - other users with less privileges may use the more restricted but easier-to-use and nicer-looking Respa Admin UI.
 
@@ -31,11 +31,11 @@ Contributing
 
 Your contributions are always welcome!
 
-Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respaTku/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
+Our main issue tracking is on [Github](https://github.com/digipointtku/respa/issues). If you want to report a bug or see a new feature feel free to create a [new issue](https://github.com/digipointtku/respa/issues/new) on GitHub. Alternatively, you can create a pull request (base master branch). Your PR will be reviewed by the project tech lead.
 
 - [City of Helsinki](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.hel.fi/) & [Huvaja UI](https://huonevaraus.hel.fi/)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
-- City of Turku - for [Varaamo UI](https://varaamo.turku.fi/) - [GitHub repo](https://github.com/digipointtku/respaTku)
+- [City of Turku](https://respa.turku.fi/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respa)
 - [City of Hämeenlinna](https://varaukset.hameenlinna.fi/v1) - for [Varaamo UI](https://varaukset.hameenlinna.fi/varaamo/) and [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 - [City of Espoo](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.espoo.fi/)
 - [City of Vantaa](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.vantaa.fi/)
@@ -45,7 +45,6 @@ Our main issue tracking is on [Github](https://github.com/digipointtku/respaTku/
 - [The Libraries of Lapland](https://varaamo-api.lapinkirjasto.fi/v1) - for [Varaamo UI](https://varaamo.lapinkirjasto.fi/)
 - [City of Tampere](https://respa.tampere.fi/v1/) - for [Varaamo UI](https://varaamo.tampere.fi/) - [GitHub repo](https://github.com/Tampere/respa)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
-- [City of Turku](https://varaamo.turku.fi:8000/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/digipointTku/respaTku)
 - City of Hämeenlinna - for [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 
 FAQ
@@ -177,7 +176,7 @@ docker-compose up
 cat <name_of_the_sanitized_respa_dump>.sql | docker exec -i respa-db psql -U postgres -d respa
 ```
 
-Try: http://localhost:8000/ra/resource/
+Try: http://localhost:8000/ra/
 
 
 Database
@@ -286,6 +285,11 @@ pinned versions for updates.
 To remove a dependency, remove it from `requirements.in`,
 run `pip-compile` and then `pip-sync`. If everything works
 as expected, commit the changes.
+
+
+Also uses [django_multi_email_field](https://github.com/Christophe31/django-multi-email-field.git)
+
+Installation via `pip install -U git+https://github.com/Christophe31/django-multi-email-field.git`
 
 Documentation
 -------------

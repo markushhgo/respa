@@ -4,13 +4,13 @@ from allauth.socialaccount.providers.oauth2.views import (OAuth2Adapter,
                                                           OAuth2LoginView,
                                                           OAuth2CallbackView)
 from .provider import TurkuProvider
-
+from django.conf import settings
 
 class TurkuOAuth2Adapter(OAuth2Adapter):
     provider_id = TurkuProvider.id
-    access_token_url = 'https://tunnistamo.turku.fi/oauth2/token/'
-    authorize_url = 'https://tunnistamo.turku.fi/oauth2/authorize/'
-    profile_url = 'https://tunnistamo.turku.fi/user/'
+    access_token_url = '%s/oauth2/token/' % getattr(settings, 'OIDC_AUTH')['ISSUER']
+    authorize_url = '%s/oauth2/authorize/' % getattr(settings, 'OIDC_AUTH')['ISSUER']
+    profile_url = '%s/user/' % getattr(settings, 'OIDC_AUTH')['ISSUER']
 
     def complete_login(self, request, app, token, **kwargs):
         headers = {'Authorization': 'Bearer {0}'.format(token.token)}
