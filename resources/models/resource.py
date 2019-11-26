@@ -330,7 +330,7 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
 
         :type user: User
         """
-        if self.is_admin(user):
+        if self.is_admin(user) or user.is_staff:
             return
 
         max_count = self.max_reservations_per_user
