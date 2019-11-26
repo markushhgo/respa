@@ -4,7 +4,7 @@ from django.db import models, transaction
 from django.contrib.auth.models import Group, AbstractUser as DjangoAbstractUser
 from django.utils.translation import ugettext_lazy as _
 
-from .utils import uuid_to_username
+from .utils import uuid_to_username, username_to_uuid
 
 logger = logging.getLogger(__name__)
 
@@ -78,6 +78,9 @@ class AbstractUser(DjangoAbstractUser):
 
     def natural_key(self):
         return (str(self.uuid),)
+
+    def get_uuid(self):
+        return username_to_uuid(self.username)
 
     def sync_groups_from_ad(self):
         """Determine which Django groups to add or remove based on AD groups."""

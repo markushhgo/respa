@@ -80,6 +80,16 @@ class ReservationQuerySet(models.QuerySet):
         allowed_resources = Resource.objects.with_perm('can_view_reservation_catering_orders', user)
         return self.filter(Q(user=user) | Q(resource__in=allowed_resources))
 
+class ReservationBulkQuerySet(models.QuerySet):
+    def current(self):
+        return self
+
+class ReservationBulk(ModifiableModel):
+    bucket = models.ManyToManyField('Reservation', related_name='reservationbulks', db_index=True)
+    objects = ReservationBulkQuerySet.as_manager()
+
+    def __str__(self):
+        return "Reservation Bulk"
 
 class Reservation(ModifiableModel):
     CREATED = 'created'

@@ -6,26 +6,34 @@ from django.conf import settings
 from guardian.core import ObjectPermissionChecker
 from django.contrib.auth import get_user_model
 from django.conf import settings
+from django.http import JsonResponse
 from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import (
     PermissionDenied, ValidationError as DjangoValidationError
 )
 from django.db.models import Q
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime
 from django_filters.rest_framework import DjangoFilterBackend
+from django.contrib.sites.shortcuts import get_current_site
 from notifications.models import NotificationType
 from rest_framework import viewsets, serializers, filters, exceptions, permissions
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
+from rest_framework.decorators import action
 from rest_framework.fields import BooleanField, IntegerField
 from rest_framework import renderers
 from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.settings import api_settings as drf_settings
+from rest_framework.permissions import IsAdminUser
 from psycopg2.extras import DateTimeTZRange
 
 from munigeo import api as munigeo_api
+from datetime import datetime
+from time import strptime, mktime
 
-from resources.models import Reservation, Resource, ReservationMetadataSet
+from resources.models import Reservation, Resource, ReservationMetadataSet, ReservationBulk, ReservationQuerySet
 from resources.models.reservation import RESERVATION_EXTRA_FIELDS
+from resources.models.utils import build_reservations_ical_file
 from resources.pagination import ReservationPagination
 from resources.models.utils import generate_reservation_xlsx, get_object_or_none
 
@@ -69,6 +77,24 @@ class UserSerializer(TranslatedModelSerializer):
         fields = ('id', 'display_name', 'email')
         ref_name = 'ReservationUserSerializer'
 
+
+class ReservationBulkSerializer(ExtraDataMixin, TranslatedModelSerializer):
+    bucket = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ReservationBulk
+        fields = [
+            'bucket'
+        ]
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_bucket(self, obj):
+        data = []
+        for res in obj.bucket.all():
+            data.append(
+                (res.begin, res.end)
+            )
 
 class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoModelSerializer):
     begin = NullableDateTimeField()
@@ -552,6 +578,154 @@ class ReservationCacheMixin:
         self._preload_permissions()
         return context
 
+class ReservationBulkViewSet(viewsets.ModelViewSet):
+    queryset = ReservationBulk.objects.all()
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly, ReservationPermission, permissions.IsAdminUser,)
+
+    def get_serializer_class(self):
+        return ReservationBulkSerializer
+
+    def get_serializer(self, *args, **kwargs):
+        return super().get_serializer(*args, **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        return queryset
+
+    """
+    {
+    "reservation_stack": [{
+        "begin": "2019-11-26T13:00:00+02:00",
+        "end": "2019-11-26T14:00:00+02:00",
+        "resource": "awmdvkth2vea"
+    }, {
+        "begin": "2019-11-27T11:00:00.000Z",
+        "end": "2019-11-27T12:00:00.000Z"
+    }, {
+        "begin": "2019-11-28T11:00:00.000Z",
+        "end": "2019-11-28T12:00:00.000Z"
+    }, {
+        "begin": "2019-11-29T11:00:00.000Z",
+        "end": "2019-11-29T12:00:00.000Z"
+    }],
+    "reserver_name": "nimiiiiiii",
+    "reserver_phone_number": "2092393939",
+    "reserver_email_address": "asd@ewq.com",
+    "preferred_language": "fi",
+    "resource": "awmdvkth2vea"
+    }
+    """
+
+    def create(self, request):
+        stack = request.data.pop('reservation_stack')
+        if 'resource' in stack[0]:
+            stack[0].pop('resource')
+        data = {
+            **request.data
+        }
+        data.update({
+            'user': request.user
+        })
+        try:
+            for key in stack:
+                begin = key.get('begin')
+                end = key.get('end')
+                if begin is None or end is None:
+                    return JsonResponse(
+                        {
+                            'status':'false',
+                            'message':'Reservation begin or end are null'
+                        },
+                        status=400
+                    )
+            reservations = []
+            failed = False
+            for key in stack:
+                begin = parse_datetime(key.get('begin'))
+                end = parse_datetime(key.get('end'))
+                #begin =  datetime.fromtimestamp(mktime(strptime(str(key.get('begin')), '%Y-%m-%dT%H:%M:%S.%fz')))
+                #end = datetime.fromtimestamp(mktime(strptime(str(key.get('end')), '%Y-%m-%dT%H:%M:%S.%fz')))
+                resource = data.get('resource')
+                if not resource:
+                    print("No resource")
+                    raise Exception("No resource")
+                for res in Resource.objects.all():
+                    if res.id == resource:
+                        resource = res
+                        break
+                if not isinstance(resource, Resource):
+                    print("Invalid resource type")
+                    raise Exception("Invalid resource type")
+                data['resource'] = resource
+                res = Reservation(
+                    **data
+                )
+                res.begin = begin
+                res.end = end
+                if res.user is None:
+                    print('Reservation user is None')
+                if resource.validate_reservation_period(res, res.user) or resource.validate_max_reservations_per_user(res.user) or resource.check_reservation_collision(begin, end, res):
+                    failed = True
+                    continue
+                reservations.append(res)
+            if failed:
+                return JsonResponse(
+                    {
+                        'status':'false',
+                        'message': _('Some reservations failed reservation checks.')
+                    }, status=400
+                )
+
+            for res in reservations:
+                res.state = 'confirmed'
+                res.save()
+            res = reservations[0]
+            url = ''.join(['http://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
+            #send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
+            ical_file = build_reservations_ical_file(reservations)
+            attachment = ('reservation.ics', ical_file, 'text/calendar')
+            print('Email address: %s or %s' % (res.reserver_email_address, res.user.email))
+            res.send_reservation_mail(
+                NotificationType.RESERVATION_BULK_CREATED,
+                user=res.user,
+                action_by_official=res.user.is_staff,
+                attachments=[attachment]
+            )
+            return JsonResponse(
+                {
+                    'status':'true',
+                    'url': str(url),
+                    'id': int(res.id),
+                    'resource': str(res.resource.id),
+                    'user': {
+                        'id': str(res.user.get_uuid()),
+                        'display_name': str(res.user.get_display_name()),
+                        'email': str(res.reserver_email_address) if res.reserver_email_address else res.user.email
+                    },
+                    'begin': str(res.begin),
+                    'end': str(res.end),
+                    'is_own': bool(res.is_own(res.user)),
+                    'state': str(res.state),
+                    'need_manual_confirmation': bool(res.need_manual_confirmation()),
+                    'staff_event': bool(res.staff_event),
+                    'user_permissions': {
+                        'can_modify': bool(res.can_modify(res.user)),
+                        'can_delete': bool(res.can_modify(res.user))
+                    },
+                    'preferred_language': str(res.preferred_language),
+                    'type': str(res.type)
+                }, status=200
+            )
+        except Exception as ex:
+            print(ex)
+            return JsonResponse(
+                {
+                    'status':'false',
+                    'message': 'Internal server error'
+                }, status=500
+            )
+
+
 
 class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, ReservationCacheMixin):
     queryset = Reservation.objects.select_related('user', 'resource', 'resource__unit')\
@@ -665,3 +839,4 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_instance.notify_staff_about_reservation(NotificationType.RESERVATION_MODIFIED_OFFICIAL)
 
 register_view(ReservationViewSet, 'reservation')
+register_view(ReservationBulkViewSet, 'reservation_bulk')
