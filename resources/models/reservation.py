@@ -403,7 +403,7 @@ class Reservation(ModifiableModel):
             if (self.number_of_participants > self.resource.people_capacity):
                 raise ValidationError(_("This resource has people capacity limit of %s" % self.resource.people_capacity))
 
-    def get_notification_context(self, language_code, user=None, notification_type=None):
+    def get_notification_context(self, language_code, user=None, notification_type=None, extra_context={}):
         if not user:
             user = self.user
         with translation.override(language_code):
@@ -477,10 +477,16 @@ class Reservation(ModifiableModel):
             order = getattr(self, 'order', None)
             if order:
                 context['order'] = order.get_notification_context(language_code)
-
+        if extra_context:
+            context.update({
+                'bulk_email_context':
+                {
+                **extra_context
+                }
+            })
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None, extra_context={}):
         """
         Stuff common to all reservation related mails.
 

@@ -675,10 +675,18 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                         'message': _('Some reservations failed reservation checks.')
                     }, status=400
                 )
-
+            reservation_dates_context = {}
             for res in reservations:
                 res.state = 'confirmed'
                 res.save()
+                reservation_dates_context.update(
+                    {
+                        str(res.origin_id): {
+                            'begin': str(res.begin),
+                            'end': str(res.end)
+                        }
+                    }
+                )
             res = reservations[0]
             url = ''.join(['http://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
             #send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
@@ -687,9 +695,9 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
             print('Email address: %s or %s' % (res.reserver_email_address, res.user.email))
             res.send_reservation_mail(
                 NotificationType.RESERVATION_BULK_CREATED,
-                user=res.user,
                 action_by_official=res.user.is_staff,
-                attachments=[attachment]
+                attachments=[attachment],
+                extra_context=reservation_dates_context
             )
             return JsonResponse(
                 {
