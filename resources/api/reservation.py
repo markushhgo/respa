@@ -639,7 +639,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                         status=400
                     )
             reservations = []
-            failed = False
+            failed = (False, "")
             for key in stack:
                 begin = parse_datetime(key.get('begin'))
                 end = parse_datetime(key.get('end'))
@@ -662,17 +662,21 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                 )
                 res.begin = begin
                 res.end = end
-                if res.user is None:
-                    print('Reservation user is None')
-                if resource.validate_reservation_period(res, res.user) or resource.validate_max_reservations_per_user(res.user) or resource.check_reservation_collision(begin, end, res):
-                    failed = True
+                if resource.validate_reservation_period(res, res.user):
+                    failed = (True, "Reservation period validation")
+                    continue
+                if resource.validate_max_reservations_per_user(res.user):
+                    failed = (True, "Max reservations validation")
+                    continue
+                if resource.check_reservation_collision(begin, end, res):
+                    failed = (True, "Reservation collision validation")
                     continue
                 reservations.append(res)
-            if failed:
+            if failed[0]:
                 return JsonResponse(
                     {
                         'status':'false',
-                        'message': _('Some reservations failed reservation checks.')
+                        'message': _('Some reservations failed reservation checks: %s' % failed[1])
                     }, status=400
                 )
             reservation_dates_context = {}
