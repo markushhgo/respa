@@ -620,6 +620,12 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
         stack = request.data.pop('reservation_stack')
         if 'resource' in stack[0]:
             stack[0].pop('resource')
+        if len(stack) > 100:
+            return JsonResponse({
+                'status':'false',
+                'message':'Too many reservations at once.'
+                }, status=400
+            )
         data = {
             **request.data
         }
@@ -647,14 +653,12 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                 #end = datetime.fromtimestamp(mktime(strptime(str(key.get('end')), '%Y-%m-%dT%H:%M:%S.%fz')))
                 resource = data.get('resource')
                 if not resource:
-                    print("No resource")
                     raise Exception("No resource")
                 for res in Resource.objects.all():
                     if res.id == resource:
                         resource = res
                         break
                 if not isinstance(resource, Resource):
-                    print("Invalid resource type")
                     raise Exception("Invalid resource type")
                 data['resource'] = resource
                 res = Reservation(
