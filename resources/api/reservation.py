@@ -578,19 +578,65 @@ class ReservationCacheMixin:
         self._preload_permissions()
         return context
 
-class ReservationBulkViewSet(viewsets.ModelViewSet):
-    queryset = ReservationBulk.objects.all()
+class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
+    queryset = Reservation.objects.select_related('user', 'resource', 'resource__unit')\
+        .prefetch_related('catering_orders').prefetch_related('resource__groups').order_by('begin', 'resource__unit__name', 'resource__name')
+    if settings.RESPA_PAYMENTS_ENABLED:
+        queryset = queryset.prefetch_related('order', 'order__order_lines', 'order__order_lines__product')
+    filter_backends = (DjangoFilterBackend, filters.OrderingFilter, UserFilterBackend, ReservationFilterBackend,
+                       NeedManualConfirmationFilterBackend, StateFilterBackend, CanApproveFilterBackend)
+    filterset_class = ReservationFilterSet
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, ReservationPermission, permissions.IsAdminUser,)
+    renderer_classes = (renderers.JSONRenderer, renderers.BrowsableAPIRenderer, ReservationExcelRenderer)
+    pagination_class = ReservationPagination
+    authentication_classes = (
+        list(drf_settings.DEFAULT_AUTHENTICATION_CLASSES) +
+        [TokenAuthentication, SessionAuthentication])
+    ordering_fields = ('begin',)
 
     def get_serializer_class(self):
-        return ReservationBulkSerializer
+        if settings.RESPA_PAYMENTS_ENABLED:
+            from payments.api.reservation import PaymentsReservationSerializer  # noqa
+            return PaymentsReservationSerializer
+        else:
+            return ReservationSerializer
 
     def get_serializer(self, *args, **kwargs):
+        if 'data' not in kwargs and len(args) == 1:
+            # It's a read operation
+            instance_or_page = args[0]
+            if isinstance(instance_or_page, Reservation):
+                self._page = [instance_or_page]
+            else:
+                self._page = instance_or_page
+
         return super().get_serializer(*args, **kwargs)
+
+    def get_serializer_context(self, *args, **kwargs):
+        context = super().get_serializer_context(*args, **kwargs)
+        if hasattr(self, '_page'):
+            context.update(self._get_cache_context())
+        return context
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        user = self.request.user
+
+        # General Administrators can see all reservations
+        if is_general_admin(user):
+            return queryset
+
+        # normal users can see only their own reservations and reservations that are confirmed, requested or
+        # waiting for payment
+        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT))
+        if user.is_authenticated:
+            filters |= Q(user=user)
+        queryset = queryset.filter(filters)
+
+        queryset = queryset.filter(resource__in=Resource.objects.visible_for(user))
+
         return queryset
+
 
     """
     {
@@ -608,14 +654,13 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
         "begin": "2019-11-29T11:00:00.000Z",
         "end": "2019-11-29T12:00:00.000Z"
     }],
-    "reserver_name": "nimiiiiiii",
+    "reserver_name": "nimi",
     "reserver_phone_number": "2092393939",
     "reserver_email_address": "asd@ewq.com",
     "preferred_language": "fi",
     "resource": "awmdvkth2vea"
     }
     """
-
     def create(self, request):
         stack = request.data.pop('reservation_stack')
         if 'resource' in stack[0]:
@@ -683,24 +728,30 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                         'message': _('Some reservations failed reservation checks: %s' % failed[1])
                     }, status=400
                 )
-            reservation_dates_context = {}
+            reservation_dates_context = { 'dates': [] }
+
+            """
+            {% if bulk_email_context is defined %}
+                {% for date in bulk_email_context['dates'] %}
+                    Alku: {{ date.get('begin') }}
+                    Loppu {{ date.get('end') }}
+                {% endfor %}
+            {% endif %}
+            """
+
             for res in reservations:
                 res.state = 'confirmed'
                 res.save()
-                reservation_dates_context.update(
+                reservation_dates_context['dates'].append(
                     {
-                        str(res.origin_id): {
-                            'begin': str(res.begin),
-                            'end': str(res.end)
-                        }
+                        'begin': '%s %s' % (str(res.begin).split(' ')[0], str(reservations[0].begin).split(' ')[1]),
+                        'end': '%s %s' % (str(res.end).split(' ')[0], str(reservations[0].end).split(' ')[1])
                     }
                 )
             res = reservations[0]
-            url = ''.join(['http://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
-            #send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
+            url = ''.join(['https://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
             ical_file = build_reservations_ical_file(reservations)
             attachment = ('reservation.ics', ical_file, 'text/calendar')
-            print('Email address: %s or %s' % (res.reserver_email_address, res.user.email))
             res.send_reservation_mail(
                 NotificationType.RESERVATION_BULK_CREATED,
                 action_by_official=res.user.is_staff,
@@ -733,14 +784,12 @@ class ReservationBulkViewSet(viewsets.ModelViewSet):
                 }, status=200
             )
         except Exception as ex:
-            print(ex)
             return JsonResponse(
                 {
                     'status':'false',
                     'message': 'Internal server error'
                 }, status=500
             )
-
 
 
 class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, ReservationCacheMixin):

@@ -479,9 +479,8 @@ class Reservation(ModifiableModel):
                 context['order'] = order.get_notification_context(language_code)
         if extra_context:
             context.update({
-                'bulk_email_context':
-                {
-                **extra_context
+                'bulk_email_context': {
+                    **extra_context
                 }
             })
         return context
@@ -509,15 +508,13 @@ class Reservation(ModifiableModel):
             user = self.user
 
         language = self.preferred_language if not user.is_staff else DEFAULT_LANG
-        context = self.get_notification_context(language, notification_type=notification_type)
-
+        context = self.get_notification_context(language, notification_type=notification_type, extra_context=extra_context)
         try:
             if staff_email:
                 language = DEFAULT_LANG
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
             logger.error(e, exc_info=True, extra={'user': user.uuid})
-            print("Notification template exception")
             return
         if staff_email:
             print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (staff_email, rendered_notification['subject'], language))
