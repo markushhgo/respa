@@ -579,63 +579,19 @@ class ReservationCacheMixin:
         return context
 
 class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
-    queryset = Reservation.objects.select_related('user', 'resource', 'resource__unit')\
-        .prefetch_related('catering_orders').prefetch_related('resource__groups').order_by('begin', 'resource__unit__name', 'resource__name')
-    if settings.RESPA_PAYMENTS_ENABLED:
-        queryset = queryset.prefetch_related('order', 'order__order_lines', 'order__order_lines__product')
-    filter_backends = (DjangoFilterBackend, filters.OrderingFilter, UserFilterBackend, ReservationFilterBackend,
-                       NeedManualConfirmationFilterBackend, StateFilterBackend, CanApproveFilterBackend)
-    filterset_class = ReservationFilterSet
+    queryset = ReservationBulk.objects.all()
     permission_classes = (permissions.IsAuthenticatedOrReadOnly, ReservationPermission, permissions.IsAdminUser,)
-    renderer_classes = (renderers.JSONRenderer, renderers.BrowsableAPIRenderer, ReservationExcelRenderer)
-    pagination_class = ReservationPagination
-    authentication_classes = (
-        list(drf_settings.DEFAULT_AUTHENTICATION_CLASSES) +
-        [TokenAuthentication, SessionAuthentication])
-    ordering_fields = ('begin',)
 
     def get_serializer_class(self):
-        if settings.RESPA_PAYMENTS_ENABLED:
-            from payments.api.reservation import PaymentsReservationSerializer  # noqa
-            return PaymentsReservationSerializer
-        else:
-            return ReservationSerializer
+        return ReservationBulkSerializer
 
     def get_serializer(self, *args, **kwargs):
-        if 'data' not in kwargs and len(args) == 1:
-            # It's a read operation
-            instance_or_page = args[0]
-            if isinstance(instance_or_page, Reservation):
-                self._page = [instance_or_page]
-            else:
-                self._page = instance_or_page
-
         return super().get_serializer(*args, **kwargs)
-
-    def get_serializer_context(self, *args, **kwargs):
-        context = super().get_serializer_context(*args, **kwargs)
-        if hasattr(self, '_page'):
-            context.update(self._get_cache_context())
-        return context
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        user = self.request.user
-
-        # General Administrators can see all reservations
-        if is_general_admin(user):
-            return queryset
-
-        # normal users can see only their own reservations and reservations that are confirmed, requested or
-        # waiting for payment
-        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT))
-        if user.is_authenticated:
-            filters |= Q(user=user)
-        queryset = queryset.filter(filters)
-
-        queryset = queryset.filter(resource__in=Resource.objects.visible_for(user))
-
         return queryset
+
 
 
     """
@@ -661,6 +617,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
     "resource": "awmdvkth2vea"
     }
     """
+
     def create(self, request):
         stack = request.data.pop('reservation_stack')
         if 'resource' in stack[0]:
@@ -738,7 +695,6 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 {% endfor %}
             {% endif %}
             """
-
             for res in reservations:
                 res.state = 'confirmed'
                 res.save()
@@ -749,7 +705,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                     }
                 )
             res = reservations[0]
-            url = ''.join(['https://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
+            url = ''.join(['http://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
             ical_file = build_reservations_ical_file(reservations)
             attachment = ('reservation.ics', ical_file, 'text/calendar')
             res.send_reservation_mail(
@@ -759,30 +715,8 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 extra_context=reservation_dates_context
             )
             return JsonResponse(
-                {
-                    'status':'true',
-                    'url': str(url),
-                    'id': int(res.id),
-                    'resource': str(res.resource.id),
-                    'user': {
-                        'id': str(res.user.get_uuid()),
-                        'display_name': str(res.user.get_display_name()),
-                        'email': str(res.reserver_email_address) if res.reserver_email_address else res.user.email
-                    },
-                    'begin': str(res.begin),
-                    'end': str(res.end),
-                    'is_own': bool(res.is_own(res.user)),
-                    'state': str(res.state),
-                    'need_manual_confirmation': bool(res.need_manual_confirmation()),
-                    'staff_event': bool(res.staff_event),
-                    'user_permissions': {
-                        'can_modify': bool(res.can_modify(res.user)),
-                        'can_delete': bool(res.can_modify(res.user))
-                    },
-                    'preferred_language': str(res.preferred_language),
-                    'type': str(res.type)
-                }, status=200
-            )
+                data={ **ReservationSerializer(context={'request': self.request if self.request else request}).to_representation(res) },
+                status=200)
         except Exception as ex:
             return JsonResponse(
                 {
