@@ -1602,3 +1602,6 @@ msgstr "Muokattavissa"
 
 msgid "Can be edited"
 msgstr "Voi muokata"
+
+msgid "Logged in as user"
+msgstr "Kirjauduttiin sisään käyttäjänä"
