@@ -39,17 +39,17 @@ class User(AbstractUser):
             "This is almost as powerful as superuser."))
 
     def __str__(self):
-        try:
-            if self.first_name and self.last_name is None:
-                return self.first_name
-            elif self.last_name and self.first_name is None:
-                return self.last_name
-            elif self.first_name and self.last_name:
-                return '%s %s' % (self.first_name, self.last_name)
-            else:
-                return self.username
-        except:
-            return self.username
+        ret = ""
+        if self.first_name:
+            ret += self.first_name
+        if self.last_name:
+            ret += ' ' + self.last_name
+        if not ret:
+            ret += self.username
+        if self.email:
+            ret += ' (%s)' % self.email
+        return ret
+
 
 
     class Meta:
