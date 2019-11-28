@@ -494,6 +494,7 @@ class Reservation(ModifiableModel):
         try:
             notification_template = NotificationTemplate.objects.get(type=notification_type)
         except NotificationTemplate.DoesNotExist:
+            print('NotificationTemplate does not exist')
             return
 
         if user:
@@ -514,6 +515,7 @@ class Reservation(ModifiableModel):
                 language = DEFAULT_LANG
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
+            print('NotifcationTemplateException: %s' % e)
             logger.error(e, exc_info=True, extra={'user': user.uuid})
             return
         if staff_email:
