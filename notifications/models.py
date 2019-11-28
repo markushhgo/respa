@@ -55,6 +55,8 @@ class NotificationType:
     RESERVATION_COMMENT_CREATED = 'reservation_comment_created'
     RESERVATION_COMMENT_CREATED_BY_OFFICIAL = 'reservation_comment_created_by_official'
 
+    RESERVATION_BULK_CREATED = 'reservation_bulk_created'
+
 
 class NotificationTemplateException(Exception):
     pass
@@ -92,6 +94,8 @@ class NotificationTemplate(TranslatableModel):
         (NotificationType.CATERING_ORDER_DELETED, _('Catering order deleted')),
         (NotificationType.RESERVATION_COMMENT_CREATED, _('Reservation comment created')),
         (NotificationType.CATERING_ORDER_COMMENT_CREATED, _('Catering order comment created')),
+
+        (NotificationType.RESERVATION_BULK_CREATED, _('Reservation bulk created'))
     )
 
     type = models.CharField(
