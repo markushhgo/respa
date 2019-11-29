@@ -1250,3 +1250,18 @@ msgid ""
 "superuser."
 msgstr "anger om användaren är en General Administrator med särskilda "
 "behörigheter för många objekt inom Respa"
+
+msgid "Reservation failed. Too many reservations at once."
+msgstr "Bokningen misslyckades. För många bokningar."
+
+msgid "Reservation failed. Overlap with existing reservations."
+msgstr "Bokningen misslyckades. Någon av tiderna är redan bokad."
+
+msgid "Reservation failed. Make sure reservation period is correct."
+msgstr "Bokningen misslyckades. Kolla reserveringstiderna."
+
+msgid "Reservation failed. Begin or end time is missing."
+msgstr "Bokningen misslyckades. Någon av tiderna fattas."
+
+msgid "Reservation failed. Try again later."
+msgstr "Bokningen misslyckades. Försök igen senare."
