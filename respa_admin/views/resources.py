@@ -404,7 +404,7 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
 
             if image_key in self.request.FILES:
                 resource_image.image = self.request.FILES[image_key]
-                resource_image.save()
+            resource_image.save()
 
     def _delete_extra_images(self, resource_images_formset):
         data = resource_images_formset.data
