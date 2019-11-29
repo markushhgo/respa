@@ -11,6 +11,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import (
     PermissionDenied, ValidationError as DjangoValidationError
 )
+from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
@@ -29,7 +30,7 @@ from psycopg2.extras import DateTimeTZRange
 
 from munigeo import api as munigeo_api
 from datetime import datetime
-from time import strptime, mktime
+from time import strptime, mktime, sleep
 
 from resources.models import Reservation, Resource, ReservationMetadataSet, ReservationBulk, ReservationQuerySet
 from resources.models.reservation import RESERVATION_EXTRA_FIELDS
@@ -42,6 +43,8 @@ from .base import (
     NullableDateTimeField, TranslatedModelSerializer, register_view, DRFFilterBooleanWidget,
     ExtraDataMixin
 )
+
+from random import uniform
 
 from ..models.utils import dateparser
 
@@ -619,7 +622,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
     "resource": "awmdvkth2vea"
     }
     """
-
+    @transaction.atomic
     def create(self, request):
         stack = request.data.pop('reservation_stack')
         if 'resource' in stack[0]:
@@ -696,9 +699,28 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 {% endfor %}
             {% endif %}
             """
-
+            sleep(uniform(.035, .450))
             for res in reservations:
                 res.state = 'confirmed'
+                if resource.validate_reservation_period(res, res.user):
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('Reservation failed. Make sure reservation period is correct.')
+                        }, status=400
+                    )
+                if resource.validate_max_reservations_per_user(res.user):
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('Reservation failed. Too many reservations at once.')
+                        }, status=400
+                    )
+                if resource.check_reservation_collision(begin, end, res):
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('Reservation failed. Overlap with existing reservations.')
+                        }, status=400
+                    )
+                sleep(uniform(.015, .175))
                 res.save()
                 reservation_dates_context['dates'].append(
                     {
