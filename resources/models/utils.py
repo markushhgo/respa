@@ -19,8 +19,6 @@ from rest_framework.reverse import reverse
 from icalendar import Calendar, Event, vDatetime, vText, vGeo
 import xlsxwriter
 
-from datetime import datetime
-
 
 DEFAULT_LANG = settings.LANGUAGES[0][0]
 
@@ -268,7 +266,7 @@ def dateparser(first, iter) -> str:
     try:
         time = '%s %s' % (str(iter).split(' ')[0], str(first).split(' ')[1])
         time = time.split('+')[0]
-        time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y %H:%M:%S')
+        time = datetime.datetime.strptime(time, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y %H:%M:%S')
         return time
     except Exception as ex:
         print(ex)
