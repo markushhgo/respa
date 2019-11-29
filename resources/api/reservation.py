@@ -43,6 +43,8 @@ from .base import (
     ExtraDataMixin
 )
 
+from ..models.utils import dateparser
+
 User = get_user_model()
 
 # FIXME: Make this configurable?
@@ -695,15 +697,29 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 {% endfor %}
             {% endif %}
             """
+
             for res in reservations:
                 res.state = 'confirmed'
                 res.save()
                 reservation_dates_context['dates'].append(
                     {
-                        'begin': '%s %s' % (str(res.begin).split(' ')[0], str(reservations[0].begin).split(' ')[1]),
-                        'end': '%s %s' % (str(res.end).split(' ')[0], str(reservations[0].end).split(' ')[1])
+                        'begin': dateparser(reservations[0].begin, res.begin),
+                        'end':  dateparser(reservations[0].end, res.end)
                     }
                 )
+
+            reservation_dates_context.update({
+                'first_reservation': {
+                    'begin': dateparser(reservations[0].begin, reservations[0].begin),
+                    'end': dateparser(reservations[0].end, reservations[0].end)
+                }
+            })
+            reservation_dates_context.update({
+                'last_reservation': {
+                    'begin': dateparser(reservations[0].begin, reservations[len(reservations) - 1].begin),
+                    'end': dateparser(reservations[0].end, reservations[len(reservations) - 1].end)
+                }
+            })
             res = reservations[0]
             url = ''.join(['http://', get_current_site(request).domain, '/v1/', 'reservation/', str(res.id), '/'])
             ical_file = build_reservations_ical_file(reservations)

@@ -19,6 +19,8 @@ from rest_framework.reverse import reverse
 from icalendar import Calendar, Event, vDatetime, vText, vGeo
 import xlsxwriter
 
+from datetime import datetime
+
 
 DEFAULT_LANG = settings.LANGUAGES[0][0]
 
@@ -258,3 +260,15 @@ def build_ical_feed_url(ical_token, request):
 
     url = reverse('ical-feed', kwargs={'ical_token': ical_token}, request=request)
     return url[:url.find('?')]
+
+def dateparser(first, iter) -> str:
+    """
+    Return parsed time format `%d-%m-%Y` `%H:%M:%S` from `%Y-%m-%d` `%H:%M:%S`+`%z`
+    """
+    try:
+        time = '%s %s' % (str(iter).split(' ')[0], str(first).split(' ')[1])
+        time = time.split('+')[0]
+        time = datetime.strptime(time, '%Y-%m-%d %H:%M:%S').strftime('%d-%m-%Y %H:%M:%S')
+        return time
+    except Exception as ex:
+        print(ex)
