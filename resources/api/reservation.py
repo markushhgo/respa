@@ -626,8 +626,8 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
             stack[0].pop('resource')
         if len(stack) > 100:
             return JsonResponse({
-                'status':'false',
-                'message':'Too many reservations at once.'
+                    'status':'false',
+                    'recurring_validation_error': _('Too many reservations at once.'),
                 }, status=400
             )
         data = {
@@ -641,15 +641,12 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 begin = key.get('begin')
                 end = key.get('end')
                 if begin is None or end is None:
-                    return JsonResponse(
-                        {
+                    return JsonResponse({
                             'status':'false',
-                            'message':'Reservation begin or end are null'
-                        },
-                        status=400
+                            'recurring_validation_error': _('Reservation begin or end are null')
+                        }, status=400
                     )
             reservations = []
-            failed = (False, "")
             for key in stack:
                 begin = parse_datetime(key.get('begin'))
                 end = parse_datetime(key.get('end'))
@@ -671,22 +668,24 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 res.begin = begin
                 res.end = end
                 if resource.validate_reservation_period(res, res.user):
-                    failed = (True, "Reservation period validation")
-                    continue
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('Some reservations failed the period check')
+                        }, status=400
+                    )
                 if resource.validate_max_reservations_per_user(res.user):
-                    failed = (True, "Max reservations validation")
-                    continue
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('You have made too many reservations')
+                        }, status=400
+                    )
                 if resource.check_reservation_collision(begin, end, res):
-                    failed = (True, "Reservation collision validation")
-                    continue
+                    return JsonResponse({
+                            'status':'false',
+                            'recurring_validation_error': _('Some reservations are overlapping')
+                        }, status=400
+                    )
                 reservations.append(res)
-            if failed[0]:
-                return JsonResponse(
-                    {
-                        'status':'false',
-                        'message': _('Some reservations failed reservation checks: %s' % failed[1])
-                    }, status=400
-                )
             reservation_dates_context = { 'dates': [] }
 
             """
@@ -736,7 +735,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
         except Exception as ex:
             return JsonResponse(
                 {
-                    'status':'false',
+                    'status': 'false',
                     'message': 'Internal server error'
                 }, status=500
             )
