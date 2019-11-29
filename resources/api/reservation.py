@@ -627,7 +627,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
         if len(stack) > 100:
             return JsonResponse({
                     'status':'false',
-                    'recurring_validation_error': _('Too many reservations at once.'),
+                    'recurring_validation_error': _('Reservation failed. Too many reservations at once.'),
                 }, status=400
             )
         data = {
@@ -643,7 +643,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 if begin is None or end is None:
                     return JsonResponse({
                             'status':'false',
-                            'recurring_validation_error': _('Reservation begin or end are null')
+                            'recurring_validation_error': _('Reservation failed. Begin or end time is missing.')
                         }, status=400
                     )
             reservations = []
@@ -670,19 +670,19 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
                 if resource.validate_reservation_period(res, res.user):
                     return JsonResponse({
                             'status':'false',
-                            'recurring_validation_error': _('Some reservations failed the period check')
+                            'recurring_validation_error': _('Reservation failed. Make sure reservation period is correct.')
                         }, status=400
                     )
                 if resource.validate_max_reservations_per_user(res.user):
                     return JsonResponse({
                             'status':'false',
-                            'recurring_validation_error': _('You have made too many reservations')
+                            'recurring_validation_error': _('Reservation failed. Too many reservations at once.')
                         }, status=400
                     )
                 if resource.check_reservation_collision(begin, end, res):
                     return JsonResponse({
                             'status':'false',
-                            'recurring_validation_error': _('Some reservations are overlapping')
+                            'recurring_validation_error': _('Reservation failed. Overlap with existing reservations.')
                         }, status=400
                     )
                 reservations.append(res)
@@ -736,7 +736,7 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
             return JsonResponse(
                 {
                     'status': 'false',
-                    'message': 'Internal server error'
+                    'recurring_validation_error': 'Reservation failed. Try again later.'
                 }, status=500
             )
 
