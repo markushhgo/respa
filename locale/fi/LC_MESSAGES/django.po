@@ -1602,3 +1602,23 @@ msgstr "Muokattavissa"
 
 msgid "Can be edited"
 msgstr "Voi muokata"
+
+msgid "Logged in as user"
+msgstr "Kirjauduttiin sisään käyttäjänä"
+
+msgid "Reservation failed. Too many reservations at once."
+msgstr "Varaus epäonnistui. Liian monta varausta kerralla."
+
+msgid "Reservation failed. Overlap with existing reservations."
+msgstr "Varaus epäonnistui. Jokin ajoista on jo varattu."
+
+msgid "Reservation failed. Make sure reservation period is correct."
+msgstr "Varaus epäonnistui. Tarkista varausaika."
+
+msgid "Reservation failed. Begin or end time is missing."
+msgstr "Varaus epäonnistui. Alkamis- tai loppumisaika puuttuu."
+
+msgid "Reservation failed. Try again later."
+msgstr "Varaus epäonnistui. Yritä uudelleen hetken päästä."
+
+

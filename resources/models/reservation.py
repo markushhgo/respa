@@ -80,6 +80,16 @@ class ReservationQuerySet(models.QuerySet):
         allowed_resources = Resource.objects.with_perm('can_view_reservation_catering_orders', user)
         return self.filter(Q(user=user) | Q(resource__in=allowed_resources))
 
+class ReservationBulkQuerySet(models.QuerySet):
+    def current(self):
+        return self
+
+class ReservationBulk(ModifiableModel):
+    bucket = models.ManyToManyField('Reservation', related_name='reservationbulks', db_index=True)
+    objects = ReservationBulkQuerySet.as_manager()
+
+    def __str__(self):
+        return "Reservation Bulk"
 
 class Reservation(ModifiableModel):
     CREATED = 'created'
@@ -393,7 +403,7 @@ class Reservation(ModifiableModel):
             if (self.number_of_participants > self.resource.people_capacity):
                 raise ValidationError(_("This resource has people capacity limit of %s" % self.resource.people_capacity))
 
-    def get_notification_context(self, language_code, user=None, notification_type=None):
+    def get_notification_context(self, language_code, user=None, notification_type=None, extra_context={}):
         if not user:
             user = self.user
         with translation.override(language_code):
@@ -467,10 +477,15 @@ class Reservation(ModifiableModel):
             order = getattr(self, 'order', None)
             if order:
                 context['order'] = order.get_notification_context(language_code)
-
+        if extra_context:
+            context.update({
+                'bulk_email_context': {
+                    **extra_context
+                }
+            })
         return context
 
-    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None):
+    def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None, extra_context={}):
         """
         Stuff common to all reservation related mails.
 
@@ -479,6 +494,7 @@ class Reservation(ModifiableModel):
         try:
             notification_template = NotificationTemplate.objects.get(type=notification_type)
         except NotificationTemplate.DoesNotExist:
+            print('NotificationTemplate does not exist')
             return
 
         if user:
@@ -493,15 +509,14 @@ class Reservation(ModifiableModel):
             user = self.user
 
         language = self.preferred_language if not user.is_staff else DEFAULT_LANG
-        context = self.get_notification_context(language, notification_type=notification_type)
-
+        context = self.get_notification_context(language, notification_type=notification_type, extra_context=extra_context)
         try:
             if staff_email:
                 language = DEFAULT_LANG
             rendered_notification = notification_template.render(context, language)
         except NotificationTemplateException as e:
+            print('NotifcationTemplateException: %s' % e)
             logger.error(e, exc_info=True, extra={'user': user.uuid})
-            print("Notification template exception")
             return
         if staff_email:
             print("Sending automated mail :: (%s) %s || LOCALE: %s"  % (staff_email, rendered_notification['subject'], language))
