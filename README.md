@@ -70,11 +70,20 @@ Install all packages required for development with pip command:
 
 ### Create the database
 
+Linux
 ```shell
 sudo -u postgres createuser -P -R -S respa
 sudo -u postgres psql -d template1 -c "create extension hstore;"
 sudo -u postgres createdb -Orespa respa
 sudo -u postgres psql respa -c "CREATE EXTENSION postgis;"
+```
+
+Windows
+```
+psql -U postgres -c "create role respa with encrypted password 'password';"
+psql -U postgres --dbname=template1 -c "create extension hstore;"
+psql -U postgres -c "create database respa;"
+psql -U postgres --dbname=respa -c "create extension postgis;"
 ```
 
 
