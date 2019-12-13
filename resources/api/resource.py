@@ -220,7 +220,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
         request = self.context.get('request')
         user = request.user if request else None
 
-        if user and obj.is_admin(user):
+        if user and (obj.is_admin(user) or obj.is_manager(user)):
             return None
         else:
             return obj.get_reservable_before()
@@ -229,7 +229,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
         request = self.context.get('request')
         user = request.user if request else None
 
-        if user and obj.is_admin(user):
+        if user and (obj.is_admin(user) or obj.is_manager(user)):
             return None
         else:
             return obj.get_reservable_after()
