@@ -215,7 +215,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
             request_user.preferred_language = settings.LANGUAGES[0][0]
             request_user.save()
 
-        if not is_resource_admin:
+        if not is_resource_admin and not is_resource_manager:
             reservable_before = resource.get_reservable_before()
             if reservable_before and data['begin'] >= reservable_before:
                 raise ValidationError(_('The resource is reservable only before %(datetime)s' %
@@ -241,7 +241,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 raise ValidationError({'type': _('You are not allowed to make a reservation of this type')})
 
         if 'comments' in data:
-            if not is_resource_admin:
+            if not is_resource_admin and not is_resource_manager:
                 raise ValidationError(dict(comments=_('Only allowed to be set by staff members')))
 
         if 'access_code' in data:
@@ -335,7 +335,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 'require_workstation': instance.require_workstation,
             })
         # Show the comments field and the user object only for staff
-        if not resource.is_admin(user):
+        if not resource.is_admin(user) and not resource.is_manager(user):
             del data['comments']
             del data['user']
 
