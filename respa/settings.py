@@ -62,6 +62,7 @@ env = environ.Env(
     OIDC_ISSUER=(str, ''),
     OIDC_LEEWAY=(int, 0),
     GSM_NOTIFICATION_ADDRESS=(str, ''),
+    OUTLOOK_EMAIL_DOMAIN=(str, ''),
 )
 environ.Env.read_env()
 # used for generating links to images, when no request context is available
@@ -136,7 +137,7 @@ INSTALLED_APPS = [
     'kulkunen',
     'payments',
 
-    'respa_exchange',
+    'respa_outlook',
     'respa_admin',
 
     'sanitized_dump',
@@ -311,6 +312,7 @@ OIDC_AUTH = {
 CSRF_COOKIE_NAME = '%s-csrftoken' % env.str('COOKIE_PREFIX')
 SESSION_COOKIE_NAME = '%s-sessionid' % env.str('COOKIE_PREFIX')
 GSM_NOTIFICATION_ADDRESS = env('GSM_NOTIFICATION_ADDRESS')
+OUTLOOK_EMAIL_DOMAIN = env('OUTLOOK_EMAIL_DOMAIN')
 
 
 from easy_thumbnails.conf import Settings as thumbnail_settings  # noqa
