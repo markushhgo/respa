@@ -1,4 +1,5 @@
 import pytz
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.conf import settings
 from django.contrib.gis.db import models
 from django.db.models import Q
@@ -77,6 +78,11 @@ class Unit(ModifiableModel, AutoIdentifiedModel):
                                    verbose_name=_('External data source'))
     data_source_hours = models.CharField(max_length=128, blank=True, default='',
                                          verbose_name=_('External data source for opening hours'))
+
+    sms_reminder = models.BooleanField(verbose_name=_('Send SMS Reminder'), default=False)
+
+    sms_reminder_delay = models.IntegerField(verbose_name=_('How many hours before reservation the reminder is sent'), default=1,
+                                    validators=[MinValueValidator(1), MaxValueValidator(8766)])
 
     objects = UnitQuerySet.as_manager()
 
