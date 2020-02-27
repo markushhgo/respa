@@ -367,7 +367,7 @@ class Reservation(ModifiableModel):
         return format_dt_range(translation.get_language(), begin, end)
 
     def create_reminder(self):
-        r_date = self.begin - timedelta(hours=int(self.resource.unit.sms_reminder_delay))
+        r_date = self.begin - datetime.timedelta(hours=int(self.resource.unit.sms_reminder_delay))
         reminder = ReservationReminder()
         reminder.reservation = self
         reminder.reminder_date = r_date
@@ -377,7 +377,7 @@ class Reservation(ModifiableModel):
     def modify_reminder(self):
         if not self.reminder:
             return
-        r_date = self.begin - timedelta(hours=int(self.resource.unit.sms_reminder_delay))
+        r_date = self.begin - datetime.timedelta(hours=int(self.resource.unit.sms_reminder_delay))
         self.reminder.reminder_date = r_date
         self.reminder.save()
 
