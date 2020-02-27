@@ -3,8 +3,6 @@ import logging
 import datetime
 import pytz
 
-
-from datetime import datetime, timedelta
 from django.utils import timezone
 import django.contrib.postgres.fields as pgfields
 from django.conf import settings
@@ -249,7 +247,7 @@ class Reservation(ModifiableModel):
     def can_view_access_code(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_access_codes(user)
+        return self.resource.can_view_reservation_access_code(user)
 
     def set_state(self, new_state, user):
         # Make sure it is a known state
@@ -349,7 +347,7 @@ class Reservation(ModifiableModel):
     def can_view_catering_orders(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_catering_orders(user)
+        return self.resource.can_view_reservation_catering_orders(user)
 
     def can_add_product_order(self, user):
         return self.is_own(user)
@@ -357,7 +355,7 @@ class Reservation(ModifiableModel):
     def can_view_product_orders(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_product_orders(user)
+        return self.resource.can_view_reservation_product_orders(user)
 
     def get_order(self):
         return getattr(self, 'order', None)
@@ -398,6 +396,14 @@ class Reservation(ModifiableModel):
         the original reservation need to be provided in kwargs as 'original_reservation', so
         that it can be excluded when checking if the resource is available.
         """
+
+        if 'user' in kwargs:
+            user = kwargs['user']
+        else:
+            user = self.user
+
+        user_is_admin = user and self.resource.is_admin(user)
+
         if self.end <= self.begin:
             raise ValidationError(_("You must end the reservation after it has begun"))
 
@@ -413,9 +419,14 @@ class Reservation(ModifiableModel):
         if self.resource.check_reservation_collision(self.begin, self.end, original_reservation):
             raise ValidationError(_("The resource is already reserved for some of the period"))
 
-        if (self.end - self.begin) < self.resource.min_period:
-            raise ValidationError(_("The minimum reservation length is %(min_period)s") %
-                                  {'min_period': humanize_duration(self.resource.min_period)})
+        if not user_is_admin:
+            if (self.end - self.begin) < self.resource.min_period:
+                raise ValidationError(_("The minimum reservation length is %(min_period)s") %
+                                      {'min_period': humanize_duration(self.resource.min_period)})
+        else:
+            if not (self.end - self.begin) % self.resource.slot_size == datetime.timedelta(0):
+                raise ValidationError(_("The minimum reservation length is %(slot_size)s") %
+                                      {'slot_size': humanize_duration(self.resource.slot_size)})
 
         if self.access_code:
             validate_access_code(self.access_code, self.resource.access_code_type)
