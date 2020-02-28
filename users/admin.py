@@ -56,53 +56,6 @@ last_names_list = [
 ]
 
 
-first_names_list = [
-    'Patrick',
-    'Julia',
-    'Andrew',
-    'Paige',
-    'Ewan',
-    'Elsie',
-    'Toby',
-    'Holly',
-    'Dominic',
-    'Isla',
-    'Edison',
-    'Luna',
-    'Ronald',
-    'Bryanna',
-    'Augustus',
-    'Laurel',
-    'Miles',
-    'Patricia',
-    'Beckett',
-    'Elle'
-]
-
-last_names_list = [
-    'Ward',
-    'Robertson',
-    'Nicholson',
-    'Armstrong',
-    'White',
-    'Trevino',
-    'James',
-    'Hines',
-    'Clark',
-    'Castro',
-    'Read',
-    'Brown',
-    'Griffiths',
-    'Taylor',
-    'Cole',
-    'Leach',
-    'Chavez',
-    'Stout',
-    'Mccullough',
-    'Richards'
-]
-
-
 def _add_general_admin_to_fieldsets(fieldsets):
     def modify_field_data(field_data):
         if 'is_superuser' in (field_data or {}).get('fields', ()):

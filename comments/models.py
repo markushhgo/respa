@@ -28,11 +28,7 @@ if getattr(settings, 'RESPA_CATERINGS_ENABLED', False):
 
 def get_commentable_content_types():
     return ContentType.objects.get_for_models(*COMMENTABLE_MODELS.values()).values()
-
-def get_content_type_choices():
-    return {'id__in': (ct.id for ct in get_commentable_content_types())}
-
-
+    
 def get_content_type_choices():
     return {'id__in': (ct.id for ct in get_commentable_content_types())}
 
