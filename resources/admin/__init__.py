@@ -247,6 +247,7 @@ class PurposeAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, Translat
 
 
 class TermsOfUseAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, TranslationAdmin):
+    list_display = ['name', 'terms_type']
     pass
 
 
@@ -371,6 +372,15 @@ class ReservationBulkAdmin(admin.ModelAdmin):
 
 class ReservationReminderAdmin(admin.ModelAdmin):
     extra_readonly_fields_on_update = ('reservation_type',)
+
+# Override TokenAdmin of django rest framework
+# to use raw_id_field on user
+class RespaTokenAdmin(admin.ModelAdmin):
+    list_display = ('key', 'user', 'created')
+    fields = ('user',)
+    ordering = ('-created',)
+    raw_id_fields = ('user',)
+
 
 # Override TokenAdmin of django rest framework
 # to use raw_id_field on user

@@ -33,6 +33,10 @@ def get_content_type_choices():
     return {'id__in': (ct.id for ct in get_commentable_content_types())}
 
 
+def get_content_type_choices():
+    return {'id__in': (ct.id for ct in get_commentable_content_types())}
+
+
 class CommentQuerySet(models.QuerySet):
     def can_view(self, user):
         if not user.is_authenticated:
