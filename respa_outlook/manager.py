@@ -1,4 +1,5 @@
-from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone
+from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone, DELEGATE
+from exchangelib.errors import ErrorSchemaValidation
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -9,35 +10,31 @@ class RespaOutlookManager:
         self.configuration = configuration
         self.account = None
         self.pop_from_store = False
-        self.managed_calendar = None
-        self.manage = False
         try:
-            self.account = Account(configuration.email, credentials=Credentials(configuration.email, configuration.password), autodiscover=True)
-            self.calendar = self.account.calendar.all()
-            self.thread = threading.Thread(target=self._manage_managed_calendar)
-            self.thread.start()
+            self.account = self._get_account()
+            self.calendar = self.account.calendar
         except:
             self.pop_from_store = True
 
-    def refresh(self):
-        self.calendar = self.account.calendar.all()
-        return self.calendar
-
     def future(self):
-        self.calendar = self.calendar.filter(end__gte=ToEWSDateTime(datetime.now().replace(microsecond=0)))
-        return self.calendar
-    
-    def all(self):
-        return self.managed_calendar
+        return self.account.calendar.filter(end__gte=ToEWSDateTime(datetime.now().replace(microsecond=0)))
 
-    def _manage_managed_calendar(self):
-        self.manage = True
-        while self.manage:
-            self.managed_calendar = self.account.calendar.all()
-            sleep(20)
-    
-    def _calendar(self):
-        return self.account.calendar
+    def _get_account(self):
+        if not self.account:
+            self.account = Account(primary_smtp_address=self.configuration.email, credentials=Credentials(self.configuration.email, self.configuration.password), autodiscover=True, access_type=DELEGATE)
+        else:
+            ews_url = self.account.protocol.service_endpoint
+            ews_auth_type = self.account.protocol.auth_type
+            primary_smtp_address = self.account.primary_smtp_address
+
+            # You can now create the Account without autodiscovering, using the cached values:
+            config = Configuration(service_endpoint=ews_url, credentials=Credentials(self.configuration.email, self.configuration.password), auth_type=ews_auth_type)
+            self.account = Account(
+                primary_smtp_address=primary_smtp_address, 
+                config=config, autodiscover=False, 
+                access_type=DELEGATE,
+            )
+        return self.account
 
 
 """

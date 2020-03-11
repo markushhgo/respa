@@ -1,4 +1,6 @@
 from respa_outlook.models import RespaOutlookReservation
+from django.core.exceptions import ValidationError
+
 from time import sleep, time
 from copy import copy
 
@@ -24,11 +26,18 @@ class Listen():
     def start(self):
         self.status = True
         while self.status:
+            pop = []
             for manager in self.configs:
                 self.manager = self.configs[manager]
+                if self.manager.pop_from_store:
+                    pop.append(self.manager)
+                    continue
+
                 self.config = self.manager.configuration
                 self.calendar = copy(self.manager.future())
 
+                assert self.manager is not None
+                assert self.config is not None
                 assert self.calendar is not None
 
                 self.__handle_add()
@@ -38,14 +47,14 @@ class Listen():
                 self.manager = None
                 self.config = None
                 self.calendar = None
-            sleep(30)
+            for manager in pop:
+                self.configs.pop(manager.configuration.id)
     
     def stop(self):
         self.status = False
 
 
     def __handle_remove(self):
-        sleep(5)
         for appointment in self.calendar:
             if not self.creating:
                 try:
@@ -63,7 +72,6 @@ class Listen():
 
     
     def __handle_add(self):
-        sleep(5)
         for appointment in self.calendar:
             try:
                 reservation = RespaOutlookReservation.objects.get(exchange_id=appointment.id)
@@ -71,23 +79,25 @@ class Listen():
                     appointment.delete()
                     reservation.delete()
                 continue
-            except:
+            except Exception as ex:
                 pass
             try:
                 email = appointment.required_attendees[0].mailbox.email_address
-            except:
+            except Exception as ex:
                 continue
 
             self.creating = True
-            self.config.create_respa_outlook_reservation(
-                appointment = appointment,
-                reservation = None,
-                email = email
-            )
+            try: 
+                self.config.create_respa_outlook_reservation(
+                    appointment = appointment,
+                    reservation = None,
+                    email = email
+                )
+            except ValidationError:
+                appointment.delete()
             self.creating = False
     
     def __handle_modify(self):
-        sleep(5)
         old_ids = {}
         for reservation in RespaOutlookReservation.objects.all():
             if reservation.exchange_id not in old_ids:
@@ -108,8 +118,9 @@ class Listen():
         for appointment in self.calendar:
             _dict = old_ids.get(appointment.id)
             if _dict:
-                if _dict.get('modified_timestamp') > time():
+                if _dict.get('modified_timestamp') > int(time()):
                     continue
+
                 if _dict.get('begin') != appointment.start:
                     if not self.modifying:
                         self.modifying = True
@@ -126,7 +137,7 @@ class Listen():
 
 
     def is_missing_from_calendar(self, id):
-        for appointment in self.manager.all():
+        for appointment in self.manager.calendar.all():
             if appointment.id == id:
                 return False
         return True

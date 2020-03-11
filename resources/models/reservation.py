@@ -311,8 +311,7 @@ class Reservation(ModifiableModel):
                     else:
                         self.send_reservation_cancelled_mail()
                         self.notify_staff_about_reservation(NotificationType.RESERVATION_CANCELLED_OFFICIAL)
-            else:
-                reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
+            reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         self.state = new_state
         self.save()
 

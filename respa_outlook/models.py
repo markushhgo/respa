@@ -1,14 +1,31 @@
 from django.db import models
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ValidationError
 from respa_outlook.manager import store, ToEWSDateTime
 
 from exchangelib import CalendarItem, Mailbox, Attendee
+from exchangelib.properties import Mailbox
+from exchangelib.version import EXCHANGE_2016
+import logging
+# This handler will pretty-print and syntax highlight the request and response XML documents
+from exchangelib.util import PrettyXmlHandler
 
+from os.path import abspath, join
+
+logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG, handlers=[
+    PrettyXmlHandler(
+        open(abspath(join('.','exchange.log')), 'w')
+    )])
+# Your code using exchangelib goes here
 from datetime import datetime, timedelta
 
 
+import time
+
 from resources.models import Reservation
+from resources.models.utils import send_respa_mail
+
 
 from copy import copy
 
@@ -21,7 +38,7 @@ class RespaOutlookConfiguration(models.Model):
     name = models.CharField(verbose_name=_("Configuration name"), max_length=255)
     resource = models.ForeignKey('resources.Resource', verbose_name=_('Resource'), related_name='_Resources',
                                     blank=True, null=True, on_delete=models.CASCADE)
-    
+
     email = models.CharField(verbose_name=_('Email'), max_length=255)
     password = models.CharField(verbose_name=_('Password'), max_length=255)
 
@@ -30,7 +47,7 @@ class RespaOutlookConfiguration(models.Model):
 
     class Meta:
         verbose_name = _("Outlook configuration")
-        verbose_name_plural = _("Outlook configurations")  
+        verbose_name_plural = _("Outlook configurations")
 
     def __str__(self):
         try:
@@ -43,14 +60,14 @@ class RespaOutlookConfiguration(models.Model):
             return
         if not reservation.reserver_email_address.endswith(settings.OUTLOOK_EMAIL_DOMAIN):
             return
-            
+
         unit_address = reservation.resource.unit.address_postal_full if reservation.resource.unit.address_postal_full else reservation.resource.unit.street_address
 
         manager = store.get(self.id)
 
         appointment = CalendarItem(
             account=manager.account,
-            folder=manager._calendar(),
+            folder=manager.calendar,
             subject = 'Reservation created',
             body = 'You have created an reservation',
             start=ToEWSDateTime(reservation.begin),
@@ -64,30 +81,37 @@ class RespaOutlookConfiguration(models.Model):
                 )
             ]
         )
+        Mailbox.get_field_by_fieldname('routing_type').supported_from = EXCHANGE_2016
         appointment.save()
-        self.create_respa_outlook_reservation(
-            appointment = appointment, 
-            reservation=reservation, 
-            email = reservation.reserver_email_address
-        )
+        self.create_respa_outlook_reservation(appointment=appointment, reservation=reservation,
+                                              email=reservation.reserver_email_address)
 
 
     def handle_modify(self, reservation, _from_outlook=True):
         outlook = RespaOutlookReservation.objects.get(reservation_id=reservation.id)
         manager = store.get(self.id)
-        appointment = manager._calendar().get(id=outlook.exchange_id)
+        appointment = manager.calendar.get(id=outlook.exchange_id)
         if _from_outlook:
+            email = appointment.required_attendees[0].mailbox.email_address
+
             __cache = copy(reservation)
             if reservation.begin != appointment.start:
                 reservation.begin = appointment.start
             if reservation.end != appointment.end:
                 reservation.end = appointment.end
-            email = appointment.required_attendees[0].mailbox.email_address
-            if reservation.email_address != email:
-                reservation.email_address = email
             try:
+                if reservation.email_address != email:
+                    raise ValidationError("Not authorized")
+
+
                 reservation.clean()
                 reservation.save()
+
+                ret = send_respa_mail(
+                    email_address=email,
+                    subject="Reservation created",
+                    body="Reservation via outlook modified"
+                )
             except:
                 appointment.start = ToEWSDateTime(__cache.begin, True)
                 appointment.end = ToEWSDateTime(__cache.end, True)
@@ -97,6 +121,11 @@ class RespaOutlookConfiguration(models.Model):
                         response_type='Accept'
                     )
                 appointment.save()
+                ret = send_respa_mail(
+                    email_address=email,
+                    subject="Reservation failed",
+                    body="Reservation via outlook failed."
+                )
         else:
             appointment.start = ToEWSDateTime(reservation.begin, True)
             appointment.end = ToEWSDateTime(reservation.end, True)
@@ -106,7 +135,7 @@ class RespaOutlookConfiguration(models.Model):
                         response_type='Accept'
                     )
             appointment.save()
-        outlook.modified = datetime.now() + timedelta(minutes=2)
+        outlook.modified = datetime.now().replace(tzinfo='Europe/Helsinki') + timedelta(minutes=2)
         outlook.save()
 
 
@@ -124,18 +153,22 @@ class RespaOutlookConfiguration(models.Model):
                 reserver_email_address = email,
                 state = Reservation.CONFIRMED
             )
-            try:
-                reservation.clean()
-                reservation.save()
-            except:
-                pass
+            reservation.clean()
+            reservation.save()
+            ret = send_respa_mail(
+                email_address=email,
+                subject="Reservation created",
+                body="Reservation via outlook created"
+            )
+            print(ret[0], ret[1])
+
         RespaOutlookReservation(
             name = '%s (%s)' % (reservation.reserver_email_address, self.resource.name),
             exchange_id = appointment.id,
             exchange_changekey = appointment.changekey,
             reservation = reservation
         ).save()
-        
+
 
 
 class RespaOutlookReservationQuerySet(models.QuerySet):
@@ -143,7 +176,7 @@ class RespaOutlookReservationQuerySet(models.QuerySet):
 
 class RespaOutlookReservation(models.Model):
     name = models.CharField(verbose_name=_("Reserver name & Resource"), max_length=255)
-    
+
     reservation = models.ForeignKey('resources.Reservation', verbose_name=_('Reservation'), related_name='OutlookReservations',
                                     blank=True, null=True, on_delete=models.CASCADE)
 
@@ -169,4 +202,7 @@ class RespaOutlookReservation(models.Model):
     def get_modified_timestamp(self):
         if self.modified:
             return int((self.modified.replace(tzinfo=pytz.timezone('Europe/Helsinki')) - datetime(year=1970, month=1, day=1, hour=0, minute=0, second=0).replace(tzinfo=pytz.timezone('Europe/Helsinki'))).total_seconds())
-        return int((datetime.now().replace(tzinfo=pytz.timezone('Europe/Helsinki')) - datetime(year=1970, month=1, day=1, hour=0, minute=0, second=0).replace(tzinfo=pytz.timezone('Europe/Helsinki'))).total_seconds())
+
+        #return int(time.time())
+        return int((datetime.now().replace(tzinfo=None) - datetime(year=1970, month=1, day=1, hour=0, minute=0, second=0).replace(tzinfo=None)).total_seconds())
+
