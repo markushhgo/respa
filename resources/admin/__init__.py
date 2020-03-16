@@ -28,6 +28,7 @@ from ..models import (
     ResourceEquipment, ResourceGroup, ResourceImage, ResourceType, TermsOfUse,
     Unit, UnitAuthorization, UnitIdentifier, UnitGroup, UnitGroupAuthorization)
 from munigeo.models import Municipality
+from rest_framework.authtoken.admin import Token
 
 logger = logging.getLogger(__name__)
 
@@ -246,6 +247,7 @@ class PurposeAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, Translat
 
 
 class TermsOfUseAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, TranslationAdmin):
+    list_display = ['name', 'terms_type']
     pass
 
 
@@ -371,6 +373,33 @@ class ReservationBulkAdmin(admin.ModelAdmin):
 class ReservationReminderAdmin(admin.ModelAdmin):
     extra_readonly_fields_on_update = ('reservation_type',)
 
+# Override TokenAdmin of django rest framework
+# to use raw_id_field on user
+class RespaTokenAdmin(admin.ModelAdmin):
+    list_display = ('key', 'user', 'created')
+    fields = ('user',)
+    ordering = ('-created',)
+    raw_id_fields = ('user',)
+
+
+# Override TokenAdmin of django rest framework
+# to use raw_id_field on user
+class RespaTokenAdmin(admin.ModelAdmin):
+    list_display = ('key', 'user', 'created')
+    fields = ('user',)
+    ordering = ('-created',)
+    raw_id_fields = ('user',)
+
+
+# Override TokenAdmin of django rest framework
+# to use raw_id_field on user
+class RespaTokenAdmin(admin.ModelAdmin):
+    list_display = ('key', 'user', 'created')
+    fields = ('user',)
+    ordering = ('-created',)
+    raw_id_fields = ('user',)
+
+
 admin_site.register(ResourceImage, ResourceImageAdmin)
 admin_site.register(Resource, ResourceAdmin)
 admin_site.register(Reservation, ReservationAdmin)
@@ -393,3 +422,7 @@ admin.site.register(Municipality, MunicipalityAdmin)
 admin.site.register(AccessibilityViewpoint, AccessibilityViewpointAdmin)
 admin.site.register(AccessibilityValue)
 admin.site.register(ResourceAccessibility, ResourceAccessibilityAdmin)
+
+if admin.site.is_registered(Token):
+    admin.site.unregister(Token)
+admin_site.register(Token, RespaTokenAdmin)
