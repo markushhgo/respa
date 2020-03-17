@@ -7,17 +7,7 @@ from respa_outlook.manager import store, ToEWSDateTime
 from exchangelib import CalendarItem, Mailbox, Attendee
 from exchangelib.properties import Mailbox
 from exchangelib.version import EXCHANGE_2016
-import logging
-# This handler will pretty-print and syntax highlight the request and response XML documents
-from exchangelib.util import PrettyXmlHandler
-
 from os.path import abspath, join
-
-logging.basicConfig(format='%(name)s - %(levelname)s - %(message)s', level=logging.DEBUG, handlers=[
-    PrettyXmlHandler(
-        open(abspath(join('.','exchange.log')), 'w')
-    )])
-# Your code using exchangelib goes here
 from datetime import datetime, timedelta
 
 

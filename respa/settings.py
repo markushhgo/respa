@@ -144,7 +144,7 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'kulkunen',
     'payments',
-
+    'respa_exchange',
     'respa_outlook',
     'respa_admin',
 
