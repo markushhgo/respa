@@ -64,6 +64,7 @@ env = environ.Env(
     OIDC_LEEWAY=(int, 0),
     GSM_NOTIFICATION_ADDRESS=(str, ''),
     OUTLOOK_EMAIL_DOMAIN=(str, ''),
+    OUTLOOK_POLLING_RATE=(float, 5.0),
     HELUSERS_PROVIDER=(str, 'helusers.providers.helsinki'),
     HELUSERS_SOCIALACCOUNT_ADAPTER=(str, 'helusers.adapter.SocialAccountAdapter'),
     HELUSERS_DEFAULT_AUTHENTICATION=(str, 'helusers.jwt.JWTAuthentication'),
@@ -336,6 +337,7 @@ CSRF_COOKIE_NAME = '%s-csrftoken' % env.str('COOKIE_PREFIX')
 SESSION_COOKIE_NAME = '%s-sessionid' % env.str('COOKIE_PREFIX')
 GSM_NOTIFICATION_ADDRESS = env('GSM_NOTIFICATION_ADDRESS')
 OUTLOOK_EMAIL_DOMAIN = env('OUTLOOK_EMAIL_DOMAIN')
+OUTLOOK_POLLING_RATE = env('OUTLOOK_POLLING_RATE')
 
 
 from easy_thumbnails.conf import Settings as thumbnail_settings  # noqa

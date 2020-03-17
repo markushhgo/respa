@@ -53,7 +53,7 @@ class RespaOutlookConfiguration(models.Model):
 
         unit_address = reservation.resource.unit.address_postal_full if reservation.resource.unit.address_postal_full else reservation.resource.unit.street_address
 
-        manager = store.get(self.id)
+        manager = store.items.get(self.id)
 
         appointment = CalendarItem(
             account=manager.account,
@@ -79,7 +79,7 @@ class RespaOutlookConfiguration(models.Model):
 
     def handle_modify(self, reservation, _from_outlook=True):
         outlook = RespaOutlookReservation.objects.get(reservation_id=reservation.id)
-        manager = store.get(self.id)
+        manager = store.items.get(self.id)
         appointment = manager.calendar.get(id=outlook.exchange_id)
         if _from_outlook:
             email = appointment.required_attendees[0].mailbox.email_address

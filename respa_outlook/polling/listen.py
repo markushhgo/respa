@@ -1,19 +1,16 @@
+from django.conf import settings
+
 from respa_outlook.models import RespaOutlookReservation
 from django.core.exceptions import ValidationError
 
 from time import sleep, time
 from copy import copy
-
-import queue
 import threading
 
-
-
-# TODO: Add queueing
-
 class Listen():
-    def __init__(self, configs = {}):
-        self.configs = configs
+    def __init__(self, store):
+        self.store = store
+        self.configs = store.items
         self.status = False
         self.creating = False
         self.modifying = False
@@ -27,7 +24,10 @@ class Listen():
         self.status = True
         while self.status:
             pop = []
-            for manager in self.configs:
+
+            configs = copy(self.configs) # Avoid RunTimeError this way
+
+            for manager in configs:
                 self.manager = self.configs[manager]
                 if self.manager.pop_from_store:
                     pop.append(self.manager)
@@ -47,8 +47,10 @@ class Listen():
                 self.manager = None
                 self.config = None
                 self.calendar = None
+
             for manager in pop:
                 self.configs.pop(manager.configuration.id)
+            sleep(settings.OUTLOOK_POLLING_RATE)
     
     def stop(self):
         self.status = False

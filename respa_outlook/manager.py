@@ -1,9 +1,9 @@
-from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone, DELEGATE
+from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone, DELEGATE, Configuration
 from exchangelib.errors import ErrorSchemaValidation
 from datetime import datetime, timedelta
 from time import sleep
 
-import threading
+from threading import Lock
 
 class RespaOutlookManager:
     def __init__(self, configuration):
@@ -40,9 +40,38 @@ class RespaOutlookManager:
 """
 Store configurations here on startup
 """
-store = {}
+class Store:
+    def __init__(self):
+        self.items = {}
+        self.__lock__ = Lock()
 
+    def lock(self):
+        if self.locked():
+            return
 
+        self.__lock__.acquire()
+    
+    def release(self):
+        if not self.locked():
+            return
+
+        self.__lock__.release()
+    
+    def locked(self):
+        return self.__lock__.locked()
+    
+    def add(self, instance):
+        from resources.models import Resource
+
+        self.items.update({
+            instance.id : RespaOutlookManager(instance)
+        })
+        res = Resource.objects.get(pk=instance.resource.id)
+        if res:
+            res.configuration = instance
+        res.save()
+
+store = Store()
 
 
 def ToEWSDateTime(_datetime, send_to_ews=False):

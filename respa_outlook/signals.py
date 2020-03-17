@@ -12,9 +12,9 @@ logger = logging.getLogger()
 
 def configuration_delete(sender, **kwargs):
     instance = kwargs.get('instance')
-    manager = store.get(instance.id)
-    if conf:
-        conf.manager = True
+    manager = store.items.get(instance.id)
+    if manager:
+        manager.pop_from_store = True
         logger.info("Removing configuration")
     
     
@@ -23,11 +23,5 @@ def configuration_delete(sender, **kwargs):
 
 def configuration_save(sender, **kwargs):
     instance = kwargs.get('instance')
-    store.update({
-        instance.id : RespaOutlookManager(instance)
-    })
-    res = Resource.objects.get(pk=instance.resource.id)
-    if res:
-        res.configuration = instance
-        res.save()
+    store.add(instance)
     logger.info("Configuration created")
