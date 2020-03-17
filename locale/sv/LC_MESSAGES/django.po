@@ -168,125 +168,96 @@ msgstr "Kommentar"
 msgid "Comments"
 msgstr "Kommentarer"
 
-#: kulkunen/models.py:36 kulkunen/models.py:89
 msgid "installed"
 msgstr ""
 
-#: kulkunen/models.py:37 kulkunen/models.py:92
 msgid "removed"
 msgstr ""
 
-#: kulkunen/models.py:46
 #, fuzzy
 #| msgctxt "singular"
 #| msgid "terms of use"
 msgid "State of the user"
 msgstr "villkor"
 
-#: kulkunen/models.py:54 kulkunen/models.py:121 kulkunen/models.py:250
 #, fuzzy
 #| msgid "Identifier"
 msgid "identifier"
 msgstr "Identifierare"
 
-#: kulkunen/models.py:55
 msgid "Identifier of user in the access control system (if any)"
 msgstr ""
 
-#: kulkunen/models.py:67
 #, fuzzy
 #| msgid "unit identifier"
 msgid "[No identifier]"
 msgstr "identifierare av enhet"
 
-#: kulkunen/models.py:69
 #, python-brace-format
 msgid "{uuid}: {name}"
 msgstr ""
 
-#: kulkunen/models.py:71
 #, python-brace-format
 msgid "{uuid}"
 msgstr ""
 
-#: kulkunen/models.py:88 resources/models/reservation.py:108
 msgid "requested"
 msgstr "begärd"
 
-#: kulkunen/models.py:90 payments/models.py:202
-#: resources/models/reservation.py:105
 msgid "cancelled"
 msgstr "avbruten"
 
-#: kulkunen/models.py:91
 #, fuzzy
 #| msgid "Remove image"
 msgid "removing"
 msgstr "Radera bild"
 
-#: kulkunen/models.py:115
 #, fuzzy
 #| msgid "Access code"
 msgid "access code"
 msgstr "Behörighetskod"
 
-#: kulkunen/models.py:118
 msgid "State of the grant"
 msgstr ""
 
-#: kulkunen/models.py:122
 msgid "Identifier of grant in the access control system (if any)"
 msgstr ""
 
-#: kulkunen/models.py:125
 msgid "How many times the system has tried to install this grant and failed"
 msgstr ""
 
-#: kulkunen/models.py:128
 msgid "How many times the system has tried to remove this grant (and failed)"
 msgstr ""
 
-#: kulkunen/models.py:139
 #, fuzzy, python-brace-format
 #| msgid "Slot size for reservation time"
 msgid "{user} {reservation} ({state})"
 msgstr "Spårstorlek för bokningstid"
 
-#: kulkunen/models.py:241
 msgid "system"
 msgstr ""
 
-#: kulkunen/models.py:247 resources/models/resource.py:256
-#: respa_exchange/models.py:87
 msgid "resource"
 msgstr "resurs"
 
-#: kulkunen/models.py:251
 msgid "Identifier of resource in the access control system (if any)"
 msgstr ""
 
-#: kulkunen/models.py:254 kulkunen/models.py:336
 msgid "Driver-specific configuration"
 msgstr ""
 
-#: kulkunen/models.py:255 kulkunen/models.py:337
 msgid "Internal driver data"
 msgstr ""
 
-#: kulkunen/models.py:332
 #, fuzzy
 #| msgid "reservation"
 msgid "reservation leeway"
 msgstr "reservation"
 
-#: kulkunen/models.py:333
-#, fuzzy
-#| msgid "How many hours before reservation the reminder is sent"
 msgid ""
 "How many minutes before and after the reservation the access will be allowed"
-msgstr "Hur många timmar före reserveringen ska SMS-påminnelsen skickas"
+msgstr ""
 
-#: notifications/apps.py:7
 msgid "Notifications"
 msgstr "Notifikationer"
 
@@ -358,31 +329,9 @@ msgstr "Officiell begärd bokning"
 msgid "Reservation created with access code"
 msgstr "Bokning skapad med behörighetskod"
 
-#: notifications/models.py:85
-#, fuzzy
-#| msgid "Reservation created with access code"
-msgid "Reservation created with access code official"
-msgstr "Bokning skapad med behörighetskod"
-
-#: notifications/models.py:86
-#, fuzzy
-#| msgid "Reservation created with access code"
-msgid "Reservation created with access code by official"
-msgstr "Bokning skapad med behörighetskod"
-
-#: notifications/models.py:88
-msgid "Reservation confirmed"
-msgstr "Bokning godkänd"
-
-#: notifications/models.py:89
-msgid "Reservation denied"
-msgstr "Bokning avböjd"
-
-#: notifications/models.py:90
 msgid "Access code was created for a reservation"
 msgstr ""
 
-#: notifications/models.py:92
 msgid "Catering order created"
 msgstr "Catering beställning skapad"
 
@@ -453,254 +402,202 @@ msgstr "Meddelande mall"
 msgid "Notification templates"
 msgstr "Meddelande mallar"
 
-#: payments/admin.py:35
 msgid "All the resources must have manual reservation confirmation disabled."
 msgstr ""
 
-#: payments/admin.py:49
 msgid "price"
 msgstr ""
 
-#: payments/admin.py:52 payments/admin.py:62 payments/models.py:96
-#: resources/models/resource.py:257
 msgid "resources"
 msgstr "resurser"
 
-#: payments/admin.py:67 payments/admin.py:184 payments/models.py:60
 #, fuzzy
 #| msgid "created"
 msgid "created at"
 msgstr "skapad"
 
-#: payments/admin.py:72
 #, fuzzy
 #| msgid "Modified by"
 msgid "modified at"
 msgstr "Modifierad av"
 
-#: payments/admin.py:87 payments/models.py:90
 #, fuzzy
 #| msgid "Copy time period"
 msgid "price period"
 msgstr "Kopiera tidsperiod"
 
-#: payments/admin.py:103
 #, fuzzy
 #| msgid "resource type"
 msgid "product type"
 msgstr "typ av resurs"
 
-#: payments/admin.py:108 payments/admin.py:179 payments/models.py:79
 msgid "price including VAT"
 msgstr ""
 
-#: payments/admin.py:113
 #, fuzzy
 #| msgid "unit group"
 msgid "unit price"
 msgstr "enhetgrupp"
 
-#: payments/admin.py:118 payments/models.py:83
 msgid "tax percentage"
 msgstr ""
 
-#: payments/admin.py:133
 msgid "timestamp"
 msgstr ""
 
-#: payments/admin.py:174
 #, fuzzy
 #| msgid "username"
 msgid "user"
 msgstr "användarnamn"
 
-#: payments/api/base.py:51
 msgid "Cannot exceed max product quantity"
 msgstr ""
 
-#: payments/api/base.py:61
 #, fuzzy
 #| msgid "This field cannot have a value with this resource"
 msgid "This product isn't available on the resource."
 msgstr "Det här fältet kan inte ha ett värde med den här resursen"
 
-#: payments/api/reservation.py:56
 msgid "At least one order line required."
 msgstr ""
 
-#: payments/api/reservation.py:61
 msgid "Order lines cannot contain duplicate products."
 msgstr ""
 
-#: payments/api/reservation.py:66
 #, fuzzy
 #| msgid "The order contains products from several providers."
 msgid "The order must contain at least one product of type \"rent\"."
 msgstr "Ordern innehåller produkter från flera leverantörer."
 
-#: payments/models.py:49
 #, fuzzy
 #| msgid "Parent"
 msgid "rent"
 msgstr "Förälder"
 
-#: payments/models.py:50
 msgid "extra"
 msgstr ""
 
-#: payments/models.py:56
 #, fuzzy
 #| msgid "period"
 msgid "per period"
 msgstr "period"
 
-#: payments/models.py:57
 msgid "fixed"
 msgstr ""
 
-#: payments/models.py:64
 #, fuzzy
 #| msgid "Catering product"
 msgid "internal product ID"
 msgstr "Catering produkt"
 
-#: payments/models.py:70
 msgid "archived_at"
 msgstr ""
 
-#: payments/models.py:73
 #, fuzzy
 #| msgid "Main type"
 msgid "type"
 msgstr "Huvudtyp"
 
-#: payments/models.py:74
 msgid "SKU"
 msgstr ""
 
-#: payments/models.py:75 respa_exchange/models.py:23
 msgid "name"
 msgstr "namn"
 
-#: payments/models.py:76 resources/models/availability.py:197
 msgid "description"
 msgstr "beskrivning"
 
-#: payments/models.py:87
 #, fuzzy
 #| msgid "resource type"
 msgid "price type"
 msgstr "typ av resurs"
 
-#: payments/models.py:93
 #, fuzzy
 #| msgid "Quantity"
 msgid "max quantity"
 msgstr "Kvantitet"
 
-#: payments/models.py:101 payments/models.py:284
 #, fuzzy
 #| msgid "Product"
 msgid "product"
 msgstr "Produkt"
 
-#: payments/models.py:102
 #, fuzzy
 #| msgid "Product"
 msgid "products"
 msgstr "Produkt"
 
-#: payments/models.py:113
 msgid "This field requires a non-zero value when price type is \"per period\"."
 msgstr ""
 
-#: payments/models.py:198
 msgid "waiting"
 msgstr ""
 
-#: payments/models.py:199 resources/models/reservation.py:106
 msgid "confirmed"
 msgstr "godkänd"
 
-#: payments/models.py:200
 msgid "rejected"
 msgstr ""
 
-#: payments/models.py:201
 msgid "expired"
 msgstr ""
 
-#: payments/models.py:205
 #, fuzzy
 #| msgid "State"
 msgid "state"
 msgstr "Tillstånd"
 
-#: payments/models.py:206
 #, fuzzy
 #| msgid "Phone number"
 msgid "order number"
 msgstr "Telefonnummer"
 
-#: payments/models.py:208 resources/api/reservation.py:867
-#: resources/models/reservation.py:183
 msgid "reservation"
 msgstr "reservation"
 
-#: payments/models.py:214 payments/models.py:282
 #, fuzzy
 #| msgid "Order"
 msgid "order"
 msgstr "Beställning"
 
-#: payments/models.py:215
 #, fuzzy
 #| msgid "Order"
 msgid "orders"
 msgstr "Beställning"
 
-#: payments/models.py:287
 #, fuzzy
 #| msgid "Quantity"
 msgid "quantity"
 msgstr "Kvantitet"
 
-#: payments/models.py:290
 #, fuzzy
 #| msgid "Catering order line"
 msgid "order line"
 msgstr "Catering beställning linje"
 
-#: payments/models.py:291
 #, fuzzy
 #| msgid "Catering order lines"
 msgid "order lines"
 msgstr "Catering beställning linjer"
 
-#: payments/models.py:306 payments/models.py:315
 msgid "order log entry"
 msgstr ""
 
-#: payments/models.py:310
 #, fuzzy
 #| msgid "Illegal state change"
 msgid "state change"
 msgstr "Otillåten förändring av tillstånd"
 
-#: payments/models.py:316
 msgid "order log entries"
 msgstr ""
 
-#: payments/utils.py:48
 msgid "hour"
 msgstr ""
 
-#: payments/utils.py:50
 #, python-brace-format
 msgid "{hours} hours"
 msgstr ""
 
-#: reports/api/daily_reservations.py:59
 msgid "No reservations."
 msgstr "Ingen bokning"
 
@@ -820,19 +717,12 @@ msgstr ""
 msgid "The resource is reservable only after %(datetime)s"
 msgstr ""
 
-#: resources/api/reservation.py:237
-#, fuzzy
-#| msgid "Only allowed to be set by staff members"
 msgid "Only allowed to be set by resource managers"
-msgstr "Endast tillåtet att fastställas av personal. "
+msgstr "Tillåts endast ställas in av resurshanterare"
 
-#: resources/api/reservation.py:241
-#, fuzzy
-#| msgid "You are not allowed to make reservations in this resource."
 msgid "You are not allowed to make a reservation of this type"
-msgstr "Du får inte göra reservationer i denna resurs."
+msgstr "Du får inte boka den här typen"
 
-#: resources/api/reservation.py:245
 msgid "Only allowed to be set by staff members"
 msgstr "Endast tillåtet att fastställas av personal. "
 
@@ -875,7 +765,6 @@ msgstr "Bokningen misslyckades. Någon av tiderna är redan bokad."
 msgid "reservations"
 msgstr "reservationer"
 
-#: resources/apps.py:7
 msgid "Resource app"
 msgstr "Resurs app"
 
@@ -891,92 +780,75 @@ msgstr "Enhets administratör"
 msgid "unit manager"
 msgstr "Enhets chef"
 
-#: resources/models/accessibility.py:13 resources/models/accessibility.py:30
-#: resources/models/accessibility.py:56 resources/models/accessibility.py:81
-#: resources/models/base.py:52
+msgid "unit viewer"
+msgstr "Enhets visare"
+
 msgid "Time of modification"
 msgstr "Modifieringstidpukt"
 
-#: resources/models/accessibility.py:16
 #, fuzzy
 #| msgid "Accessibility"
 msgid "accessibility viewpoint"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:17
 #, fuzzy
 #| msgid "Accessibility"
 msgid "accessibility viewpoints"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:27 resources/models/accessibility.py:52
-#: resources/models/accessibility.py:77
 #, fuzzy
 #| msgid "Accessibility"
 msgid "Accessibility summary value"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:28
 #, fuzzy
 #| msgid "Catering product"
 msgid "Ordering priority"
 msgstr "Catering produkt"
 
-#: resources/models/accessibility.py:34
 #, fuzzy
 #| msgid "Accessibility"
 msgid "accessibility value"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:35
 #, fuzzy
 #| msgid "Accessibility"
 msgid "accessibility values"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:49 resources/models/accessibility.py:74
 #, fuzzy
 #| msgid "Accessibility"
 msgid "Resource Accessibility"
 msgstr "Tillgänglighet"
 
-#: resources/models/accessibility.py:51 resources/models/accessibility.py:76
-#: resources/models/availability.py:110 resources/models/reservation.py:119
-#: resources/models/resource.py:684 respa_outlook/models.py:18
 msgid "Resource"
 msgstr "Resurs"
 
-#: resources/models/accessibility.py:54 resources/models/accessibility.py:79
 #, fuzzy
 #| msgid "Resource group"
 msgid "Resource ordering priority"
 msgstr "Resursgrupp"
 
-#: resources/models/accessibility.py:61
 #, fuzzy
 #| msgid "Enter accessibility data"
 msgid "resource accessibility summary"
 msgstr "Ange tillgänglighetsdata"
 
-#: resources/models/accessibility.py:62
 #, fuzzy
 #| msgid "Enter accessibility data"
 msgid "resource accessibility summaries"
 msgstr "Ange tillgänglighetsdata"
 
-#: resources/models/accessibility.py:86
 #, fuzzy
 #| msgid "Enter accessibility data"
 msgid "unit accessibility summary"
 msgstr "Ange tillgänglighetsdata"
 
-#: resources/models/accessibility.py:87
 #, fuzzy
 #| msgid "Enter accessibility data"
 msgid "unit accessibility summaries"
 msgstr "Ange tillgänglighetsdata"
 
-#: resources/models/availability.py:14
 msgid "open"
 msgstr "öppen"
 
@@ -988,9 +860,6 @@ msgstr "stängd"
 msgid "-"
 msgstr "-"
 
-#: resources/models/availability.py:112 resources/models/resource.py:176
-#: resources/models/unit.py:192
-#: respa_admin/templates/respa_admin/resources/form/_permissions.html:11
 msgid "Unit"
 msgstr "Enhet"
 
@@ -1075,7 +944,6 @@ msgstr "Stänger"
 msgid "Range between opens and closes"
 msgstr "Tid mellan öppnar och stänger"
 
-#: resources/models/availability.py:200
 msgid "day"
 msgstr "dag"
 
@@ -1083,7 +951,6 @@ msgstr "dag"
 msgid "days"
 msgstr "dagar"
 
-#: resources/models/base.py:53
 msgid "Modified by"
 msgstr "Modifierad av"
 
@@ -1141,11 +1008,15 @@ msgstr "Kan se reservationers behörighetskod"
 msgid "Can view reservation extra fields"
 msgstr "Kan se reservationers extra fält"
 
-#: resources/models/permissions.py:10
+msgid "Can view reservation user"
+msgstr "Kan se reservationers användare"
+
 msgid "Can access reservation comments"
 msgstr "Kan ser kommentarer i reservationer"
 
-#: resources/models/permissions.py:11
+msgid "Can create comments for a reservation"
+msgstr "Kan skapa kommentarer för en reservation"
+
 msgid "Can view reservation catering orders"
 msgstr "Kan visa reservationer catering beställningar"
 
@@ -1153,19 +1024,31 @@ msgstr "Kan visa reservationer catering beställningar"
 msgid "Can modify reservation catering orders"
 msgstr "Kan redigera reservation catering beställningar"
 
-#: resources/models/permissions.py:13
 #, fuzzy
 #| msgid "Can view reservation catering orders"
 msgid "Can view reservation product orders"
 msgstr "Kan visa reservationer catering beställningar"
 
-#: resources/models/permissions.py:14
 #, fuzzy
 #| msgid "Can modify reservations"
 msgid "Can modify paid reservations"
 msgstr "Kan modifiera reservationer"
 
-#: resources/models/reservation.py:104
+msgid "Can bypass payment for paid reservations"
+msgstr "Kan åsidosätta betalningen av bokningen"
+
+msgid "Can create a reservation that is a staff event"
+msgstr "Kan skapa en reservation som är en personalhändelse"
+
+msgid "Can create reservations of a non-normal type"
+msgstr "Kan skapa reservationer av en icke-normal typ"
+
+msgid "Can bypass manual confirmation requirement for resources"
+msgstr "Kan kringgå manuellt bekräftelsekrav för resurser"
+
+msgid "Can create reservations for other registered users"
+msgstr "Kan skapa reservationer för andra registrerade användare"
+
 msgid "created"
 msgstr "skapad"
 
@@ -1173,15 +1056,14 @@ msgstr "skapad"
 msgid "denied"
 msgstr "nekad"
 
-#: resources/models/reservation.py:109
 msgid "waiting for payment"
 msgstr ""
 
-#: resources/models/reservation.py:115
-#, fuzzy
-#| msgid "No reservations"
 msgid "Normal reservation"
-msgstr "Ingen bokning"
+msgstr "Normal reservation"
+
+msgid "Resource blocked"
+msgstr "Resurs blockerad"
 
 #: resources/models/reservation.py:116
 #, fuzzy
@@ -1241,17 +1123,9 @@ msgstr "Deltagare"
 msgid "Host name"
 msgstr "Värdnamn"
 
-#: resources/models/reservation.py:150
-msgid "Require assistance"
-msgstr ""
+msgid "Reservation extra questions"
+msgstr "Extra frågor för bokning"
 
-#: resources/models/reservation.py:151
-#, fuzzy
-#| msgid "Reservation"
-msgid "Require workstation"
-msgstr "Reservation"
-
-#: resources/models/reservation.py:155
 msgid "Reserver name"
 msgstr "Reservnamn"
 
@@ -1287,31 +1161,26 @@ msgstr "Extra frågor för bokning"
 msgid "Company"
 msgstr "Företag"
 
-#: resources/models/reservation.py:165
 #, fuzzy
 #| msgid "Billing address street"
 msgid "Billing first name"
 msgstr "Fakturering gatuadress"
 
-#: resources/models/reservation.py:166
 #, fuzzy
 #| msgid "Billing address street"
 msgid "Billing last name"
 msgstr "Fakturering gatuadress"
 
-#: resources/models/reservation.py:167
 #, fuzzy
 #| msgid "Billing address zip"
 msgid "Billing email address"
 msgstr "Fakturering gatuadress postnummer"
 
-#: resources/models/reservation.py:168
 #, fuzzy
 #| msgid "Phone number"
 msgid "Billing phone number"
 msgstr "Telefonnummer"
 
-#: resources/models/reservation.py:169
 msgid "Billing address street"
 msgstr "Fakturering gatuadress"
 
@@ -1441,7 +1310,15 @@ msgstr "syfte"
 msgid "purposes"
 msgstr "syften"
 
-#: resources/models/resource.py:127
+msgid "Payment terms"
+msgstr "Betalnings villkor"
+
+msgid "Generic terms"
+msgstr "Allmänna villkor"
+
+msgid "Terms type"
+msgstr "Typ av villkor"
+
 msgctxt "singular"
 msgid "terms of use"
 msgstr "villkor"
@@ -1463,15 +1340,9 @@ msgstr "Svag"
 msgid "Strong"
 msgstr "Stark"
 
-#: resources/models/resource.py:171
-#, fuzzy
-#| msgid "6-digit pin code"
 msgid "4-digit PIN code"
-msgstr "6-siffrig PIN-kod"
+msgstr "4-siffrig PIN-kod"
 
-#: resources/models/resource.py:172
-#, fuzzy
-#| msgid "6-digit pin code"
 msgid "6-digit PIN code"
 msgstr "6-siffrig PIN-kod"
 
@@ -1559,11 +1430,6 @@ msgstr "Bokningsinfo"
 msgid "Responsible contact info"
 msgstr "Ansvarig person"
 
-#: resources/models/resource.py:212
-msgid "Generic terms"
-msgstr "Allmänna villkor"
-
-#: resources/models/resource.py:214
 msgid "Specific terms"
 msgstr "Specifika villkor"
 
@@ -1594,17 +1460,14 @@ msgstr "Högsta pris per timme"
 msgid "Access code type"
 msgstr "Typ av behörighetskod"
 
-#: resources/models/resource.py:234
 #, fuzzy
 #| msgid "Can view reservation access code"
 msgid "Generate access codes"
 msgstr "Kan se reservationers behörighetskod"
 
-#: resources/models/resource.py:235
 msgid "Should access codes generated by the general system"
 msgstr ""
 
-#: resources/models/resource.py:237 resources/models/unit.py:73
 msgid "Reservable max. days in advance"
 msgstr "Bokningsbar dagar i förväg"
 
@@ -1624,14 +1487,6 @@ msgstr ""
 "En URL till ett externt bokningssystem om den här resursen hanteras "
 "annorstädes"
 
-#: resources/models/resource.py:250 respa_outlook/admin.py:21
-#: respa_outlook/models.py:28
-#, fuzzy
-#| msgid "Exchange configuration"
-msgid "Outlook configuration"
-msgstr "Exchange konfiguration"
-
-#: resources/models/resource.py:315
 msgid "You cannot make a multi day reservation"
 msgstr ""
 
@@ -1656,11 +1511,9 @@ msgstr ""
 msgid "This value must be a multiple of slot_size"
 msgstr "Detta värde måste vara ett flertal av slot_size"
 
-#: resources/models/resource.py:674
 msgid "This cannot be enabled because the resource has product(s)."
 msgstr ""
 
-#: resources/models/resource.py:679
 msgid "Main photo"
 msgstr "Huvudbild"
 
@@ -1779,25 +1632,12 @@ msgstr "Bild URL"
 msgid "Picture caption"
 msgstr "Bilddtext"
 
-#: resources/models/unit.py:78
-#, fuzzy
-#| msgid "External calendar"
 msgid "External data source"
-msgstr "Externt kalendersystem"
+msgstr "Extern datakälla"
 
-#: resources/models/unit.py:80
 msgid "External data source for opening hours"
-msgstr ""
+msgstr "Extern datakälla för öppettider"
 
-#: resources/models/unit.py:82
-msgid "Send SMS Reminder"
-msgstr "Skicka SMS-påminnelse"
-
-#: resources/models/unit.py:84
-msgid "How many hours before reservation the reminder is sent"
-msgstr "Hur många timmar före reserveringen ska SMS-påminnelsen skickas"
-
-#: resources/models/unit.py:90
 msgid "unit"
 msgstr "enhet"
 
@@ -1871,12 +1711,9 @@ msgid_plural "%(count)d minutes"
 msgstr[0] ""
 msgstr[1] ""
 
-#: resources/templates/admin/municipalities/import_template.html:10
-#: resources/templates/admin/units/import_template.html:10
 msgid "Home"
-msgstr ""
+msgstr "Hem"
 
-#: resources/templates/admin/resources/period_inline.html:10
 msgid "Add Another"
 msgstr ""
 
@@ -1942,11 +1779,11 @@ msgstr "Personalkonto"
 msgid "Allows user to grant permissions to units"
 msgstr "Tillåter användare att bevilja behörigheter till behörigheter"
 
-#: respa_admin/forms.py:462
-msgid "You can't add permissions to unit you are not admin of"
+msgid ""
+"You can't add, change or delete permissions to unit you are not admin of"
 msgstr ""
-"Du kan inte bevilja behörigheter till enheter som du inte är administratör "
-"för"
+"Du kan inte bevilja, redigera eller radera behörigheter till enheter som du "
+"inte är administratör för"
 
 #: respa_admin/templates/respa_admin/_nav.html:49
 msgid "Log out"
@@ -1961,19 +1798,15 @@ msgstr "Användarhantering"
 msgid "Contact us"
 msgstr "Kontakta oss"
 
-#: respa_admin/templates/respa_admin/_nav.html:99
 msgid "Instructions"
 msgstr "Instruktioner"
 
-#: respa_admin/templates/respa_admin/common/_notification.html:5
-msgid "Logged in as user"
-msgstr ""
-
-#: respa_admin/templates/respa_admin/common/_period_day.html:32
 msgid "Copy to next"
-msgstr ""
+msgstr "Kopiera till nästa"
 
-#: respa_admin/templates/respa_admin/common/_periods_accordion.html:19
+msgid "New period"
+msgstr "Ny tidsperiod"
+
 msgid "Copy time period"
 msgstr "Kopiera tidsperiod"
 
@@ -2026,11 +1859,6 @@ msgstr ""
 msgid "Login failed"
 msgstr "Inloggningen misslyckades"
 
-#: respa_admin/templates/respa_admin/login.html:39
-msgid "Log in with Turku account"
-msgstr "Logga in med Turku konto"
-
-#: respa_admin/templates/respa_admin/login.html:49
 #, fuzzy
 #| msgid "username"
 msgid "Username"
@@ -2042,7 +1870,9 @@ msgstr "användarnamn"
 msgid "Password"
 msgstr "lösenord"
 
-#: respa_admin/templates/respa_admin/page_resources.html:10
+msgid "Log in with Django account"
+msgstr "Logga in med Django konto"
+
 msgid "All resources I manage"
 msgstr "Alla mina resurser"
 
@@ -2055,13 +1885,9 @@ msgstr "Skapa ny resurs"
 msgid "Search"
 msgstr "Sök"
 
-#: respa_admin/templates/respa_admin/page_units.html:10
-#, fuzzy
-#| msgid "All resources I manage"
 msgid "All units I manage"
-msgstr "Alla mina resurser"
+msgstr "Alla mina enheter"
 
-#: respa_admin/templates/respa_admin/resources/_resource_list.html:8
 msgid "All resources"
 msgstr "Alla resurser"
 
@@ -2104,21 +1930,18 @@ msgstr "Personal"
 msgid "Admin"
 msgstr "Admin"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:61
+msgid "Viewer"
+msgstr "Visare"
+
 msgid "Manager"
 msgstr "Chef"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:65
-#: respa_admin/templates/respa_admin/resources/form/_permissions.html:13
 msgid "Can approve reservations"
 msgstr "Kan godkänna bokningen"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:83
-#: respa_admin/templates/respa_admin/resources/_user_list.html:48
 msgid "Edit permissions"
 msgstr "Redigera behörigheter"
 
-#: respa_admin/templates/respa_admin/resources/_user_list.html:9
 msgid "Users by search term"
 msgstr "Användarsökning med term"
 
@@ -2126,13 +1949,9 @@ msgstr "Användarsökning med term"
 msgid "Clear search"
 msgstr "Rensa sökning"
 
-#: respa_admin/templates/respa_admin/resources/edit_user.html:12
-#: respa_admin/templates/respa_admin/resources/form/_toolbar.html:14
-#: respa_admin/templates/respa_admin/units/form/_toolbar.html:6
 msgid "Save"
 msgstr "Spara"
 
-#: respa_admin/templates/respa_admin/resources/edit_user.html:15
 msgid "Cancel"
 msgstr "Avbryt"
 
@@ -2178,7 +1997,9 @@ msgstr "E-post notifikationer"
 msgid "A notification will be sent when a space is booked."
 msgstr "Ett meddelande kommer att skickas då ett utrymme har bokats."
 
-#: respa_admin/templates/respa_admin/resources/form/_equipment.html:8
+msgid "Extra questions for reservation"
+msgstr "Extra frågor för bokning"
+
 msgid "Choose from the list below"
 msgstr "Välj från listan nedan"
 
@@ -2260,7 +2081,9 @@ msgstr "Behörigheter"
 msgid "Manager/admin of unit"
 msgstr "Enhetens admin/chef"
 
-#: respa_admin/templates/respa_admin/resources/form/_terms.html:22
+msgid "Booking form"
+msgstr "Bokningsformulär"
+
 msgid "Pricing"
 msgstr "Pris"
 
@@ -2273,7 +2096,6 @@ msgstr "Detta utrymme är gratis"
 msgid "Functions"
 msgstr "Funktioner"
 
-#: respa_admin/templates/respa_admin/resources/form/_toolbar.html:18
 msgid "View resource"
 msgstr "Visa resurs"
 
@@ -2281,43 +2103,24 @@ msgstr "Visa resurs"
 msgid "User profile"
 msgstr "Användarprofil"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:8
-#, fuzzy
-#| msgid "units"
 msgid "All units"
-msgstr "enheter"
+msgstr "Alla enheter"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:19
-#, fuzzy
-#| msgid "Edit"
 msgid "Editable"
-msgstr "Redigera"
+msgstr "Redigerbar"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:37
-#, fuzzy
-#| msgid "Can not be reserved"
 msgid "Can be edited"
-msgstr "Kan inte reserveras"
+msgstr "Kan redigeras"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:39
-#, fuzzy
-#| msgid "Can not be reserved"
 msgid "Can not be edited"
-msgstr "Kan inte reserveras"
+msgstr "Kan inte redigeras"
 
-#: respa_admin/templates/respa_admin/units/form/_general_info.html:29
-#, fuzzy
-#| msgid "Contact us"
 msgid "Contact"
-msgstr "Kontakta oss"
+msgstr "Kontaktuppgifter"
 
-#: respa_admin/templates/respa_admin/units/form/_toolbar.html:10
-#, fuzzy
-#| msgid "unit"
 msgid "View unit"
-msgstr "enhet"
+msgstr "Visa enhet"
 
-#: respa_admin/templates/respa_admin/user_management.html:15
 msgid "Search for users"
 msgstr ""
 
@@ -2339,33 +2142,20 @@ msgstr "Modifiera resurs"
 msgid "Create new resource"
 msgstr "Skapa ny resurs"
 
-#: respa_admin/views/units.py:79
-#, fuzzy
-#| msgid "Units"
 msgid "Unit saved"
-msgstr "Enheter"
+msgstr "Enheten sparad"
 
-#: respa_admin/views/units.py:87
-#, fuzzy
-#| msgid "unit"
 msgid "Edit unit"
-msgstr "enhet"
+msgstr "Redigera enhet"
 
-#: respa_admin/views/units.py:89
-#, fuzzy
-#| msgid "Create new resource"
 msgid "Create new unit"
-msgstr "Skapa ny resurs"
+msgstr "Skapa ny enhet"
 
-#: respa_admin/views/units.py:140
 msgid "Saving failed. Check error in the form."
-msgstr ""
+msgstr "Sparningen misslyckades. Visa fel i formuläret."
 
-#: respa_admin/views/units.py:148
-#, fuzzy
-#| msgid "Unit"
 msgid "Edit Unit"
-msgstr "Enhet"
+msgstr "Redigera enhet"
 
 #: respa_exchange/models.py:26
 msgid "a descriptive name for this Exchange configuration"
@@ -2641,8 +2431,26 @@ msgstr ""
 #~ msgid "Extra questions"
 #~ msgstr "Extra frågor"
 
+msgid "Reservation failed. Too many reservations at once."
+msgstr "Bokningen misslyckades. För många bokningar."
+
+msgid "Reservation failed. Overlap with existing reservations."
+msgstr "Bokningen misslyckades. Någon av tiderna är redan bokad."
+
+msgid "Reservation failed. Make sure reservation period is correct."
+msgstr "Bokningen misslyckades. Kolla reserveringstiderna."
+
+msgid "Reservation failed. Begin or end time is missing."
+msgstr "Bokningen misslyckades. Någon av tiderna fattas."
+
+msgid "Reservation failed. Try again later."
+msgstr "Bokningen misslyckades. Försök igen senare."
+
+#~ msgid "Extra questions"
+#~ msgstr "Extra frågor"
+
 #~ msgid "Extra questions for reservation"
 #~ msgstr "Extra frågor för bokning"
 
-#~ msgid "Reservation failed. Try again later."
-#~ msgstr "Bokningen misslyckades. Försök igen senare."
+msgid "How many hours before reservation the reminder is sent"
+msgstr "Hur många timmar före reserveringen ska SMS-påminnelsen skickas"

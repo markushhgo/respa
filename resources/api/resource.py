@@ -14,10 +14,11 @@ from django.db.models.functions import Coalesce, Least
 from django.urls import reverse
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
+from django.contrib.auth import get_user_model
 
 from resources.pagination import PurposePagination
 from rest_framework import exceptions, filters, mixins, serializers, viewsets, response, status
-from rest_framework.authentication import SessionAuthentication
+from rest_framework.authentication import SessionAuthentication, TokenAuthentication
 from rest_framework.decorators import action
 from guardian.core import ObjectPermissionChecker
 
@@ -78,7 +79,8 @@ class PurposeViewSet(viewsets.ReadOnlyModelViewSet):
     pagination_class = PurposePagination
 
     def get_queryset(self):
-        if is_staff(self.request.user):
+        user = self.request.user
+        if is_staff(user) or is_general_admin(user):
             return self.queryset
         else:
             return self.queryset.filter(public=True)
@@ -167,6 +169,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
     required_reservation_extra_fields = serializers.ReadOnlyField(source='get_required_reservation_extra_field_names')
     is_favorite = serializers.SerializerMethodField()
     generic_terms = serializers.SerializerMethodField()
+    payment_terms = serializers.SerializerMethodField()
     # deprecated, backwards compatibility
     reservable_days_in_advance = serializers.ReadOnlyField(source='get_reservable_max_days_in_advance')
     reservable_max_days_in_advance = serializers.ReadOnlyField(source='get_reservable_max_days_in_advance')
@@ -202,10 +205,18 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
 
     def get_user_permissions(self, obj):
         request = self.context.get('request', None)
+        prefetched_user = self.context.get('prefetched_user', None)
+
+        if request:
+            user = prefetched_user or request.user
+
         return {
-            'can_make_reservations': obj.can_make_reservations(request.user) if request else False,
-            'can_ignore_opening_hours': obj.can_ignore_opening_hours(request.user) if request else False,
-            'is_admin': obj.is_admin(request.user) if request else False,
+            'can_make_reservations': obj.can_make_reservations(user) if request else False,
+            'can_ignore_opening_hours': obj.can_ignore_opening_hours(user) if request else False,
+            'is_admin': obj.is_admin(user) if request else False,
+            'is_manager': obj.is_manager(user) if request else False,
+            'is_viewer': obj.is_viewer(user) if request else False,
+            'can_bypass_payment': obj.can_bypass_payment(user) if request else False,
         }
 
     def get_is_favorite(self, obj):
@@ -216,9 +227,21 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
         data = TermsOfUseSerializer(obj.generic_terms).data
         return data['text']
 
+    def get_payment_terms(self, obj):
+        data = TermsOfUseSerializer(obj.payment_terms).data
+        return data['text']
+
     def get_reservable_before(self, obj):
         request = self.context.get('request')
-        user = request.user if request else None
+        prefetched_user = self.context.get('prefetched_user', None)
+
+        user = None
+        if request:
+            user = prefetched_user or request.user
+
+        user = None
+        if request:
+            user = prefetched_user or request.user
 
         if user and (obj.is_admin(user) or obj.is_manager(user)):
             return None
@@ -227,7 +250,11 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
 
     def get_reservable_after(self, obj):
         request = self.context.get('request')
-        user = request.user if request else None
+        prefetched_user = self.context.get('prefetched_user', None)
+
+        user = None
+        if request:
+            user = prefetched_user or request.user
 
         if user and (obj.is_admin(user) or obj.is_manager(user)):
             return None
@@ -708,7 +735,7 @@ class ResourceCacheMixin:
 
 class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,
                           viewsets.GenericViewSet, ResourceCacheMixin):
-    queryset = Resource.objects.select_related('generic_terms', 'unit', 'type', 'reservation_metadata_set')
+    queryset = Resource.objects.select_related('generic_terms', 'payment_terms', 'unit', 'type', 'reservation_metadata_set')
     queryset = queryset.prefetch_related('favorited_by', 'resource_equipment', 'resource_equipment__equipment',
                                          'purposes', 'images', 'purposes', 'groups')
     if settings.RESPA_PAYMENTS_ENABLED:
@@ -736,6 +763,14 @@ class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update(self._get_cache_context())
+
+        request_user = self.request.user
+        if request_user.is_authenticated:
+            prefetched_user = get_user_model().objects.prefetch_related('unit_authorizations', 'unit_group_authorizations__subject__members').\
+                get(pk=request_user.pk)
+
+            context['prefetched_user'] = prefetched_user
+
         return context
 
     def get_queryset(self):
@@ -745,6 +780,9 @@ class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,
 class ResourceViewSet(munigeo_api.GeoModelAPIView, mixins.RetrieveModelMixin,
                       viewsets.GenericViewSet, ResourceCacheMixin):
     queryset = ResourceListViewSet.queryset
+    authentication_classes = (
+        list(drf_settings.DEFAULT_AUTHENTICATION_CLASSES) +
+        [TokenAuthentication, SessionAuthentication])
 
     def get_serializer_class(self):
         if settings.RESPA_PAYMENTS_ENABLED:

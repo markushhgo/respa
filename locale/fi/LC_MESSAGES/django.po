@@ -755,13 +755,9 @@ msgstr "Tila on varattavissa vain %(datetime)s jälkeen"
 msgid "Only allowed to be set by resource managers"
 msgstr ""
 
-#: resources/api/reservation.py:241
-#, fuzzy
-#| msgid "You are not allowed to make reservations in this resource."
 msgid "You are not allowed to make a reservation of this type"
-msgstr "Varauksen teko tähän resurssiin ei ole sallittua."
+msgstr "Et voi tehdä tämän tyyppistä varausta"
 
-#: resources/api/reservation.py:245
 msgid "Only allowed to be set by staff members"
 msgstr "Ainoastaan virkailijat saavat asettaa"
 
@@ -820,9 +816,9 @@ msgstr "toimipisteen ylläpitäjä"
 msgid "unit manager"
 msgstr "toimipisteen hoitaja"
 
-#: resources/models/accessibility.py:13 resources/models/accessibility.py:30
-#: resources/models/accessibility.py:56 resources/models/accessibility.py:81
-#: resources/models/base.py:52
+msgid "unit viewer"
+msgstr "toimipisteen katsoja"
+
 msgid "Time of modification"
 msgstr "Muokkausaika"
 
@@ -1050,11 +1046,15 @@ msgstr "Voi nähdä varauksen pääsykoodin"
 msgid "Can view reservation extra fields"
 msgstr "Voi nähdä varauksen lisäkentät"
 
-#: resources/models/permissions.py:10
+msgid "Can view reservation user"
+msgstr "Voi nähdä varauksen käyttäjän"
+
 msgid "Can access reservation comments"
 msgstr "Pääsy varauksen kommentteihin"
 
-#: resources/models/permissions.py:11
+msgid "Can create comments for a reservation"
+msgstr "Voi luoda kommentteja varaukseen"
+
 msgid "Can view reservation catering orders"
 msgstr "Voi nähdä varauksen cateringtilaukset"
 
@@ -1070,7 +1070,21 @@ msgstr "Voi nähdä varauksen tuotetilaukset"
 msgid "Can modify paid reservations"
 msgstr "Voi muokata maksettuja varauksia"
 
-#: resources/models/reservation.py:104
+msgid "Can bypass payment for paid reservations"
+msgstr "Voi ohittaa varauksen maksamisen"
+
+msgid "Can create a reservation that is a staff event"
+msgstr "Voi luoda henkilökuntavarauksen"
+
+msgid "Can create reservations of a non-normal type"
+msgstr "Voi tehdä erikoistyyppisiä varauksia"
+
+msgid "Can bypass manual confirmation requirement for resources"
+msgstr "Voi ohittaa manuaalisen vahvistuksen"
+
+msgid "Can create reservations for other registered users"
+msgstr "Voi tehdä varauksia muille käyttäjille"
+
 msgid "created"
 msgstr "luoja"
 
@@ -1082,19 +1096,12 @@ msgstr "hylätty"
 msgid "waiting for payment"
 msgstr "odottaa maksua"
 
-#: resources/models/reservation.py:115
-#, fuzzy
-#| msgid "No reservations"
 msgid "Normal reservation"
-msgstr "Ei varauksia"
+msgstr "Tavallinen varaus"
 
-#: resources/models/reservation.py:116
-#, fuzzy
-#| msgid "Resource type"
 msgid "Resource blocked"
-msgstr "Resurssityyppi"
+msgstr "Resurssi suljettu"
 
-#: resources/models/reservation.py:121
 msgid "Begin time"
 msgstr "Alkuaika"
 
@@ -1338,7 +1345,15 @@ msgstr "käyttötarkoitus"
 msgid "purposes"
 msgstr "käyttötarkoitukset"
 
-#: resources/models/resource.py:127
+msgid "Payment terms"
+msgstr "Maksuehdot"
+
+msgid "Generic terms"
+msgstr "Yleiset ehdot"
+
+msgid "Terms type"
+msgstr "Ehtojen tyyppi"
+
 msgctxt "singular"
 msgid "terms of use"
 msgstr "käyttöehdot"
@@ -1448,11 +1463,6 @@ msgstr "Varausinfo"
 msgid "Responsible contact info"
 msgstr "Vastuuhenkilön yhteystiedot"
 
-#: resources/models/resource.py:212
-msgid "Generic terms"
-msgstr "Yleiset ehdot"
-
-#: resources/models/resource.py:214
 msgid "Specific terms"
 msgstr "Resurssikohtaiset ehdot"
 
@@ -1663,25 +1673,12 @@ msgstr "Valokuvan osoite"
 msgid "Picture caption"
 msgstr "Valokuvan kuvateksti"
 
-#: resources/models/unit.py:78
-#, fuzzy
-#| msgid "External calendar"
 msgid "External data source"
-msgstr "Ulkoinen kalenterijärjestelmä"
+msgstr "Ulkoinen tietolähde"
 
-#: resources/models/unit.py:80
 msgid "External data source for opening hours"
-msgstr ""
+msgstr "Ulkoinen tietolähde aukioloajoille"
 
-#: resources/models/unit.py:82
-msgid "Send SMS Reminder"
-msgstr "Lähetä tekstiviestimuistutus varauksista"
-
-#: resources/models/unit.py:84
-msgid "How many hours before reservation the reminder is sent"
-msgstr "Kuinka monta tuntia etukäteen lähetetään muistutus"
-
-#: resources/models/unit.py:90
 msgid "unit"
 msgstr "toimipiste"
 
@@ -1826,9 +1823,11 @@ msgstr "Henkilökunnan tili"
 msgid "Allows user to grant permissions to units"
 msgstr "Antaa käyttäjän myöntää käyttöoikeuksia toimipisteille"
 
-#: respa_admin/forms.py:462
-msgid "You can't add permissions to unit you are not admin of"
-msgstr "Et voi antaa käyttöoikeuksia toimipisteelle, jonka ylläpitäjä et ole"
+msgid ""
+"You can't add, change or delete permissions to unit you are not admin of"
+msgstr ""
+"Et voi lisätä, poistaa tai muokata käyttöoikeuksia toimipisteelle, jonka "
+"ylläpitäjä et ole"
 
 #: respa_admin/templates/respa_admin/_nav.html:49
 msgid "Log out"
@@ -1847,15 +1846,12 @@ msgstr "Ota yhteyttä"
 msgid "Instructions"
 msgstr "Ohjeet"
 
-#: respa_admin/templates/respa_admin/common/_notification.html:5
-msgid "Logged in as user"
-msgstr "Kirjauduttiin sisään käyttäjänä"
-
-#: respa_admin/templates/respa_admin/common/_period_day.html:32
 msgid "Copy to next"
-msgstr ""
+msgstr "Kopioi seuraavaan"
 
-#: respa_admin/templates/respa_admin/common/_periods_accordion.html:19
+msgid "New period"
+msgstr "Uusi aikajakso"
+
 msgid "Copy time period"
 msgstr "Kopioi aikajakso"
 
@@ -1911,11 +1907,6 @@ msgstr ""
 msgid "Login failed"
 msgstr "Kirjautuminen epäonnistui"
 
-#: respa_admin/templates/respa_admin/login.html:39
-msgid "Log in with Turku account"
-msgstr "Kirjaudu Turku-tunnuksella"
-
-#: respa_admin/templates/respa_admin/login.html:49
 msgid "Username"
 msgstr "Käyttäjätunnus"
 
@@ -1923,7 +1914,9 @@ msgstr "Käyttäjätunnus"
 msgid "Password"
 msgstr "Salasana"
 
-#: respa_admin/templates/respa_admin/page_resources.html:10
+msgid "Log in with Django account"
+msgstr "Kirjaudu sisään Django-tunnuksella"
+
 msgid "All resources I manage"
 msgstr "Kaikki hallitsemani resurssit"
 
@@ -1936,11 +1929,9 @@ msgstr "Luo uusi resurssi"
 msgid "Search"
 msgstr "Hae"
 
-#: respa_admin/templates/respa_admin/page_units.html:10
 msgid "All units I manage"
 msgstr "Kaikki hallitsemani toimipisteet"
 
-#: respa_admin/templates/respa_admin/resources/_resource_list.html:8
 msgid "All resources"
 msgstr "Kaikki resurssit"
 
@@ -1983,21 +1974,18 @@ msgstr "Henkilökunta"
 msgid "Admin"
 msgstr "Admin"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:61
+msgid "Viewer"
+msgstr "Katsoja"
+
 msgid "Manager"
 msgstr "Hoitaja"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:65
-#: respa_admin/templates/respa_admin/resources/form/_permissions.html:13
 msgid "Can approve reservations"
 msgstr "Voi hyväksyä varauksia"
 
-#: respa_admin/templates/respa_admin/resources/_unit_user_list.html:83
-#: respa_admin/templates/respa_admin/resources/_user_list.html:48
 msgid "Edit permissions"
 msgstr "Muokkaa käyttöoikeuksia"
 
-#: respa_admin/templates/respa_admin/resources/_user_list.html:9
 msgid "Users by search term"
 msgstr "Käyttäjät haulla"
 
@@ -2005,13 +1993,9 @@ msgstr "Käyttäjät haulla"
 msgid "Clear search"
 msgstr "Tyhjennä haku"
 
-#: respa_admin/templates/respa_admin/resources/edit_user.html:12
-#: respa_admin/templates/respa_admin/resources/form/_toolbar.html:14
-#: respa_admin/templates/respa_admin/units/form/_toolbar.html:6
 msgid "Save"
 msgstr "Tallenna"
 
-#: respa_admin/templates/respa_admin/resources/edit_user.html:15
 msgid "Cancel"
 msgstr "Peruuta"
 
@@ -2139,7 +2123,9 @@ msgstr "Käyttöoikeudet"
 msgid "Manager/admin of unit"
 msgstr "Toimipisteen ylläpitäjä/hoitaja"
 
-#: respa_admin/templates/respa_admin/resources/form/_terms.html:22
+msgid "Booking form"
+msgstr "Varauslomake"
+
 msgid "Pricing"
 msgstr "Hinnoittelu"
 
@@ -2152,7 +2138,6 @@ msgstr "Tila on ilmainen"
 msgid "Functions"
 msgstr "Toiminnot"
 
-#: respa_admin/templates/respa_admin/resources/form/_toolbar.html:18
 msgid "View resource"
 msgstr "Tarkastele resurssia"
 
@@ -2160,37 +2145,24 @@ msgstr "Tarkastele resurssia"
 msgid "User profile"
 msgstr "Käyttäjäprofiili"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:8
 msgid "All units"
 msgstr "Kaikki toimipisteet"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:19
 msgid "Editable"
+msgstr "Muokattava"
+
+msgid "Can be edited"
 msgstr "Muokattavissa"
 
-#: respa_admin/templates/respa_admin/units/_unit_list.html:37
-msgid "Can be edited"
-msgstr "Voi muokata"
-
-#: respa_admin/templates/respa_admin/units/_unit_list.html:39
-#, fuzzy
-#| msgid "Can be edited"
 msgid "Can not be edited"
-msgstr "Voi muokata"
+msgstr "Ei muokattavissa"
 
-#: respa_admin/templates/respa_admin/units/form/_general_info.html:29
-#, fuzzy
-#| msgid "Contact us"
 msgid "Contact"
-msgstr "Ota yhteyttä"
+msgstr "Yhteystiedot"
 
-#: respa_admin/templates/respa_admin/units/form/_toolbar.html:10
-#, fuzzy
-#| msgid "unit"
 msgid "View unit"
-msgstr "toimipiste"
+msgstr "Tarkastele toimipistettä"
 
-#: respa_admin/templates/respa_admin/user_management.html:15
 msgid "Search for users"
 msgstr "Hae käyttäjiä"
 
@@ -2212,35 +2184,21 @@ msgstr "Muokkaa resurssia"
 msgid "Create new resource"
 msgstr "Luo uusi resurssi"
 
-#: respa_admin/views/units.py:79
-#, fuzzy
-#| msgid "Units"
 msgid "Unit saved"
-msgstr "Toimipisteet"
+msgstr "Toimipiste tallennettu"
 
-#: respa_admin/views/units.py:87
-#, fuzzy
-#| msgid "unit"
 msgid "Edit unit"
-msgstr "toimipiste"
+msgstr "Muokkaa toimipistettä"
 
-#: respa_admin/views/units.py:89
-#, fuzzy
-#| msgid "Create new resource"
 msgid "Create new unit"
-msgstr "Luo uusi resurssi"
+msgstr "Luo uusi toimipiste"
 
-#: respa_admin/views/units.py:140
 msgid "Saving failed. Check error in the form."
-msgstr ""
+msgstr "Tallennus epäonnistui. Tarkista lomakkeen virheet."
 
-#: respa_admin/views/units.py:148
-#, fuzzy
-#| msgid "Unit"
 msgid "Edit Unit"
-msgstr "Toimipiste"
+msgstr "Muokkaa toimipistettä"
 
-#: respa_exchange/models.py:26
 msgid "a descriptive name for this Exchange configuration"
 msgstr "kuvaava nimi tälle Exchange-kokoonpanolle"
 
@@ -2463,32 +2421,8 @@ msgstr ""
 msgid "Password changed successfully."
 msgstr ""
 
-#: users/admin.py:165
-#, python-format
-msgid "Change password: %s"
-msgstr ""
-
-#: users/models.py:11
-#, fuzzy
-#| msgid "Host name"
-msgid "First name"
-msgstr "Isäntä"
-
-#: users/models.py:12
-#, fuzzy
-#| msgid "Host name"
-msgid "Last name"
-msgstr "Isäntä"
-
-#: users/models.py:14
-#, fuzzy
-#| msgid "Start date"
-msgid "Birthdate"
-msgstr "Alkupäivä"
-
-#: users/models.py:22
-msgid "Favorite resources"
-msgstr "Suosikkiresurssit"
+msgid "Logged in as user"
+msgstr "Kirjauduttiin sisään käyttäjänä"
 
 #: users/models.py:28
 msgid "staff status"

@@ -17,7 +17,7 @@ daemonize==2.5.0
 database-sanitizer==0.4.0
 defusedxml
 Delorean==1.0.0
-Django==2.2.9
+Django==2.2.10
 django-admin-json-editor==0.1.5
 django-allauth==0.41.0
 django-anymail==5.0
@@ -28,7 +28,7 @@ django-environ==0.4.5
 django-filter==2.1.0
 django-grappelli==2.12.2
 django-guardian==1.4.9
-django-helusers==0.4.2
+django-helusers==0.5.6
 django-hstore==1.4.2
 django-image-cropping==1.2.0
 django-jinja==2.4.1
@@ -94,7 +94,7 @@ python-docx==0.8.10
 python-jose==3.0.1
 python3-openid==3.1.0
 pytz==2018.9
-PyYAML==5.1
+PyYAML==5.3
 raven==6.10.0
 requests==2.21.0
 requests-cache==0.4.13
