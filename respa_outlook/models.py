@@ -4,7 +4,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.exceptions import ValidationError
 from respa_outlook.manager import store, ToEWSDateTime
 
-from exchangelib import CalendarItem, Mailbox, Attendee
+from exchangelib import CalendarItem, Mailbox, Attendee, EWSTimeZone
 from exchangelib.properties import Mailbox
 from exchangelib.version import EXCHANGE_2016
 from os.path import abspath, join
@@ -77,55 +77,40 @@ class RespaOutlookConfiguration(models.Model):
                                               email=reservation.reserver_email_address)
 
 
-    def handle_modify(self, reservation, _from_outlook=True):
-        outlook = RespaOutlookReservation.objects.get(reservation_id=reservation.id)
+    def handle_modify(self, reservation, appointment=None):
         manager = store.items.get(self.id)
-        appointment = manager.calendar.get(id=outlook.exchange_id)
-        if _from_outlook:
-            email = appointment.required_attendees[0].mailbox.email_address
+        outlook = RespaOutlookReservation.objects.get(reservation_id=reservation.id)
 
-            __cache = copy(reservation)
+        if appointment:
+            cache = copy(reservation)
             if reservation.begin != appointment.start:
                 reservation.begin = appointment.start
             if reservation.end != appointment.end:
                 reservation.end = appointment.end
             try:
-                if reservation.email_address != email:
-                    raise ValidationError("Not authorized")
-
-
                 reservation.clean()
                 reservation.save()
-
-                ret = send_respa_mail(
-                    email_address=email,
-                    subject="Reservation created",
-                    body="Reservation via outlook modified"
-                )
-            except:
-                appointment.start = ToEWSDateTime(__cache.begin, True)
-                appointment.end = ToEWSDateTime(__cache.end, True)
+            except ValidationError:
+                appointment.start = cache.begin
+                appointment.end = cache.end
                 appointment.required_attendees[0] = \
                     Attendee(
-                        mailbox=Mailbox(email_address=__cache.reserver_email_address),
+                        mailbox=Mailbox(email_address=cache.reserver_email_address),
                         response_type='Accept'
                     )
                 appointment.save()
-                ret = send_respa_mail(
-                    email_address=email,
-                    subject="Reservation failed",
-                    body="Reservation via outlook failed."
-                )
         else:
-            appointment.start = ToEWSDateTime(reservation.begin, True)
-            appointment.end = ToEWSDateTime(reservation.end, True)
+            appointment = manager.calendar.get(id=outlook.exchange_id)
+            appointment.start = ToEWSDateTime(reservation.begin)
+            appointment.end = ToEWSDateTime(reservation.end)
+
             appointment.required_attendees[0] = \
                      Attendee(
                         mailbox=Mailbox(email_address=reservation.reserver_email_address),
                         response_type='Accept'
                     )
             appointment.save()
-        outlook.modified = datetime.now().replace(tzinfo='Europe/Helsinki') + timedelta(minutes=2)
+        outlook.modified = datetime.now() + timedelta(minutes=2)
         outlook.save()
 
 

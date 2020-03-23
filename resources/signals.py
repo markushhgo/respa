@@ -24,4 +24,4 @@ def handle_reservation_modified(sender, instance, user, **kwargs):
         instance.modify_reminder()
 
     if instance.resource.configuration:
-        instance.resource.configuration.handle_modify(instance, False)
+        instance.resource.configuration.handle_modify(instance)

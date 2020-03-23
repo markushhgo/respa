@@ -74,7 +74,7 @@ class Store:
 store = Store()
 
 
-def ToEWSDateTime(_datetime, send_to_ews=False):
+def ToEWSDateTime(_datetime):
     tz = EWSTimeZone.timezone('Europe/Helsinki')
     time = tz.localize(
         EWSDateTime(
@@ -85,7 +85,4 @@ def ToEWSDateTime(_datetime, send_to_ews=False):
             minute=_datetime.minute
         )
     )
-    if send_to_ews:
-        _magic = str(time).split('+')[1].split(':')[0]
-        time = time + timedelta(hours=int(_magic))
     return time
