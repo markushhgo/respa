@@ -19,23 +19,22 @@ class RespaOutlookConfig(AppConfig):
         from respa_outlook.models import RespaOutlookConfiguration
         from respa_outlook.polling import Listen
         
-        if 'runserver' in argv and settings.DEBUG:
-            for configuration in RespaOutlookConfiguration.objects.all():
-                store.items.update({
-                    configuration.id : RespaOutlookManager(configuration)
-                })
-                if store.items.get(configuration.id).pop_from_store:      # Remove failed managers
-                    store.items.pop(configuration.id)
-            Listen(store)
-            post_save.connect(
-                configuration_save,
-                sender=RespaOutlookConfiguration,
-                dispatch_uid='respa-outlook-config-save'
-            )
-            pre_delete.connect(
-                configuration_delete,
-                sender=RespaOutlookConfiguration,
-                dispatch_uid='respa-outlook-config-delete'
-            )
+        for configuration in RespaOutlookConfiguration.objects.all():
+            store.items.update({
+                configuration.id : RespaOutlookManager(configuration)
+            })
+            if store.items.get(configuration.id).pop_from_store:      # Remove failed managers
+                store.items.pop(configuration.id)
+        Listen(store)
+        post_save.connect(
+            configuration_save,
+            sender=RespaOutlookConfiguration,
+            dispatch_uid='respa-outlook-config-save'
+        )
+        pre_delete.connect(
+            configuration_delete,
+            sender=RespaOutlookConfiguration,
+            dispatch_uid='respa-outlook-config-delete'
+        )
         
 

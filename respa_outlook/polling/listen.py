@@ -8,7 +8,7 @@ from exchangelib.errors import ErrorItemNotFound
 from time import sleep, time
 from copy import copy
 
-import threading
+from threading import Thread, Event
 
 class Listen():
     def __init__(self, store):
@@ -17,15 +17,17 @@ class Listen():
         self.status = False
         self.creating = False
         self.modifying = False
-        self.thread = threading.Thread(target=self.start)
+        self.thread = Thread(target=self.start)
+        self.signal = Event()
         self.manager = None
         self.config = None
         self.calendar = None
+        self.thread.setDaemon(True)
         self.thread.start()
 
     def start(self):
-        self.status = True
-        while self.status:
+        while not self.signal.wait(0):
+            print("brap")
             pop = []
 
             configs = copy(self.configs) # Avoid RunTimeError this way
@@ -54,7 +56,7 @@ class Listen():
             sleep(settings.OUTLOOK_POLLING_RATE)
     
     def stop(self):
-        self.status = False
+        self.signal.set()
 
 
     def handle_add(self):
