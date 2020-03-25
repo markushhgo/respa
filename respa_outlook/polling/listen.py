@@ -27,7 +27,6 @@ class Listen():
 
     def start(self):
         while not self.signal.wait(0):
-            print("brap")
             pop = []
 
             configs = copy(self.configs) # Avoid RunTimeError this way
