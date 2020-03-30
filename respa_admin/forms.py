@@ -3,8 +3,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
 from django.forms.formsets import DELETION_FIELD_NAME
-
 from guardian.core import ObjectPermissionChecker
+
+
+from taggit.forms import TagField
 
 from .widgets import (
     RespaCheckboxSelect,
@@ -189,6 +191,10 @@ class ResourceForm(forms.ModelForm):
         required=True,
         label='Nimi [fi]',
     )
+    tags = TagField(
+        required=False,
+        label='Avainsanat'
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -253,6 +259,7 @@ class ResourceForm(forms.ModelForm):
             'payment_terms',
             'public',
             'reservation_metadata_set',
+            'tags'
         ] + translated_fields
 
         widgets = {
