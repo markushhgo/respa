@@ -71,6 +71,7 @@ env = environ.Env(
     AUTHENTICATION_CLASSES=(list, ['helusers.jwt.JWTAuthentication']),
     HELUSERS_AUTHENTICATION_BACKEND=(str, 'helusers.tunnistamo_oidc.TunnistamoOIDCAuth'),
     USE_SWAGGER_OPENAPI_VIEW=(bool, False),
+    USE_RESPA_EXCHANGE=(bool, False),
     EMAIL_HOST=(str, ''),
     MACHINE_TO_MACHINE_AUTH_ENABLED=(bool, False),
     JWT_AUTH_HEADER_PREFIX=(str, "JWT"),
@@ -106,6 +107,7 @@ SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 SITE_ID = 1
 
 USE_SWAGGER_OPENAPI_VIEW = env('USE_SWAGGER_OPENAPI_VIEW')
+USE_RESPA_EXCHANGE = env('USE_RESPA_EXCHANGE')
 
 # Application definition
 INSTALLED_APPS = [

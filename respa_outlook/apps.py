@@ -18,14 +18,15 @@ class RespaOutlookConfig(AppConfig):
         from respa_outlook.signals import configuration_delete, configuration_save
         from respa_outlook.models import RespaOutlookConfiguration
         from respa_outlook.polling import Listen
-        
-        for configuration in RespaOutlookConfiguration.objects.all():
-            store.items.update({
-                configuration.id : RespaOutlookManager(configuration)
-            })
-            if store.items.get(configuration.id).pop_from_store:      # Remove failed managers
-                store.items.pop(configuration.id)
-        Listen(store)
+
+        if settings.USE_RESPA_EXCHANGE:
+            for configuration in RespaOutlookConfiguration.objects.all():
+                store.items.update({
+                    configuration.id : RespaOutlookManager(configuration)
+                })
+                if store.items.get(configuration.id).pop_from_store:      # Remove failed managers
+                    store.items.pop(configuration.id)
+            Listen(store)
         post_save.connect(
             configuration_save,
             sender=RespaOutlookConfiguration,
