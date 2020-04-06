@@ -38,7 +38,6 @@ before_install:
 before_script:
   - ./build-resources
   - ls -l respa_admin/static/respa_admin/main.css  # Check main.css got built
-  - ./manage.py makemigrations
   - ./manage.py migrate
   - ./manage.py compilemessages --locale fi --locale en --locale sv
 
