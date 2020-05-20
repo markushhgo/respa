@@ -188,9 +188,6 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
     def validate(self, data):
         reservation = self.instance
         request_user = self.context['request'].user
-
-
-
         # this check is probably only needed for PATCH
         try:
             resource = data['resource']

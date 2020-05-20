@@ -1,5 +1,5 @@
-from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone, DELEGATE, Configuration
-from exchangelib.errors import ErrorSchemaValidation
+from exchangelib import Account, Credentials, EWSDateTime, EWSTimeZone, IMPERSONATION, DELEGATE, Configuration
+from exchangelib.errors import ErrorSchemaValidation, ErrorImpersonateUserDenied
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -13,15 +13,18 @@ class RespaOutlookManager:
         try:
             self.account = self._get_account()
             self.calendar = self.account.calendar
-        except:
+        except ErrorImpersonateUserDenied:
+            print("Email: %s does not have the permission to impersonate resource email: %s" % 
+                    (self.configuration.email, self.configuration.resource.resource_email))
             self.pop_from_store = True
 
     def future(self):
         return self.account.calendar.filter(end__gte=ToEWSDateTime(datetime.now().replace(microsecond=0)))
 
     def _get_account(self):
+        resource = self.configuration.resource
         if not self.account:
-            self.account = Account(primary_smtp_address=self.configuration.email, credentials=Credentials(self.configuration.email, self.configuration.password), autodiscover=True, access_type=DELEGATE)
+            self.account = Account(primary_smtp_address=resource.resource_email, credentials=Credentials(self.configuration.email, self.configuration.password), autodiscover=True, access_type=DELEGATE)
         else:
             ews_url = self.account.protocol.service_endpoint
             ews_auth_type = self.account.protocol.auth_type
