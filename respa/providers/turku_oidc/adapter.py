@@ -22,3 +22,15 @@ class SocialAccountAdapter(HelSocialAccountAdapter):
         data = sociallogin.account.extra_data
         oidc = sociallogin.account.provider == 'turku_oidc'
         update_user(user, data, oidc)
+    
+
+    def save_user(self, request, sociallogin, form=None):
+        u = sociallogin.user
+        u.uuid = username_to_uuid(u.username) # Set the correct assumed uuid
+        u.set_unusable_password()
+        sociallogin.save(request)
+
+        data = sociallogin.account.extra_data
+        oidc = sociallogin.account.provider == 'turku_oidc'
+        update_user(u, data, oidc)
+        return u
