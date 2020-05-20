@@ -274,6 +274,10 @@ class Resource(ModifiableModel, AutoIdentifiedModel):
         help_text=_('A link to an external reservation system if this resource is managed elsewhere'),
         null=True, blank=True)
 
+    resource_email = models.EmailField(verbose_name='Email for Outlook', null=True, blank=True)
+    configuration = models.ForeignKey('respa_outlook.RespaOutlookConfiguration', verbose_name=_('Outlook configuration'),
+        null=True, blank=True, on_delete=models.SET_NULL, related_name='Configuration')
+
     objects = ResourceQuerySet.as_manager()
 
     class Meta:

@@ -26,3 +26,5 @@ scripts/
 pyvenv*
 .pytest_cache
 pytest_cache
+env*
+static/*

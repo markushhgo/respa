@@ -48,6 +48,7 @@ drf-oidc-auth
 drf-yasg
 easy-thumbnails
 ecdsa
+exchangelib
 factory-boy
 Faker
 flake8

@@ -12,6 +12,7 @@ astroid==2.3.3            # via -r requirements.in, pylint
 atomicwrites==1.3.0       # via -r requirements.in
 attrs==19.3.0             # via -r requirements.in, jsonschema, pytest
 babel==2.8.0              # via -r requirements.in, delorean
+cached-property==1.5.1    # via exchangelib
 certifi==2019.11.28       # via -r requirements.in, requests, sentry-sdk
 cffi==1.14.0              # via -r requirements.in, cryptography
 chardet==3.0.4            # via -r requirements.in, requests
@@ -23,7 +24,7 @@ coverage==5.0.4           # via -r requirements.in, pytest-cov
 cryptography==2.8         # via -r requirements.in, requests-ntlm, social-auth-core
 daemonize==2.5.0          # via -r requirements.in
 database-sanitizer==1.1.0  # via -r requirements.in, django-sanitized-dump
-defusedxml==0.6.0         # via -r requirements.in, python3-openid, social-auth-core
+defusedxml==0.6.0         # via -r requirements.in, exchangelib, python3-openid, social-auth-core
 delorean==1.0.0           # via -r requirements.in
 django-admin-json-editor==0.2.0  # via -r requirements.in
 django-allauth==0.41.0    # via -r requirements.in
@@ -48,15 +49,17 @@ django-parler-rest==2.1   # via -r requirements.in, django-munigeo
 django-parler==2.0.1      # via -r requirements.in, django-munigeo, django-parler-rest
 django-reversion==3.0.7   # via -r requirements.in
 django-sanitized-dump==1.2.0  # via -r requirements.in
-django-taggit==1.2.0      # via -r requirements.in
-django==2.2.11            # via -r requirements.in, django-admin-json-editor, django-allauth, django-anymail, django-appconf, django-cors-headers, django-filter, django-guardian, django-helusers, django-jinja, django-modeltranslation, django-mptt, django-multi-email-field, django-munigeo, django-reversion, django-taggit, djangorestframework, drf-oidc-auth, drf-yasg, easy-thumbnails
+django==2.2.11            # via -r requirements.in, django-admin-json-editor, django-allauth, django-anymail, django-appconf, django-cors-headers, django-filter, django-guardian, django-helusers, django-jinja, django-modeltranslation, django-mptt, django-multi-email-field, django-munigeo, django-reversion, djangorestframework, drf-oidc-auth, drf-yasg, easy-thumbnails
 djangorestframework-jwt==1.11.0  # via -r requirements.in
 djangorestframework==3.11.0  # via -r requirements.in, django-parler-rest, drf-oidc-auth, drf-yasg
+dnspython==1.16.0         # via exchangelib
+django-taggit==1.2.0      # via -r requirements.in
 drf-oidc-auth==0.9        # via -r requirements.in, django-helusers
 drf-yasg==1.17.1          # via -r requirements.in
 easy-thumbnails==2.7      # via -r requirements.in
 ecdsa==0.15               # via -r requirements.in, python-jose
 entrypoints==0.3          # via flake8
+exchangelib==3.1.1        # via -r requirements.in
 factory-boy==2.12.0       # via -r requirements.in
 faker==4.0.2              # via -r requirements.in, factory-boy
 flake8==3.7.9             # via -r requirements.in
@@ -67,17 +70,18 @@ icalendar==4.0.5          # via -r requirements.in
 idna==2.9                 # via -r requirements.in, requests
 inflection==0.3.1         # via -r requirements.in, drf-yasg
 iso8601==0.1.12           # via -r requirements.in
+isodate==0.6.0            # via exchangelib
 isort==4.3.21             # via -r requirements.in, pylint
 itypes==1.1.0             # via -r requirements.in, coreapi
 jinja2==2.11.1            # via -r requirements.in, coreschema, django-jinja
 jsonschema==3.2.0         # via -r requirements.in, swagger-spec-validator
 lazy-object-proxy==1.4.3  # via -r requirements.in, astroid
-lxml==4.5.0               # via -r requirements.in, python-docx
+lxml==4.5.0               # via -r requirements.in, exchangelib, python-docx
 markupsafe==1.1.1         # via -r requirements.in, jinja2
 mccabe==0.6.1             # via -r requirements.in, flake8, pylint
 more-itertools==8.2.0     # via -r requirements.in, pytest
 ntlm-auth==1.4.0          # via -r requirements.in, requests-ntlm
-oauthlib==3.1.0           # via -r requirements.in, requests-oauthlib, social-auth-core
+oauthlib==3.1.0           # via -r requirements.in, exchangelib, requests-oauthlib, social-auth-core
 packaging==20.3           # via -r requirements.in, drf-yasg, pytest
 pillow==7.0.0             # via -r requirements.in, easy-thumbnails
 pip-tools==4.5.1          # via -r requirements.in
@@ -89,6 +93,7 @@ pycodestyle==2.5.0        # via -r requirements.in, flake8
 pycparser==2.20           # via -r requirements.in, cffi
 pycryptodomex==3.9.7      # via -r requirements.in, pyjwkest
 pyflakes==2.1.1           # via -r requirements.in, flake8
+pygments==2.6.1           # via exchangelib
 pyjwkest==1.4.2           # via -r requirements.in, drf-oidc-auth
 pyjwt==1.7.1              # via -r requirements.in, djangorestframework-jwt, social-auth-core
 pylint-django==2.0.14     # via -r requirements.in
@@ -121,7 +126,8 @@ sqlparse==0.3.1           # via -r requirements.in, django
 swagger-spec-validator==2.5.0  # via -r requirements.in
 text-unidecode==1.3       # via -r requirements.in, faker
 typed-ast==1.4.1          # via -r requirements.in
-tzlocal==2.0.0            # via -r requirements.in, delorean
+tzlocal==2.0.0            # via -r requirements.in, delorean, exchangelib
+unidecode==1.1.1          # via social-auth-core
 uritemplate==3.0.1        # via -r requirements.in, coreapi, drf-yasg
 urllib3==1.25.8           # via -r requirements.in, requests, sentry-sdk
 wcwidth==0.1.9            # via pytest

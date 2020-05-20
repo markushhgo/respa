@@ -64,11 +64,14 @@ env = environ.Env(
     OIDC_ISSUER=(str, ''),
     OIDC_LEEWAY=(int, 3600),
     GSM_NOTIFICATION_ADDRESS=(str, ''),
+    OUTLOOK_EMAIL_DOMAIN=(str, ''),
+    OUTLOOK_POLLING_RATE=(float, 5.0),
     HELUSERS_PROVIDER=(str, 'helusers.providers.helsinki'),
     HELUSERS_SOCIALACCOUNT_ADAPTER=(str, 'helusers.adapter.SocialAccountAdapter'),
     AUTHENTICATION_CLASSES=(list, ['helusers.jwt.JWTAuthentication']),
     HELUSERS_AUTHENTICATION_BACKEND=(str, 'helusers.tunnistamo_oidc.TunnistamoOIDCAuth'),
     USE_SWAGGER_OPENAPI_VIEW=(bool, False),
+    USE_RESPA_EXCHANGE=(bool, False),
     EMAIL_HOST=(str, ''),
     MACHINE_TO_MACHINE_AUTH_ENABLED=(bool, False),
     JWT_AUTH_HEADER_PREFIX=(str, "JWT"),
@@ -104,6 +107,7 @@ SECURE_PROXY_SSL_HEADER = env('SECURE_PROXY_SSL_HEADER')
 SITE_ID = 1
 
 USE_SWAGGER_OPENAPI_VIEW = env('USE_SWAGGER_OPENAPI_VIEW')
+USE_RESPA_EXCHANGE = env('USE_RESPA_EXCHANGE')
 
 # Application definition
 INSTALLED_APPS = [
@@ -150,8 +154,8 @@ INSTALLED_APPS = [
     'notifications.apps.NotificationsConfig',
     'kulkunen',
     'payments',
-
     'respa_exchange',
+    'respa_outlook',
     'respa_admin',
 
     'sanitized_dump',
@@ -355,6 +359,8 @@ MACHINE_TO_MACHINE_AUTH_ENABLED = env('MACHINE_TO_MACHINE_AUTH_ENABLED')
 CSRF_COOKIE_NAME = '%s-csrftoken' % env.str('COOKIE_PREFIX')
 SESSION_COOKIE_NAME = '%s-sessionid' % env.str('COOKIE_PREFIX')
 GSM_NOTIFICATION_ADDRESS = env('GSM_NOTIFICATION_ADDRESS')
+OUTLOOK_EMAIL_DOMAIN = env('OUTLOOK_EMAIL_DOMAIN')
+OUTLOOK_POLLING_RATE = env('OUTLOOK_POLLING_RATE')
 
 
 from easy_thumbnails.conf import Settings as thumbnail_settings  # noqa
