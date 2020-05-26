@@ -11,16 +11,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='resource',
-            name='payment_terms',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='resources_where_payment_terms', to='resources.TermsOfUse', verbose_name='Payment terms'),
-        ),
-        migrations.AddField(
-            model_name='termsofuse',
-            name='terms_type',
-            field=models.CharField(choices=[('payment_terms', 'Payment terms'), ('generic_terms', 'Generic terms')], default='generic_terms', max_length=40, verbose_name='Terms type'),
-        ),
         migrations.AlterField(
             model_name='accessibilityvalue',
             name='created_at',
