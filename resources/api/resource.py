@@ -176,6 +176,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
     reservable_before = serializers.SerializerMethodField()
     reservable_min_days_in_advance = serializers.ReadOnlyField(source='get_reservable_min_days_in_advance')
     reservable_after = serializers.SerializerMethodField()
+    tags = serializers.SerializerMethodField()
 
     def get_extra_fields(self, includes, context):
         """ Define extra fields that can be included via query parameters. Method from ExtraDataMixin."""
@@ -202,6 +203,9 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
                     viewpoint=vp, resource=obj, value=AccessibilityValue(value=AccessibilityValue.UNKNOWN_VALUE)))
             for vp in accessibility_viewpoints]
         return [ResourceAccessibilitySerializer(summary).data for summary in summaries]
+
+    def get_tags(self, obj):
+        return obj.tags.names()
 
     def get_user_permissions(self, obj):
         request = self.context.get('request', None)
