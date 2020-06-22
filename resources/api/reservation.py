@@ -32,7 +32,10 @@ from munigeo import api as munigeo_api
 from datetime import datetime
 from time import strptime, mktime, sleep
 
-from resources.models import Reservation, Resource, ReservationMetadataSet, ReservationBulk, ReservationQuerySet
+from resources.models import (
+    Reservation, Resource, ReservationMetadataSet, ReservationHomeMunicipalityField,
+    ReservationHomeMunicipalitySet, ReservationBulk, ReservationQuerySet
+)
 from resources.models.reservation import RESERVATION_EXTRA_FIELDS
 from resources.models.utils import build_reservations_ical_file
 from resources.pagination import ReservationPagination
@@ -101,6 +104,38 @@ class ReservationBulkSerializer(ExtraDataMixin, TranslatedModelSerializer):
                 (res.begin, res.end)
             )
 
+class HomeMunicipalitySerializer(TranslatedModelSerializer):
+    class Meta:
+        model = ReservationHomeMunicipalityField
+        fields = ('id', 'name')
+        ref_name = 'ReservationHomeMunicipalitySerializer'
+
+    def to_internal_value(self, data):
+        # if string or dict is given, try to use its id and convert the id to correct home municipality object
+        if isinstance(data, str) or isinstance(data, dict):
+            home_municipality = None
+
+            if isinstance(data, str):
+                home_municipality = get_object_or_none(ReservationHomeMunicipalityField, id=data)
+
+            # if dict and key id exists
+            if isinstance(data, dict):
+                if "id" in data:
+                    home_municipality = get_object_or_none(ReservationHomeMunicipalityField, id=data['id'])
+                else:
+                    raise ValidationError(_('Invalid home municipality object - id is missing.'))
+
+            if not home_municipality:
+                    raise ValidationError({
+                        'home_municipality': {
+                            'id': [_('Invalid pk "{pk_value}" - object does not exist.').format(pk_value=data)]
+                        }
+                    })
+            data = home_municipality
+            return data
+        else:
+            return super().to_internal_value(data)
+
 class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.GeoModelSerializer):
     begin = NullableDateTimeField()
     end = NullableDateTimeField()
@@ -110,6 +145,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
     need_manual_confirmation = serializers.ReadOnlyField()
     user_permissions = serializers.SerializerMethodField()
     preferred_language = serializers.ChoiceField(choices=settings.LANGUAGES, required=False)
+    home_municipality = HomeMunicipalitySerializer(required=False)
 
     class Meta:
         model = Reservation
@@ -222,6 +258,19 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 raise ValidationError(_('The resource is reservable only after %(datetime)s' %
                                         {'datetime': reservable_after}))
 
+        # Check given home municipality is included in resource's home municipality set
+        if 'home_municipality' in data:
+            included = resource.get_included_home_municipality_names()
+            found = False
+
+            for municipality in included:
+                if data['home_municipality'].id == municipality['id']:
+                    found = True
+                    break
+
+            if not found:
+                raise ValidationError(_('Home municipality has to be one of the included home municipality options'))
+
         # normal users cannot make reservations for other people
         if not resource.can_create_reservations_for_other_users(request_user):
             data.pop('user', None)
@@ -270,7 +319,6 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         try:
             instance.clean(original_reservation=reservation, user=request_user)
         except DjangoValidationError as exc:
-
             # Convert Django ValidationError to DRF ValidationError so that in the response
             # field specific error messages are added in the field instead of in non_field_messages.
             if not hasattr(exc, 'error_dict'):

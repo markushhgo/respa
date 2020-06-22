@@ -24,7 +24,8 @@ from resources.admin.period_inline import PeriodInline
 
 from ..models import (
     AccessibilityValue, AccessibilityViewpoint, Day, Equipment, EquipmentAlias, EquipmentCategory, Purpose,
-    Reservation, ReservationBulk, ReservationReminder, ReservationMetadataField, ReservationMetadataSet, Resource, ResourceAccessibility,
+    Reservation, ReservationBulk, ReservationReminder, ReservationMetadataField, ReservationMetadataSet,
+    ReservationHomeMunicipalityField, ReservationHomeMunicipalitySet, Resource, ResourceAccessibility,
     ResourceEquipment, ResourceGroup, ResourceImage, ResourceType, TermsOfUse,
     Unit, UnitAuthorization, UnitIdentifier, UnitGroup, UnitGroupAuthorization)
 from munigeo.models import Municipality
@@ -268,6 +269,17 @@ class ReservationMetadataSetAdmin(PopulateCreatedAndModifiedMixin, admin.ModelAd
     exclude = CommonExcludeMixin.exclude + ('id',)
     form = ReservationMetadataSetForm
 
+class ReservationHomeMunicipalityFieldAdmin(CommonExcludeMixin, TranslationAdmin):
+    pass
+
+class ReservationHomeMunicipalitySetForm(forms.ModelForm):
+    class Meta:
+        model = ReservationHomeMunicipalitySet
+        exclude = CommonExcludeMixin.exclude + ('id',)
+
+class ReservationHomeMunicipalitySetAdmin(PopulateCreatedAndModifiedMixin, admin.ModelAdmin):
+    exclude = CommonExcludeMixin.exclude + ('id',)
+    form = ReservationHomeMunicipalitySetForm
 
 class ResourceGroupAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, FixedGuardedModelAdminMixin,
                          admin.ModelAdmin):
@@ -415,6 +427,8 @@ admin_site.register(ReservationMetadataField, ReservationMetadataFieldAdmin)
 admin.site.register(ReservationBulk, ReservationBulkAdmin)
 admin.site.register(ReservationReminder, ReservationReminderAdmin)
 admin_site.register(ReservationMetadataSet, ReservationMetadataSetAdmin)
+admin_site.register(ReservationHomeMunicipalityField, ReservationHomeMunicipalityFieldAdmin)
+admin_site.register(ReservationHomeMunicipalitySet, ReservationHomeMunicipalitySetAdmin)
 admin.site.register(ResourceGroup, ResourceGroupAdmin)
 if admin.site.is_registered(Municipality):
     admin.site.unregister(Municipality)
