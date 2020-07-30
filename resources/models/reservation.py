@@ -20,7 +20,7 @@ from notifications.models import NotificationTemplate, NotificationTemplateExcep
 from resources.signals import (
     reservation_modified, reservation_confirmed, reservation_cancelled
 )
-from .base import ModifiableModel
+from .base import ModifiableModel, NameIdentifiedModel
 from .resource import generate_access_code, validate_access_code
 from .resource import Resource
 from .utils import (
@@ -37,7 +37,7 @@ RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_
                             'billing_email_address', 'billing_address_street', 'billing_address_zip',
                             'billing_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
                             'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance', 'require_workstation',
-                            'host_name', 'reservation_extra_questions')
+                            'host_name', 'reservation_extra_questions', 'home_municipality')
 
 
 class ReservationQuerySet(models.QuerySet):
@@ -149,6 +149,8 @@ class Reservation(ModifiableModel):
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
     require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
     require_workstation = models.BooleanField(verbose_name=_('Require workstation'), default=False)
+    home_municipality = models.ForeignKey('ReservationHomeMunicipalityField', verbose_name=_('Home municipality'),
+                                            null=True, blank=True, on_delete=models.SET_NULL)
 
     # extra detail fields for manually confirmed reservations
 
@@ -249,7 +251,7 @@ class Reservation(ModifiableModel):
     def can_view_access_code(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_access_codes(user)
+        return self.resource.can_view_reservation_access_code(user)
 
     def set_state(self, new_state, user):
         # Make sure it is a known state
@@ -263,8 +265,10 @@ class Reservation(ModifiableModel):
                 reservation_modified.send(sender=self.__class__, instance=self, user=user)
             return
         if new_state == Reservation.CONFIRMED:
-            self.approver = user
-            reservation_confirmed.send(sender=self.__class__, instance=self, user=user)
+            self.approver = user if user and user.is_authenticated else None
+            if user and user.is_authenticated or self.resource.authentication == 'unauthenticated':
+                reservation_confirmed.send(sender=self.__class__, instance=self,
+                                           user=user)
         elif old_state == Reservation.CONFIRMED:
             self.approver = None
 
@@ -311,8 +315,7 @@ class Reservation(ModifiableModel):
                     else:
                         self.send_reservation_cancelled_mail()
                         self.notify_staff_about_reservation(NotificationType.RESERVATION_CANCELLED_OFFICIAL)
-            else:
-                reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
+            reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         self.state = new_state
         self.save()
 
@@ -349,7 +352,7 @@ class Reservation(ModifiableModel):
     def can_view_catering_orders(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_catering_orders(user)
+        return self.resource.can_view_reservation_catering_orders(user)
 
     def can_add_product_order(self, user):
         return self.is_own(user)
@@ -357,7 +360,7 @@ class Reservation(ModifiableModel):
     def can_view_product_orders(self, user):
         if self.is_own(user):
             return True
-        return self.resource.can_view_product_orders(user)
+        return self.resource.can_view_reservation_product_orders(user)
 
     def get_order(self):
         return getattr(self, 'order', None)
@@ -369,17 +372,17 @@ class Reservation(ModifiableModel):
         return format_dt_range(translation.get_language(), begin, end)
 
     def create_reminder(self):
-        r_date = self.begin - timedelta(hours=int(self.resource.unit.sms_reminder_delay))
+        r_date = self.begin - datetime.timedelta(hours=int(self.resource.unit.sms_reminder_delay))
         reminder = ReservationReminder()
         reminder.reservation = self
         reminder.reminder_date = r_date
         reminder.save()
         self.reminder = reminder
-    
+
     def modify_reminder(self):
         if not self.reminder:
             return
-        r_date = self.begin - timedelta(hours=int(self.resource.unit.sms_reminder_delay))
+        r_date = self.begin - datetime.timedelta(hours=int(self.resource.unit.sms_reminder_delay))
         self.reminder.reminder_date = r_date
         self.reminder.save()
 
@@ -398,6 +401,14 @@ class Reservation(ModifiableModel):
         the original reservation need to be provided in kwargs as 'original_reservation', so
         that it can be excluded when checking if the resource is available.
         """
+
+        if 'user' in kwargs:
+            user = kwargs['user']
+        else:
+            user = self.user
+
+        user_is_admin = user and self.resource.is_admin(user)
+
         if self.end <= self.begin:
             raise ValidationError(_("You must end the reservation after it has begun"))
 
@@ -409,13 +420,37 @@ class Reservation(ModifiableModel):
             if day and not is_valid_time_slot(dt, self.resource.slot_size, day['opens']):
                 raise ValidationError(_("Begin and end time must match time slots"), code='invalid_time_slot')
 
+        # Check if Unit has disallow_overlapping_reservations value of True
+        if (
+            self.resource.unit.disallow_overlapping_reservations and not
+            self.resource.can_create_overlapping_reservations(user)
+        ):
+            reservations_for_same_unit = Reservation.objects.filter(user=user, resource__unit=self.resource.unit)
+            valid_reservations_for_same_unit = reservations_for_same_unit.exclude(state=Reservation.CANCELLED)
+            user_has_conflicting_reservations = valid_reservations_for_same_unit.filter(
+                Q(begin__gt=self.begin, begin__lt=self.end)
+                | Q(begin__lt=self.begin, end__gt=self.begin)
+                | Q(begin__gte=self.begin, end__lte=self.end)
+            )
+
+            if user_has_conflicting_reservations:
+                raise ValidationError(
+                    _('This unit does not allow overlapping reservations for its resources'),
+                    code='conflicting_reservation'
+                )
+
         original_reservation = self if self.pk else kwargs.get('original_reservation', None)
         if self.resource.check_reservation_collision(self.begin, self.end, original_reservation):
             raise ValidationError(_("The resource is already reserved for some of the period"))
 
-        if (self.end - self.begin) < self.resource.min_period:
-            raise ValidationError(_("The minimum reservation length is %(min_period)s") %
-                                  {'min_period': humanize_duration(self.resource.min_period)})
+        if not user_is_admin:
+            if (self.end - self.begin) < self.resource.min_period:
+                raise ValidationError(_("The minimum reservation length is %(min_period)s") %
+                                      {'min_period': humanize_duration(self.resource.min_period)})
+        else:
+            if not (self.end - self.begin) % self.resource.slot_size == datetime.timedelta(0):
+                raise ValidationError(_("The minimum reservation length is %(slot_size)s") %
+                                      {'slot_size': humanize_duration(self.resource.slot_size)})
 
         if self.access_code:
             validate_access_code(self.access_code, self.resource.access_code_type)
@@ -471,10 +506,10 @@ class Reservation(ModifiableModel):
             if self.can_view_access_code(user) and self.access_code:
                 context['access_code'] = self.access_code
 
-            if self.user.is_staff:
+            if self.user and self.user.is_staff:
                 context['staff_name'] = self.user.get_display_name()
 
-            if notification_type == NotificationType.RESERVATION_CONFIRMED:
+            if notification_type in [NotificationType.RESERVATION_CONFIRMED, NotificationType.RESERVATION_CREATED]:
                 if self.resource.reservation_confirmed_notification_extra:
                     context['extra_content'] = self.resource.reservation_confirmed_notification_extra
             elif notification_type == NotificationType.RESERVATION_REQUESTED:
@@ -509,12 +544,20 @@ class Reservation(ModifiableModel):
 
     def send_reservation_mail(self, notification_type, user=None, attachments=None, action_by_official=False, staff_email=None, extra_context={}, is_reminder=False):
         if self.resource.unit.sms_reminder:
-            if self.reminder:
+            # only allow certain notification types as reminders e.g. exclude reservation_access_code_created
+            allowed_reminder_notification_types = (
+                NotificationType.RESERVATION_CONFIRMED,
+                NotificationType.RESERVATION_CREATED,
+                NotificationType.RESERVATION_CREATED_BY_OFFICIAL,
+                NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE,
+                NotificationType.RESERVATION_CREATED_WITH_ACCESS_CODE_BY_OFFICIAL,
+                )
+
+            if self.reminder and notification_type in allowed_reminder_notification_types:
                 self.reminder.notification_type = self.reminder.notification_type if self.reminder.notification_type else notification_type
                 self.reminder.user = self.reminder.user if self.reminder.user else user
                 self.reminder.action_by_official = self.reminder.action_by_official if self.reminder.action_by_official else action_by_official
                 self.reminder.save()
-        
         """
         Stuff common to all reservation related mails.
 
@@ -526,7 +569,9 @@ class Reservation(ModifiableModel):
             print('Notification type: %s does not exist' % notification_type)
             return
 
-        if user:
+        if getattr(self, 'order', None) and self.billing_email_address:
+            email_address = self.billing_email_address
+        elif user:
             email_address = user.email
         else:
             if not (self.reserver_email_address or self.user):
@@ -536,8 +581,9 @@ class Reservation(ModifiableModel):
             else:
                 email_address = self.reserver_email_address or self.user.email
             user = self.user
-
-        language = self.preferred_language if not user.is_staff else DEFAULT_LANG
+        language = DEFAULT_LANG
+        if user and not user.is_staff:
+            language = self.preferred_language
         context = self.get_notification_context(language, notification_type=notification_type, extra_context=extra_context)
         try:
             if staff_email:
@@ -665,6 +711,30 @@ class ReservationMetadataSet(ModifiableModel):
     def __str__(self):
         return self.name
 
+class ReservationHomeMunicipalityField(NameIdentifiedModel):
+    id = models.CharField(primary_key=True, max_length=100)
+    name = models.CharField(max_length=100, verbose_name=_('Name'), unique=True)
+
+    class Meta:
+        verbose_name = _('Reservation home municipality field')
+        verbose_name_plural = _('Reservation home municipality fields')
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
+
+class ReservationHomeMunicipalitySet(ModifiableModel):
+    name = models.CharField(max_length=100, verbose_name=_('Name'), unique=True)
+    included_municipalities = models.ManyToManyField(ReservationHomeMunicipalityField,
+        verbose_name=_('Included municipalities'), related_name='home_municipality_included_set')
+
+    class Meta:
+        verbose_name = _('Reservation home municipality set')
+        verbose_name_plural = _('Reservation home municipality sets')
+
+    def __str__(self):
+        return self.name
+
 class ReservationReminderQuerySet(models.QuerySet):
     pass
 
@@ -673,7 +743,7 @@ class ReservationReminder(models.Model):
                                  on_delete=models.CASCADE)
     reminder_date = models.DateTimeField(verbose_name=_('Reminder Date'))
 
-    notification_type = models.CharField(verbose_name=_('Notification type'), max_length=32, null=True, blank=True)    
+    notification_type = models.CharField(verbose_name=_('Notification type'), max_length=32, null=True, blank=True)
     user = models.ForeignKey('users.User', verbose_name=_('User'), related_name='Users',
                                  on_delete=models.CASCADE, null=True, blank=True)
     action_by_official = models.BooleanField(verbose_name=_('Action by official'), null=True, blank=True)
@@ -682,7 +752,7 @@ class ReservationReminder(models.Model):
     objects = ReservationReminderQuerySet.as_manager()
 
     def get_unix_timestamp(self):
-        return int((self.reminder_date.replace(tzinfo=pytz.timezone('Europe/Helsinki')) - datetime(year=1970, month=1, day=1, hour=0, minute=0, second=0).replace(tzinfo=pytz.timezone('Europe/Helsinki'))).total_seconds())
+        return int((self.reminder_date.replace(tzinfo=pytz.timezone('Europe/Helsinki')) - datetime.datetime(year=1970, month=1, day=1, hour=0, minute=0, second=0).replace(tzinfo=pytz.timezone('Europe/Helsinki'))).total_seconds())
 
 
     def remind(self):
@@ -694,4 +764,4 @@ class ReservationReminder(models.Model):
         )
 
     def __str__(self):
-        return '%s - %s' % (self.reservation, self.reservation.user.email)
+        return '%s - %s' % (self.reservation, self.reservation.reserver_email_address)

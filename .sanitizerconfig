@@ -143,11 +143,11 @@ strategy:
     object_pk: null
     permission_id: null
     user_id: null
-  tkusers_adgroup:
+  helusers_adgroup:
     display_name: null
     id: null
     name: null
-  tkusers_adgroupmapping:
+  helusers_adgroupmapping:
     ad_group_id: null
     group_id: null
     id: null
@@ -353,13 +353,14 @@ strategy:
     description_fi: null
     description_sv: null
     generic_terms_id: null
+    payment_terms_id: null
     id: null
     location: null
     max_period: null
-    max_price_per_hour: null
+    max_price: null
     max_reservations_per_user: null
     min_period: null
-    min_price_per_hour: null
+    min_price: null
     modified_at: null
     modified_by_id: null
     name: null
