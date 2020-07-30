@@ -54,7 +54,7 @@ class ResourceListView(ExtraContextMixin, ListView):
             pk__in=resources.values('type'))
         context['units'] = Unit.objects.filter(
             pk__in=resources.values('unit'))
-        context['search_query'] = self.search_query
+        context['search_query'] = self.search_query or ''
         context['selected_resource_type'] = self.resource_type or ''
         context['selected_resource_unit'] = self.resource_unit or ''
         context['order_by'] = self.order_by or ''
@@ -187,7 +187,7 @@ class ManageUserPermissionsListView(ExtraContextMixin, ListView):
                                    UnitGroupAuthorizationLevel.admin,
                                })
         all_available_units = self.model.objects.filter(unit_filters | unit_group_filters).prefetch_related('authorizations')
-        return all_available_units.exclude(authorizations__authorized__isnull=True)
+        return all_available_units.exclude(authorizations__authorized__isnull=True).distinct('name')
 
     def get_queryset(self):
         qs = self.get_all_available_units()

@@ -35,7 +35,7 @@ Our main issue tracking is on [Github](https://github.com/codepointtku/respa/iss
 
 - [City of Helsinki](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.hel.fi/) & [Huvaja UI](https://huonevaraus.hel.fi/)
 - [City of Lappeenranta](https://varaamo.lappeenranta.fi/respa/v1/) - for [Varaamo UI](https://varaamo.lappeenranta.fi/) - [GitHub repo](https://github.com/City-of-Lappeenranta/Respa)
-- [City of Turku](https://respa.turku.fi/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [Github repo](https://github.com/codepointtku/respa)
+- [City of Turku](https://respa.turku.fi/v1/) - for [Varaamo UI](https://varaamo.turku.fi/) - [GitHub repo](https://github.com/codepointtku/respa)
 - [City of Hämeenlinna](https://varaukset.hameenlinna.fi/v1) - for [Varaamo UI](https://varaukset.hameenlinna.fi/varaamo/) and [Berth Reservation UI](https://varaukset.hameenlinna.fi/)  - [GitHub repo](https://github.com/CityOfHameenlinna/respa)
 - [City of Espoo](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.espoo.fi/)
 - [City of Vantaa](https://api.hel.fi/respa/v1/) - for [Varaamo UI](https://varaamo.vantaa.fi/)
@@ -89,7 +89,7 @@ psql -U postgres --dbname=respa -c "create extension postgis;"
 
 ### Build Respa Admin static resources
 
-Make sure you have Node 8 or LTS and yarn installed.
+Make sure you have Node 8 or LTS and npm installed.
 
 ```shell
 ./build-resources
@@ -97,12 +97,10 @@ Make sure you have Node 8 or LTS and yarn installed.
 
 ### Dev environment configuration
 
-Create a file `respa/.env` to configure the dev environment e.g.:
+Copy `.env.example` to `respa/.env`. Make sure the config matches your database setup.
 
 ```
-DEBUG=1
-INTERNAL_IPS='127.0.0.1'
-DATABASE_URL='postgis://respa:password@localhost:5432/respa'
+cp .env.example respa/.env
 ```
 ### Run Django migrations and import data
 
@@ -142,6 +140,8 @@ Settings are done either by setting environment variables named after the settin
 - `RESPA_ADMIN_VIEW_RESOURCE_URL`: URL for a "view changes" link in Respa Admin through which the user can view changes made to a given resource. Example value: `'https://varaamo.turku.fi/resources/'`.
 - `RESPA_ADMIN_LOGO`: Name of the logo file to be displayed in Respa Admin UI. Logo file is assumed to be located in `respa_admin/static_src/img/`. Example value: `ra-logo.svg`.
 - `RESPA_ADMIN_KORO_STYLE`: Defines the style of koro-shape used in login page and resources page. Accepts values: `koro-basic`, `koro-pulse`, `koro-beat`, `koro-storm`, `koro-wave`.
+- `ENABLE_RESOURCE_TOKEN_AUTH`: Enable Django Rest Frameworks token authentication method for Resource endpoint.
+- `DISABLE_SERVER_SIDE_CURSORS`: Disable server side cursors. Useful when using pgBouncer for example. See Django docs for more information: [Django setting](https://docs.djangoproject.com/en/3.0/ref/databases/#transaction-pooling-server-side-cursors).
 
 ### Setting up PostGIS/GEOS/GDAL on Windows (x64) / Python 3
 
@@ -162,7 +162,7 @@ with staff privileges and use that session to access the Respa Admin.
 When accessing the Respa Admin without being logged in, the login
 happens with Tunnistamo.  To test the Tunnistamo login flow in local
 development environment this needs either real Respa app client id and
-client secret in the production Tunnistamo or modifying tkusers to use
+client secret in the production Tunnistamo or modifying helusers to use
 local Tunnistamo.  The client id and client secret should be configured
 in Django Admin or shell within a socialaccount.SocialApp instance with
 id "turku".  When adding the app to Tunnistamo, the OIDC callback
@@ -270,10 +270,18 @@ cd $HOME/respa
 
 ### Delayed SMS Notifications
 
+Use cron
+
 ```sh
-$ chmod +x ./handle_reminders.sh
-$ ./handle_reminders.sh
+$ crontab -e
+$ */5 * * * * cd <project_path> && <venv_path/bin/python> manage.py handle_reminders > /dev/null 2>&1
 ```
+### Theme customization
+
+Theme customization, such as changing the main colors, can be done in `respa_admin/static_src/styles/application-variables.scss`.
+
+By default, color theme is imported in this file. If you want to override certain colors, take a copy of the contents of the file
+specified in the import, and customize. Remember to remove or uncomment the original import.
 
 Requirements
 ------------
