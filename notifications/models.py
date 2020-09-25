@@ -1,6 +1,7 @@
 import logging
 
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils import translation
 from django.utils.html import strip_tags
@@ -11,6 +12,7 @@ from jinja2.exceptions import TemplateError
 from jinja2.sandbox import SandboxedEnvironment
 from parler.models import TranslatableModel, TranslatedFields
 from parler.utils.context import switch_language
+from resources.models.base import ModifiableModel
 
 DEFAULT_LANG = settings.LANGUAGES[0][0]
 
@@ -99,7 +101,14 @@ class NotificationTemplate(TranslatableModel):
     )
 
     type = models.CharField(
-        verbose_name=_('Type'), choices=NOTIFICATION_TYPE_CHOICES, max_length=100, unique=True, db_index=True
+        verbose_name=_('Type'), choices=NOTIFICATION_TYPE_CHOICES, max_length=100, db_index=True
+    )
+    name = models.CharField(
+        verbose_name=_('Name'), max_length=100, default='default', help_text=_('Name that is used to help differentiate between two templates when listing all templates.')
+    )
+
+    is_default_template = models.BooleanField(
+        verbose_name=_('Set this template as a default template.'), default=False, help_text=_('Use this template as a default template for this type.')
     )
 
     translations = TranslatedFields(
@@ -122,7 +131,10 @@ class NotificationTemplate(TranslatableModel):
     def __str__(self):
         for t in self.NOTIFICATION_TYPE_CHOICES:
             if t[0] == self.type:
-                return str(t[1])
+                if self.name:
+                    return str(t[1]) + ' ' + self.name
+                else:
+                    return str(t[1])
         return 'N/A'
 
     def render(self, context, language_code=DEFAULT_LANG):
@@ -156,6 +168,19 @@ class NotificationTemplate(TranslatableModel):
             except TemplateError as e:
                 raise NotificationTemplateException(e) from e
 
+    def clean(self, **kwargs):
+        super().clean()
+        if self.is_default_template:
+            if NotificationTemplate.objects.filter(id=self.id, type=self.type, is_default_template=True).exists():
+                logger.info("Saving modified default template of type {}.".format(self.type))
+
+            elif NotificationTemplate.objects.filter(type=self.type, is_default_template=True).exists():
+                logger.info("Attempted to save a new default template. A default template of type {} already exists.".format(self.type))
+                raise ValidationError({'is_default_template':_('Default template already exists')})
+
+            elif NotificationTemplate.objects.filter(type=self.type, is_default_template=False).exists():
+                logger.info("New default template of type {} was created.".format(self.type))
+
 
 def reservation_time(res):
     if isinstance(res, dict):
@@ -187,3 +212,22 @@ def render_notification_template(notification_type, context, language_code=DEFAU
         raise NotificationTemplateException(e) from e
 
     return template.render(context, language_code)
+
+class NotificationTemplateGroup(ModifiableModel):
+    identifier = models.CharField(verbose_name=_('Identifier'), max_length=100)
+    name = models.CharField(verbose_name=_('Name'), max_length=200)
+    templates = models.ManyToManyField(NotificationTemplate, 
+                                        verbose_name=_('Notification templates'),
+                                        related_name='groups',
+                                        blank=True,
+                                        limit_choices_to={'is_default_template': False})
+
+    class Meta:
+        verbose_name = _('Notification template group')
+        verbose_name_plural = _('Notification template groups')
+        ordering = ('name',)
+
+    def __str__(self):
+        return self.name
+
+        
