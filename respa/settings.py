@@ -174,7 +174,7 @@ INSTALLED_APPS = [
     'respa.providers.turku_oidc',
     'munigeo',
     'taggit',
-
+    'accessibility',
     'reports',
     'users',
     'caterings',
