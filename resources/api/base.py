@@ -2,10 +2,16 @@ from django.conf import settings
 from django.utils import timezone
 import django_filters
 from modeltranslation.translator import NotRegistered, translator
-from rest_framework import serializers
-from django.core.exceptions import ValidationError
+from rest_framework import serializers, fields as drf
+from django.db.models import Q
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.utils.translation import ugettext_lazy as _
+from django.contrib.gis.geos import Point
 from resources.models.availability import Period, Day
+from resources.models.resource import Resource
+from resources.models.unit import Unit
+
+from collections import OrderedDict
 
 all_views = []
 
@@ -38,7 +44,13 @@ class TranslatedModelSerializer(serializers.ModelSerializer):
             for lang in LANGUAGES:
                 key = "%s_%s" % (field_name, lang)
                 if key in self.fields:
-                    del self.fields[key]
+                    del self.fields[key]   
+            field = self.fields.get(field_name, None)
+            if not field:
+                continue
+            if isinstance(field, drf.DictField) and \
+                not getattr(field, 'help_text', None):
+                setattr(field, 'help_text', get_translated_field_help_text(field_name))
 
     def to_representation(self, obj):
         for field in self.translated_fields:
@@ -167,21 +179,114 @@ class DaySerializer(serializers.ModelSerializer):
         )
 
 class PeriodSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(required=False, help_text="This field is read-only.")
+    name = serializers.CharField(required=False, max_length=200)
+
     days = DaySerializer(required=True, many=True)
 
     class Meta:
         model = Period
-        exclude = (
-            'resource',
-            'unit',
-        )
-    
-    def create(self, validated_data):
+        exclude = ( 'resource', 'unit', )
+   
+    def create(self, validated_data, **kwargs):
         days = validated_data.pop('days', [])
+
+        if 'id' in validated_data:      # "read_only" during create
+            del validated_data['id']
+
         instance = super().create(validated_data)
+
+        if 'unit' in kwargs:
+            setattr(instance, 'unit', kwargs['unit'])
+        if 'resource' in kwargs:
+            setattr(instance, 'resource', kwargs['resource'])
 
         serializer = DaySerializer(data=days, many=True)
         if serializer.is_valid(raise_exception=True):
             days = serializer.save(period=instance)
 
+        instance.save()
         return instance
+
+    def update(self, instance, validated_data):
+        days = validated_data.pop('days', [])
+
+        try:
+            if isinstance(instance, Resource):
+                instance = self.Meta.model.objects.get(pk=validated_data['id'], resource=instance)
+            elif isinstance(instance, Unit):
+                instance = self.Meta.model.objects.get(pk=validated_data['id'], unit=instance)
+        except ObjectDoesNotExist as exc:
+            if isinstance(instance, Resource):
+                instance = self.create(validated_data, resource=instance)
+            elif isinstance(instance, Unit):
+                instance = self.create(validated_data, unit=instance)
+
+        query = Q()
+        for weekday in days:
+            query |= Q(weekday=weekday['weekday'])
+        instance.days.filter(query).delete()
+        
+        serializer = DaySerializer(data=days, many=True)
+        if serializer.is_valid(raise_exception=True):
+            days = serializer.save(period=instance)
+
+        return super().update(instance, validated_data)
+
+    
+    def to_representation(self, instance):
+        obj = super(PeriodSerializer, self).to_representation(instance)
+        obj['days'] = [{
+            'weekday': day['weekday'],
+            'opens': day['opens'],
+            'closes': day['closes'],
+            'closed': day['closed']
+            } for day in obj['days']]
+        return obj
+
+class LocationField(serializers.DictField):
+    srid = serializers.CharField(read_only=True)
+    coordinates = serializers.ListField(read_only=True)
+    type = serializers.CharField(read_only=True)
+
+    def to_internal_value(self, data):
+        if data['type'].lower() == 'point':
+            x,y = data['coordinates']
+            srid = data.get('srid', settings.DEFAULT_SRID)
+            return Point(x=x, y=y, srid=srid)
+        return super().to_internal_value(data)
+
+    def validate_empty_values(self, data):
+        if data == drf.empty:
+            return super().validate_empty_values(data)
+
+
+        fields = ('coordinates', 'type')
+
+        if not data:
+            raise serializers.ValidationError(_('This field cannot be empty.'))
+        
+        for field in fields:
+            if field not in data:
+                raise serializers.ValidationError({field:[_('This field is required.')]})
+        
+        if not isinstance(data['type'], str):
+            raise serializers.ValidationError({'type': [_('Expected value type str, got %s.' % type(data['type']).__name__)]})
+
+        if not isinstance(data['coordinates'], list):
+            raise serializers.ValidationError({'coordinates':[_('Expected value type list, got %s.' % type(data['coordinates']).__name__)]})
+
+        if len(data['coordinates']) <= 1 or len(data['coordinates']) > 2:
+                raise serializers.ValidationError({'coordinates':[_('Invalid coordinate values.')]})
+        for coord in data['coordinates']:
+            try:
+                int(coord)
+            except:
+                raise serializers.ValidationError({
+                    'coordinates':[_('Invalid coordinate values. Expected value type float, got %s.' % type(coord).__name__)]
+                })
+        x,y = data['coordinates']
+        data['coordinates'] = [float(x), float(y)]
+
+
+        return super().validate_empty_values(data)

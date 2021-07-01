@@ -10,7 +10,7 @@ from django.contrib.gis.db import models
 from django.utils import translation
 from django.utils.timezone import now
 from django.utils.translation import ugettext_lazy as _
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db.models import Q
 from psycopg2.extras import DateTimeTZRange
 
@@ -25,6 +25,8 @@ from .utils import (
     get_dt, save_dt, is_valid_time_slot, humanize_duration, send_respa_mail,
     DEFAULT_LANG, localize_datetime, format_dt_range, build_reservations_ical_file
 )
+
+from random import sample
 
 DEFAULT_TZ = pytz.timezone(settings.TIME_ZONE)
 
@@ -232,7 +234,6 @@ class Reservation(ModifiableModel):
         return self._get_dt("end", tz)
 
     def is_active(self):
-        print(self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED))
         return self.end + self.resource.cooldown >= timezone.now() and self.state not in (Reservation.CANCELLED, Reservation.DENIED)
 
     def is_own(self, user):
@@ -830,6 +831,53 @@ class ReservationMetadataSet(ModifiableModel):
 
     def __str__(self):
         return self.name
+    
+    def filter(self, field, value):
+        field = getattr(self, field, None)
+        if not field:
+            return
+        return field.filter(field_name=value)
+    
+    def add(self, field, value):
+        _field = getattr(self, field, None)
+        if not _field:
+            return
+        try:
+            obj = ReservationMetadataField.objects.get(field_name=value)
+        except ObjectDoesNotExist:
+            return
+        if field == 'required_fields':
+            self.supported_fields.add(obj)
+        _field.add(obj)
+    
+    def remove(self, field, value):
+        _field = getattr(self, field, None)
+        if not _field:
+            return
+        try:
+            obj = ReservationMetadataField.objects.get(field_name=value)
+        except ObjectDoesNotExist:
+            return
+        if field == 'supported_fields':
+            self.required_fields.remove(obj)
+        _field.remove(obj)
+
+    @staticmethod
+    def get_supported_fields():
+        try:
+            return [str(s.field_name) for s in ReservationMetadataField.objects.all()]
+        except:
+            return []
+
+    @staticmethod
+    def get_example():
+        try:
+            items = [str(s.field_name) for s in ReservationMetadataField.objects.all()]
+            if len(items) < 2:
+                return ["Example1", "Example2"]
+        except:
+            return ["Example1", "Example2"]
+        return sample(items, 2)
 
 class ReservationHomeMunicipalityField(NameIdentifiedModel):
     id = models.CharField(primary_key=True, max_length=100)
@@ -843,6 +891,7 @@ class ReservationHomeMunicipalityField(NameIdentifiedModel):
     def __str__(self):
         return self.name
 
+
 class ReservationHomeMunicipalitySet(ModifiableModel):
     name = models.CharField(max_length=100, verbose_name=_('Name'), unique=True)
     included_municipalities = models.ManyToManyField(ReservationHomeMunicipalityField,
@@ -855,6 +904,39 @@ class ReservationHomeMunicipalitySet(ModifiableModel):
     def __str__(self):
         return self.name
 
+    def add(self, value):
+        try:
+            obj = ReservationHomeMunicipalityField.objects.get(name=value)
+        except ObjectDoesNotExist:
+            return
+        self.included_municipalities.add(obj)
+    
+    def filter(self, value):
+        return self.included_municipalities.filter(name=value)
+
+    def remove(self, value):
+        try:
+            obj = ReservationHomeMunicipalityField.objects.get(name=value)
+        except ObjectDoesNotExist:
+            return
+        self.included_municipalities.remove(obj)
+
+    @staticmethod
+    def get_supported_fields():
+        try:
+            return [str(s.name) for s in ReservationHomeMunicipalityField.objects.all()]
+        except:
+            return []
+
+    @staticmethod
+    def get_example():
+        try:
+            items = [str(s.name) for s in ReservationHomeMunicipalityField.objects.all()]
+            if len(items) < 2:
+                return ["Example1", "Example2"]
+        except:
+            return ["Example1", "Example2"] 
+        return sample(items, 2)
 class ReservationReminderQuerySet(models.QuerySet):
     pass
 
