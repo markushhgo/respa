@@ -10,7 +10,7 @@ import pytz
 from django.utils.translation import gettext_lazy as _
 
 from ..models import Order, OrderLine
-from ..utils import round_price
+from ..utils import round_price, handle_customer_group_pricing
 
 from .base import PaymentProvider
 logger = logging.getLogger(__name__)
@@ -153,6 +153,7 @@ class TurkuPaymentProvider(PaymentProvider):
         if resource.timmi_resource:
             timmi_payload = TimmiPayload.objects.get(order=order)
         for order_line in order_lines:
+            order_line.handle_customer_group_pricing()
             product = order_line.product
             int_tax = int(product.tax_percentage)
             assert int_tax == product.tax_percentage

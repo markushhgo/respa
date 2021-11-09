@@ -1,20 +1,23 @@
 from django.utils.duration import duration_string
 from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
+from payments.api.product import ProductCustomerGroupSerializer
 
 from resources.api.base import TranslatedModelSerializer
+from resources.models.utils import get_translated_fields
 
-from ..models import Order, OrderLine, Product
+from ..models import Order, OrderLine, Product, ProductCustomerGroup
 
 
 class ProductSerializer(TranslatedModelSerializer):
     id = serializers.CharField(source='product_id')
     price = serializers.SerializerMethodField()
+    product_customer_groups = serializers.SerializerMethodField()
 
     class Meta:
         model = Product
         fields = (
-            'id', 'type', 'name', 'description', 'price', 'max_quantity'
+            'id', 'type', 'name', 'description', 'price', 'max_quantity', 'product_customer_groups'
         )
 
     def get_price(self, obj):
@@ -30,6 +33,11 @@ class ProductSerializer(TranslatedModelSerializer):
             ret.update({'period': duration_string(obj.price_period)})
 
         return ret
+
+    def get_product_customer_groups(self, obj):
+        product_cgs = ProductCustomerGroup.objects.filter(product=obj)
+        serializer = ProductCustomerGroupSerializer(product_cgs, many=True)
+        return serializer.data
 
 
 class OrderLineSerializer(serializers.ModelSerializer):
@@ -65,7 +73,13 @@ class OrderLineSerializer(serializers.ModelSerializer):
 class OrderSerializerBase(serializers.ModelSerializer):
     order_lines = OrderLineSerializer(many=True)
     price = serializers.CharField(source='get_price', read_only=True)
+    customer_group_name = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Order
-        fields = ('state', 'order_lines', 'price')
+        fields = ('state', 'order_lines', 'price', 'customer_group_name')
+
+
+    def get_customer_group_name(self, obj):
+        ocgd = obj.get_order_customer_group_data()
+        return get_translated_fields(ocgd)

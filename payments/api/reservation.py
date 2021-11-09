@@ -1,4 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
+from django.db.models import Q
 from rest_framework import exceptions, serializers, status
 from rest_framework.exceptions import PermissionDenied
 
@@ -7,7 +8,7 @@ from payments.exceptions import (
 )
 from resources.api.reservation import ReservationSerializer
 
-from ..models import OrderLine, Product
+from ..models import OrderCustomerGroupData, OrderLine, Product, ProductCustomerGroup
 from ..providers import get_payment_provider
 from .base import OrderSerializerBase
 
@@ -16,17 +17,27 @@ class ReservationEndpointOrderSerializer(OrderSerializerBase):
     id = serializers.ReadOnlyField(source='order_number')
     return_url = serializers.CharField(write_only=True)
     payment_url = serializers.SerializerMethodField()
+    customer_group = serializers.CharField(write_only=True, required=False)
 
     class Meta(OrderSerializerBase.Meta):
-        fields = OrderSerializerBase.Meta.fields + ('id', 'return_url', 'payment_url')
+        fields = OrderSerializerBase.Meta.fields + ('id', 'return_url', 'payment_url', 'customer_group')
 
     def create(self, validated_data):
         order_lines_data = validated_data.pop('order_lines', [])
+        customer_group = validated_data.pop('customer_group', None)
         return_url = validated_data.pop('return_url', '')
         order = super().create(validated_data)
-
+    
         for order_line_data in order_lines_data:
-            OrderLine.objects.create(order=order, **order_line_data)
+            product = order_line_data['product']
+            order_line = OrderLine.objects.create(order=order, **order_line_data)
+            prod_cg = ProductCustomerGroup.objects.filter(product=product, customer_group__id=customer_group)
+            if prod_cg.exists():
+                ocgd = OrderCustomerGroupData.objects.create(order_line=order_line,
+                product_cg_price=prod_cg.get_price_for(order_line.product))
+                ocgd.copy_translated_fields(prod_cg.first().customer_group)
+                ocgd.save()
+
 
         payments = get_payment_provider(request=self.context['request'],
                                         ui_return_url=return_url)
@@ -44,7 +55,6 @@ class ReservationEndpointOrderSerializer(OrderSerializerBase):
         except RespaPaymentError as pe:
             raise exceptions.APIException(detail=str(pe),
                                           code=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
         return order
 
     def get_payment_url(self, obj):
@@ -66,6 +76,24 @@ class ReservationEndpointOrderSerializer(OrderSerializerBase):
                 raise serializers.ValidationError(_('The order must contain at least one product of type "rent".'))
 
         return order_lines
+    
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        order_lines = attrs.get('order_lines', [])
+        customer_group = attrs.get('customer_group', None)
+
+        query = Q()
+        for order_line in order_lines:
+            product = order_line['product']
+            query |= Q(product=product, customer_group__id=customer_group)
+
+        if not query:
+            raise serializers.ValidationError(_('At least one order line required.'))
+
+        product_cgs = ProductCustomerGroup.objects.filter(query)
+        if customer_group and not product_cgs.exists():
+            raise serializers.ValidationError({'customer_group': _('Invalid customer group id')}, code='invalid_customer_group')
+        return attrs
 
     def to_internal_value(self, data):
         resource = self.context.get('resource')

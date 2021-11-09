@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import admin
 from django.core.exceptions import ValidationError
+from django.forms.models import BaseInlineFormSet
 from django.utils.safestring import mark_safe
 from django.utils.timezone import localtime
 from django.utils.translation import ugettext_lazy as _
@@ -10,7 +11,10 @@ from modeltranslation.admin import TranslationAdmin
 from payments.utils import get_price_period_display
 from resources.models import Resource
 
-from .models import Order, OrderLine, OrderLogEntry, Product
+from .models import (
+    ARCHIVED_AT_NONE, Order, OrderCustomerGroupData, OrderLine, OrderLogEntry, Product,
+    CustomerGroup, ProductCustomerGroup
+)
 
 
 def get_datetime_display(dt):
@@ -18,6 +22,13 @@ def get_datetime_display(dt):
         return None
     return localtime(dt).strftime('%d %b %Y %H:%M:%S')
 
+class CustomerGroupAdmin(TranslationAdmin):
+    fields = ('name', )
+
+class ProductCustomerGroupAdmin(admin.ModelAdmin):
+    def render_change_form(self, request, context, *args, **kwargs):
+        context['adminform'].form.fields['product'].queryset = Product.objects.current()
+        return super().render_change_form(request, context, *args, **kwargs)
 
 class ProductForm(forms.ModelForm):
     class Meta:
@@ -36,7 +47,31 @@ class ProductForm(forms.ModelForm):
         return resources
 
 
+class ProductCGInlineFormSet(BaseInlineFormSet):
+    def save_existing_objects(self, commit=True):
+        saved_instances = super(ProductCGInlineFormSet, self).save_existing_objects(commit)
+        # product customer group has old archived product here, update product to the new one
+        for product_cg in saved_instances:
+            new_product = Product.objects.filter(product_id=product_cg.product.product_id).get(archived_at=ARCHIVED_AT_NONE)
+            product_cg.product = new_product
+            product_cg.save()
+
+        return saved_instances
+
+
+class ProductCustomerGroupInline(admin.TabularInline):
+    model = ProductCustomerGroup
+    fields = ('id', 'customer_group', 'price', )
+    extra = 0
+    can_delete = True
+    formset = ProductCGInlineFormSet
+
+
 class ProductAdmin(TranslationAdmin):
+    inlines = (
+        ProductCustomerGroupInline,
+    )
+
     list_display = (
         'product_id', 'sku', 'sap_code', 'sap_unit', 'name', 'type', 'price', 'price_type', 'get_price_period', 'tax_percentage',
         'max_quantity', 'get_resources', 'get_created_at', 'get_modified_at'
@@ -50,7 +85,7 @@ class ProductAdmin(TranslationAdmin):
             'fields': ('sap_code', 'sap_unit'),
         }),
         (_('price').capitalize(), {
-            'fields': ('price', 'price_type', 'price_period', 'tax_percentage'),
+            'fields': ('price', 'price_type', 'price_period', 'tax_percentage', ),
         }),
         (_('resources').capitalize(), {
             'fields': ('resources',)
@@ -92,7 +127,7 @@ class ProductAdmin(TranslationAdmin):
 
 class OrderLineInline(admin.TabularInline):
     model = OrderLine
-    fields = ('product', 'product_type', 'unit_price', 'quantity', 'price', 'tax_percentage')
+    fields = ('product', 'product_type', 'unit_price', 'quantity', 'price', 'tax_percentage', 'customer_group')
     extra = 0
     readonly_fields = fields
     can_delete = False
@@ -120,6 +155,12 @@ class OrderLineInline(admin.TabularInline):
 
     tax_percentage.short_description = _('tax percentage')
 
+    def customer_group(self, obj):
+        order_cg = OrderCustomerGroupData.objects.filter(order_line=obj).first()
+        return order_cg.customer_group_name if order_cg else 'None'
+
+    customer_group.short_description = _('selected customer group')
+
 
 class OrderLogEntryInline(admin.TabularInline):
     model = OrderLogEntry
@@ -135,6 +176,26 @@ class OrderLogEntryInline(admin.TabularInline):
 
     timestamp_with_seconds.short_description = _('timestamp')
 
+class OrderCustomerGroupDataInline(admin.TabularInline):
+    model = OrderCustomerGroupData
+    extra = 1
+    fields = ('customer_group_name', 'product_cg_price', )
+    readonly_fields = fields
+    can_delete = False
+    verbose_name = "Selected customer group"
+    verbose_name_plural = "Selected customer group"
+    max_num = 0
+
+    def has_add_permission(self, request, obj):
+        return False
+
+    def customer_group_name(self, obj):
+        return obj.customer_group_name
+    customer_group_name.short_description = _('customer group')
+
+    def product_cg_price(self, obj):
+        return obj.product_cg_price
+    product_cg_price.short_description = _('product price')
 
 class OrderAdmin(admin.ModelAdmin):
     list_display = ('order_number', 'user', 'created_at', 'state', 'reservation', 'price')
@@ -142,7 +203,7 @@ class OrderAdmin(admin.ModelAdmin):
     fields = ('order_number', 'created_at', 'state', 'reservation', 'user', 'price')
 
     raw_id_fields = ('reservation',)
-    inlines = (OrderLineInline, OrderLogEntryInline)
+    inlines = (OrderLineInline, OrderLogEntryInline, )
     ordering = ('-id',)
     search_fields = ('order_number',)
     list_filter = ('state',)
@@ -190,3 +251,5 @@ class OrderAdmin(admin.ModelAdmin):
 if settings.RESPA_PAYMENTS_ENABLED:
     admin.site.register(Product, ProductAdmin)
     admin.site.register(Order, OrderAdmin)
+    admin.site.register(CustomerGroup, CustomerGroupAdmin)
+    admin.site.register(ProductCustomerGroup, ProductCustomerGroupAdmin)

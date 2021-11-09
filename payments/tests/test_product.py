@@ -1,14 +1,12 @@
 import datetime
 from copy import deepcopy
 from decimal import Decimal
-
 import pytest
 from pytz import UTC
 
 from resources.tests.conftest import resource_in_unit  # noqa
 
-from ..models import ARCHIVED_AT_NONE, Product
-
+from ..models import ARCHIVED_AT_NONE, CustomerGroup, Product, ProductCustomerGroup
 
 @pytest.fixture(autouse=True)
 def auto_use_django_db(db):
@@ -34,7 +32,6 @@ def product_2():
         price=Decimal('20.00')
     )
 
-
 @pytest.fixture()
 def product_1_v2(product_1):
     product_1_v2 = deepcopy(product_1)
@@ -43,6 +40,24 @@ def product_1_v2(product_1):
     product_1.refresh_from_db()
     return product_1_v2
 
+
+@pytest.mark.django_db
+def test_product_customer_group(product_with_multiple_product_cg):
+    assert ProductCustomerGroup.objects.filter(product=product_with_multiple_product_cg).count() == 5
+
+@pytest.mark.django_db
+def test_duplicate_customer_group(customer_group):
+    obj, created = CustomerGroup.objects.get_or_create(name=customer_group.name)
+    assert not created
+    assert obj == customer_group
+
+
+@pytest.mark.django_db
+def test_multiple_customer_groups(customer_groups):
+    for customer_group in customer_groups:
+        obj, created = CustomerGroup.objects.get_or_create(name=customer_group.name)
+        assert not created
+        assert obj == customer_group
 
 def test_product_creation(product_1, product_2, resource_in_unit):
     assert product_1.product_id != product_2.product_id

@@ -8,8 +8,11 @@ import factory.random
 from resources.models import Reservation
 from resources.models.utils import generate_id
 
-from .models import ARCHIVED_AT_NONE, TAX_PERCENTAGES, Order, OrderLine, Product
-
+from .models import (
+    ARCHIVED_AT_NONE, TAX_PERCENTAGES, CustomerGroup,
+    Order, OrderCustomerGroupData, OrderLine,
+    Product, ProductCustomerGroup
+)
 
 class ProductFactory(factory.django.DjangoModelFactory):
     """Mock Product objects"""
@@ -106,3 +109,28 @@ class OrderLineFactory(factory.django.DjangoModelFactory):
 
     class Meta:
         model = OrderLine
+
+
+class CustomerGroupFactory(factory.django.DjangoModelFactory):
+    """Mock CustomerGroup objects"""
+    name = factory.Faker('catch_phrase')
+    class Meta:
+        model = CustomerGroup
+
+
+class ProductCustomerGroupFactory(factory.django.DjangoModelFactory):
+    """Mock ProductCustomerGroup objects"""
+    customer_group = factory.SubFactory(CustomerGroupFactory)
+    price = factory.fuzzy.FuzzyDecimal(5.00, 100.00)
+    product = factory.SubFactory(ProductFactory)
+    class Meta:
+        model = ProductCustomerGroup
+
+
+class OrderCustomerGroupDataFactory(factory.django.DjangoModelFactory):
+    """Mock OrderCustomerGroupData objects"""
+    customer_group_name = factory.Faker('catch_phrase')
+    product_cg_price = factory.fuzzy.FuzzyDecimal(5.00, 100.00)
+    order_line = factory.SubFactory(OrderLineFactory)
+    class Meta:
+        model = OrderCustomerGroupData

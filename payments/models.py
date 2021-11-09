@@ -14,10 +14,12 @@ from django.utils.translation import ugettext_lazy as _
 from rest_framework import serializers
 
 from resources.models import Reservation, Resource
-from resources.models.utils import generate_id
+from resources.models.base import AutoIdentifiedModel
+from resources.models.utils import generate_id, get_translated_fields
+from modeltranslation.translator import NotRegistered, translator
 
 from .exceptions import OrderStateTransitionError
-from .utils import convert_aftertax_to_pretax, get_price_period_display, rounded
+from .utils import convert_aftertax_to_pretax, get_price_period_display, rounded, handle_customer_group_pricing
 
 # The best way for representing non existing archived_at would be using None for it,
 # but that would not work with the unique_together constraint, which brings many
@@ -34,13 +36,99 @@ TAX_PERCENTAGES = [Decimal(x) for x in (
 DEFAULT_TAX_PERCENTAGE = Decimal('24.00')
 
 
+class OrderCustomerGroupDataQuerySet(models.QuerySet):
+    def get_price(self):
+        return sum([i.product_cg_price for i in self])
+
+class OrderCustomerGroupData(models.Model):
+    customer_group_name = models.CharField(max_length=255)
+    product_cg_price = models.DecimalField(
+        verbose_name=_('price including VAT'), max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        help_text=_('Price of the product at that given time.')
+    )
+    order_line = models.OneToOneField('payments.OrderLine', on_delete=models.PROTECT, null=True)
+
+    objects = OrderCustomerGroupDataQuerySet.as_manager()
+
+
+    def __str__(self) -> str:
+        return 'Order: {0} <{1}> ({2})'.format(self.order_line.order.order_number, self.product_cg_price, self.customer_group_name)
+
+
+    class Meta:
+        verbose_name = _('Order customer group')
+        verbose_name_plural = _('Order customer groups')
+        ordering = ('id',)
+
+    def copy_translated_fields(self, other):
+        fields = get_translated_fields(other)
+        if not fields:
+            return self
+        translation_options = translator.get_options_for_model(self.__class__)
+        for field_name in translation_options.fields.keys():
+            for lang in [x[0] for x in settings.LANGUAGES]:
+                val = fields.get(lang, None)
+                if not val:
+                    continue
+                setattr(self, '%s_%s' % (field_name, lang), val)
+        return self
+
+class CustomerGroup(AutoIdentifiedModel):
+    id = models.CharField(primary_key=True, max_length=50)
+    name = models.CharField(verbose_name=_('Name'), max_length=200, unique=True)
+
+    def __str__(self) -> str:
+        return self.name
+
+class ProductCustomerGroupQuerySet(models.QuerySet):
+    """
+    Filter product customer groups with a customer group (cg) before calling these functions
+    """
+    def get_price_for(self, product):
+        """
+        Product customer group (pcg) can only have one product.
+        If this pcg is connected to the given product, use this pcg's price.
+        If no pcg is found, it means that product has no pcg for a certain cg
+        -> use the product's default price instead
+        """
+        product_cg = self.filter(product=product).first()
+        return product_cg.price if product_cg else product.price
+
+    def get_customer_group_name(self, product):
+        product_cg = self.filter(product=product).first()
+        return product_cg.customer_group.name if product_cg else None
+
+class ProductCustomerGroup(AutoIdentifiedModel):
+    id = models.CharField(primary_key=True, max_length=50)
+
+    customer_group = models.ForeignKey(CustomerGroup,
+        verbose_name=_('Customer group'), related_name='customer_group',
+        blank=True, on_delete=models.PROTECT
+    )
+    price = models.DecimalField(
+        verbose_name=_('price including VAT'), max_digits=10, decimal_places=2,
+        validators=[MinValueValidator(Decimal('0.01'))],
+        help_text=_('This will override product price field.')
+    )
+
+    product = models.ForeignKey('payments.Product',
+        verbose_name=_('Product'), related_name='product_customer_groups',
+        blank=True, null=True, on_delete=models.PROTECT
+    )
+
+    objects = ProductCustomerGroupQuerySet.as_manager()
+
+    def __str__(self) -> str:
+        return '{0} <{1}> ({2})'.format(self.product.name, self.price, self.customer_group.name)
+
+
 class ProductQuerySet(models.QuerySet):
     def current(self):
         return self.filter(archived_at=ARCHIVED_AT_NONE)
 
     def rents(self):
         return self.filter(type=Product.RENT)
-
 
 class Product(models.Model):
     RENT = 'rent'
@@ -121,15 +209,21 @@ class Product(models.Model):
         if self.id:
             resources = self.resources.all()
             Product.objects.filter(id=self.id).update(archived_at=now())
+            product_groups = ProductCustomerGroup.objects.filter(product=self)
             self.id = None
         else:
             resources = []
+            product_groups = []
             self.product_id = generate_id()
 
         super().save(*args, **kwargs)
 
         if resources:
             self.resources.set(resources)
+
+        for product_group in product_groups:
+            product_group.product = self
+            product_group.save()
 
     def delete(self, *args, **kwargs):
         Product.objects.filter(id=self.id).update(archived_at=now())
@@ -281,6 +375,21 @@ class Order(models.Model):
         with translation.override(language_code):
             return NotificationOrderSerializer(self).data
 
+    def get_customer_group_name(self):
+        if hasattr(self, '_in_memory_order_customer_group_data'):
+            return self._in_memory_order_customer_group_data.customer_group_name
+        order_cg = OrderCustomerGroupData.objects.filter(order_line__in=self.get_order_lines()).first()
+        return order_cg.customer_group_name if order_cg else None
+
+    def get_customer_group(self):
+        product = self.get_order_lines().first().product
+        product_cg = ProductCustomerGroup.objects.filter(product=product).first()
+        if not product_cg:
+            return
+        return product_cg.customer_group
+
+    def get_order_customer_group_data(self):
+        return OrderCustomerGroupData.objects.filter(order_line__in=self.get_order_lines()).first()
 
 class OrderLine(models.Model):
     order = models.ForeignKey(Order, verbose_name=_('order'), related_name='order_lines', on_delete=models.CASCADE)
@@ -298,18 +407,34 @@ class OrderLine(models.Model):
     def __str__(self):
         return str(self.product)
 
+    @handle_customer_group_pricing
     def get_unit_price(self) -> Decimal:
         return self.product.get_price_for_reservation(self.order.reservation)
 
+    @handle_customer_group_pricing
     def get_price(self) -> Decimal:
         return self.product.get_price_for_reservation(self.order.reservation) * self.quantity
 
+    @handle_customer_group_pricing
     def get_pretax_price_for_reservation(self):
         return self.product.get_pretax_price_for_reservation(self.order.reservation)
 
     def get_tax_price_for_reservation(self):
         return self.get_unit_price() - self.get_pretax_price_for_reservation()
 
+    @property
+    def product_cg_price(self):
+        if hasattr(self.order, '_in_memory_order_customer_group_data'):
+            order_cg = next(iter([order_cg for order_cg in self.order._in_memory_order_customer_group_data if order_cg.order_line == self]))
+            return order_cg.product_cg_price
+        order_cg = OrderCustomerGroupData.objects.filter(order_line=self).first()
+        if order_cg:
+            return order_cg.product_cg_price
+        return 0
+
+    @handle_customer_group_pricing
+    def handle_customer_group_pricing(self):
+        pass
 
 class OrderLogEntry(models.Model):
     order = models.ForeignKey(
