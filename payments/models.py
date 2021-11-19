@@ -44,7 +44,7 @@ class OrderCustomerGroupData(models.Model):
     customer_group_name = models.CharField(max_length=255)
     product_cg_price = models.DecimalField(
         verbose_name=_('price including VAT'), max_digits=10, decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal('0.00'))],
         help_text=_('Price of the product at that given time.')
     )
     order_line = models.OneToOneField('payments.OrderLine', on_delete=models.PROTECT, null=True)
@@ -108,7 +108,7 @@ class ProductCustomerGroup(AutoIdentifiedModel):
     )
     price = models.DecimalField(
         verbose_name=_('price including VAT'), max_digits=10, decimal_places=2,
-        validators=[MinValueValidator(Decimal('0.01'))],
+        validators=[MinValueValidator(Decimal('0.00'))],
         help_text=_('This will override product price field.')
     )
 
@@ -237,14 +237,16 @@ class Product(models.Model):
         return convert_aftertax_to_pretax(self.get_price_for_time_range(begin, end), self.tax_percentage)
 
     @rounded
-    def get_price_for_time_range(self, begin: datetime, end: datetime) -> Decimal:
+    def get_price_for_time_range(self, begin: datetime, end: datetime, product_cg = None) -> Decimal:
         assert begin < end
 
+        price = self.price if not product_cg else product_cg.price
+
         if self.price_type == Product.PRICE_FIXED:
-            return self.price
+            return price
         elif self.price_type == Product.PRICE_PER_PERIOD:
             assert self.price_period, '{} {}'.format(self, self.price_period)
-            return self.price * Decimal((end - begin) / self.price_period)
+            return price * Decimal((end - begin) / self.price_period)
         else:
             raise NotImplementedError('Cannot calculate price, unknown price type "{}".'.format(self.price_type))
 
@@ -433,7 +435,6 @@ class OrderLine(models.Model):
         order_cg = OrderCustomerGroupData.objects.filter(order_line=self).first()
         if order_cg:
             return order_cg.product_cg_price
-        return 0
 
     @handle_customer_group_pricing
     def handle_customer_group_pricing(self):
