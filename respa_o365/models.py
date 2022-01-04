@@ -2,6 +2,11 @@ from django.db import models
 from django.conf import settings
 from django.utils.translation import ugettext_lazy as _
 
+from datetime import datetime
+import pytz
+
+from respa_o365.availability_sync_item import period_to_item
+
 class OutlookTokenRequestData(models.Model):
     state = models.TextField(unique=True)
     created_at = models.DateTimeField()
@@ -34,6 +39,14 @@ class OutlookCalendarReservation(models.Model):
     exchange_id = models.TextField(verbose_name=_('Exchange ID'), unique=True)
     exchange_change_key = models.TextField(verbose_name=_('Exchange Change Key'))
     respa_change_key = models.TextField(verbose_name=_('Respa Change Key'))
+    
+    @property
+    def begin(self):
+        return self.reservation.begin
+
+    @property
+    def end(self):
+        return self.reservation.end
 
 class OutlookCalendarAvailability(models.Model):
     calendar_link = models.ForeignKey('OutlookCalendarLink', verbose_name=_('Calendar Link'),
@@ -44,9 +57,26 @@ class OutlookCalendarAvailability(models.Model):
     exchange_change_key = models.TextField(verbose_name=_('Exchange Change Key'))
     respa_change_key = models.TextField(verbose_name=_('Respa Change Key'))
 
+    @property
+    def begin(self):
+        item = period_to_item(self.period)
+        if item:
+            return utc_datetime(item.begin)
+        return None
+
+    @property 
+    def end(self):
+        item = period_to_item(self.period)
+        if item:
+            return utc_datetime(item.end)
+        return None
+    
+
 class OutlookSyncQueue(models.Model):
     calendar_link = models.ForeignKey('OutlookCalendarLink', verbose_name=_('Calendar Link'),
                     blank=False, null=False, on_delete=models.CASCADE)
     created_at = models.DateTimeField(verbose_name=_('Time of creation'), auto_now_add=True)
 
-    
+def utc_datetime(local_datetime):
+    tz = pytz.timezone(settings.TIME_ZONE)
+    return tz.localize(local_datetime, is_dst=False).astimezone(pytz.utc)
