@@ -104,6 +104,7 @@ class Reservation(ModifiableModel):
     DENIED = 'denied'
     REQUESTED = 'requested'
     WAITING_FOR_PAYMENT = 'waiting_for_payment'
+    READY_FOR_PAYMENT = 'ready_for_payment'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
@@ -111,6 +112,7 @@ class Reservation(ModifiableModel):
         (DENIED, _('denied')),
         (REQUESTED, _('requested')),
         (WAITING_FOR_PAYMENT, _('waiting for payment')),
+        (READY_FOR_PAYMENT, _('ready for payment')),
     )
 
     TYPE_NORMAL = 'normal'
@@ -265,9 +267,10 @@ class Reservation(ModifiableModel):
         # Make sure it is a known state
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
-            Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT
+            Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT,
+            Reservation.READY_FOR_PAYMENT
         )
-        if new_state == self.state and self.state == Reservation.CONFIRMED:
+        if new_state == self.state and self.state in (Reservation.CONFIRMED, Reservation.REQUESTED):
             reservation_modified.send(sender=self.__class__, instance=self, user=user)
             return
         elif new_state == Reservation.CONFIRMED:
@@ -320,7 +323,9 @@ class Reservation(ModifiableModel):
             return False
 
         if self.get_order():
-            return self.resource.can_modify_paid_reservations(user)
+            return self.resource.can_modify_paid_reservations(user) or (
+                self.user == user and self.state in (Reservation.READY_FOR_PAYMENT, Reservation.REQUESTED)
+            )
 
         # reservations that need manual confirmation and are confirmed cannot be
         # modified or cancelled without reservation approve permission
@@ -357,6 +362,9 @@ class Reservation(ModifiableModel):
 
     def get_order(self):
         return getattr(self, 'order', None)
+
+    def has_order(self):
+        return hasattr(self, 'order')
 
     def format_time(self):
         tz = self.resource.unit.get_tz()
@@ -437,7 +445,7 @@ class Reservation(ModifiableModel):
 
         original_reservation = self if self.pk else kwargs.get('original_reservation', None)
         if self.resource.check_reservation_collision(self.begin, self.end, original_reservation):
-            raise ValidationError(_("The resource is already reserved for some of the period"))
+            raise ValidationError({'period': _("The resource is already reserved for some of the period")}, code='invalid_period_range')
 
         if not user_is_admin:
             if (self.end - self.begin) < self.resource.min_period:

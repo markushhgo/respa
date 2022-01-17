@@ -349,9 +349,10 @@ class Order(models.Model):
             return
 
         valid_state_changes = {
-            Order.WAITING: (Order.CONFIRMED, Order.REJECTED, Order.EXPIRED),
+            Order.WAITING: (Order.CONFIRMED, Order.REJECTED, Order.EXPIRED, Order.CANCELLED, ),
             Order.CONFIRMED: (Order.CANCELLED,),
         }
+
         valid_new_states = valid_state_changes.get(old_state, ())
 
         if new_state not in valid_new_states:
@@ -387,8 +388,11 @@ class Order(models.Model):
         return order_cg.customer_group_name if order_cg else None
 
     def get_customer_group(self):
-        product = self.get_order_lines().first().product
-        product_cg = ProductCustomerGroup.objects.filter(product=product).first()
+        if hasattr(self, '_in_memory_order_lines'):
+            product = self.get_order_lines()[0].product
+        else:
+            product = self.get_order_lines().first().product
+        product_cg = ProductCustomerGroup.objects.filter(product__product_id=product.product_id).first()
         if not product_cg:
             return
         return product_cg.customer_group
@@ -432,9 +436,9 @@ class OrderLine(models.Model):
         if hasattr(self.order, '_in_memory_order_customer_group_data'):
             order_cg = next(iter([order_cg for order_cg in self.order._in_memory_order_customer_group_data if order_cg.order_line == self]))
             return order_cg.product_cg_price
-        order_cg = OrderCustomerGroupData.objects.filter(order_line=self).first()
-        if order_cg:
-            return order_cg.product_cg_price
+        order_cg = OrderCustomerGroupData.objects.filter(order_line=self)
+        if order_cg.exists():
+            return order_cg.first().product_cg_price
 
     @handle_customer_group_pricing
     def handle_customer_group_pricing(self):

@@ -39,12 +39,6 @@ class ProductForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['resources'] = forms.ModelMultipleChoiceField(queryset=Resource.objects.order_by('name'))
 
-    def clean_resources(self):
-        resources = self.cleaned_data.get('resources', [])
-        if resources:
-            if any(r.need_manual_confirmation for r in resources):
-                raise ValidationError(_('All the resources must have manual reservation confirmation disabled.'))
-        return resources
 
 
 class ProductCGInlineFormSet(BaseInlineFormSet):
@@ -157,7 +151,7 @@ class OrderLineInline(admin.TabularInline):
 
     def customer_group(self, obj):
         order_cg = OrderCustomerGroupData.objects.filter(order_line=obj).first()
-        return order_cg.customer_group_name if order_cg else 'None'
+        return order_cg.customer_group_name if order_cg and order_cg.customer_group_name else _('None')
 
     customer_group.short_description = _('selected customer group')
 

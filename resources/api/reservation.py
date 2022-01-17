@@ -37,6 +37,7 @@ import phonenumbers
 from phonenumbers.phonenumberutil import (
     region_code_for_country_code
 )
+from payments.models import Order
 
 
 from resources.models import (
@@ -171,6 +172,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         super().__init__(*args, **kwargs)
         data = self.get_initial()
         resource = None
+        request = self.context['request']
 
         # try to find out the related resource using initial data if that is given
         resource_id = data.get('resource') if data else None
@@ -189,16 +191,18 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
             required = resource.get_required_reservation_extra_field_names(cache=cache)
 
             # reservations without an order don't require billing fields
-            order = self.context['request'].data.get('order')
-            begin, end = (self.context['request'].data.get('begin'), self.context['request'].data.get('end'))
-            if not order or is_free(get_price(order, begin=begin, end=end)):
+            self.handle_reservation_modify_request(request, resource)
+            order = request.data.get('order')
+
+
+            begin, end = (request.data.get('begin', None), request.data.get('end', None))
+            if not order or isinstance(order, str) or (order and is_free(get_price(order, begin=begin, end=end))):
                 required = [field for field in required if field not in RESERVATION_BILLING_FIELDS]
 
             # staff events have less requirements
-            request_user = self.context['request'].user
             is_staff_event = data.get('staff_event', False)
 
-            if is_staff_event and resource.can_create_staff_event(request_user):
+            if is_staff_event and resource.can_create_staff_event(request.user):
                 required = {'reserver_name', 'event_description'}
 
             # we don't need to remove a field here if it isn't supported, as it will be read-only and will be more
@@ -210,6 +214,27 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 self.fields[field_name].required = True
 
         self.context.update({'resource': resource})
+
+
+    def handle_reservation_modify_request(self, request, resource):
+        # handle removing order from data when updating reservation without paying
+        if self.instance and resource.has_products() and 'order' in request.data:
+            state = request.data.get('state')
+            # states where reservation updates can be made
+            if state in (
+                Reservation.CONFIRMED, Reservation.CANCELLED, Reservation.DENIED,
+                Reservation.REQUESTED, Reservation.READY_FOR_PAYMENT):
+                has_staff_perms = resource.is_manager(request.user) or resource.is_admin(request.user)
+                user_can_modify = self.instance.can_modify(request.user)
+                # staff members never pay after reservation creation and their order can be removed safely here
+                # non staff members i.e. clients must include order when state is ready for payment
+                if has_staff_perms or (user_can_modify and state != Reservation.READY_FOR_PAYMENT):
+                    del request.data['order']
+
+
+    def get_required_fields(self):
+        return [field_name for field_name in self.fields if self.fields[field_name].required]
+
 
     def get_extra_fields(self, includes, context):
         from .resource import ResourceInlineSerializer
@@ -236,6 +261,8 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
             allowed_states = (Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED)
             if instance.state in allowed_states and value in allowed_states:
                 return value
+        if value == Reservation.WAITING_FOR_PAYMENT:
+            return value
 
         raise ValidationError(_('Illegal state change'))
 
@@ -674,11 +701,9 @@ class ReservationPermission(permissions.BasePermission):
         if resource.authentication == 'strong' and \
             not request.user.is_strong_auth:
             return False
-
         if request.method in permissions.SAFE_METHODS or \
             request.user and request.user.is_authenticated:
             return True
-
         return request.method == 'POST' and resource.authentication == 'unauthenticated'
 
     def has_object_permission(self, request, view, obj):
@@ -964,7 +989,7 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
 
         # normal users can see only their own reservations and reservations that are confirmed, requested or
         # waiting for payment
-        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT))
+        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT, Reservation.READY_FOR_PAYMENT))
         if user.is_authenticated:
             filters |= Q(user=user)
         queryset = queryset.filter(filters)
@@ -986,19 +1011,35 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
 
         order = instance.get_order()
 
-        if resource.need_manual_confirmation and not resource.can_bypass_manual_confirmation(self.request.user):
+        if resource.need_manual_confirmation and not resource.can_bypass_manual_confirmation(user):
             new_state = Reservation.REQUESTED
         else:
-            if order:
-                new_state = Reservation.CONFIRMED if order.state == Reservation.CONFIRMED else Reservation.WAITING_FOR_PAYMENT
+            if order and order.state != Order.CONFIRMED and not resource.can_bypass_manual_confirmation(user):
+                new_state = Reservation.WAITING_FOR_PAYMENT
             else:
                 new_state = Reservation.CONFIRMED
+
+        if new_state == Reservation.CONFIRMED and \
+            order and order.state == Order.WAITING and not resource.can_bypass_manual_confirmation(user):
+            new_state = Reservation.WAITING_FOR_PAYMENT
 
         instance.set_state(new_state, self.request.user)
 
     def perform_update(self, serializer):
         old_instance = self.get_object()
         new_state = serializer.validated_data.pop('state', old_instance.state)
+        order = old_instance.get_order()
+        resource = serializer.validated_data['resource']
+        can_edit_paid = resource.can_modify_paid_reservations(self.request.user)
+
+        # when staff makes an update (can edit paid perm), state should not change to waiting for payment
+        if new_state == Reservation.READY_FOR_PAYMENT and \
+            order and order.state == Order.WAITING and not can_edit_paid:
+            new_state = Reservation.WAITING_FOR_PAYMENT
+        elif new_state == Reservation.CONFIRMED and \
+            order and order.state == Order.WAITING:
+            new_state = Reservation.READY_FOR_PAYMENT
+
         new_instance = serializer.save(modified_by=self.request.user)
         new_instance.set_state(new_state, self.request.user)
         if new_state == old_instance.state and new_state not in ['denied'] and self.request.method != 'PATCH': # Reservation was modified, don't send modified upon patch.
@@ -1006,6 +1047,9 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
 
     def perform_destroy(self, instance):
         instance.set_state(Reservation.CANCELLED, self.request.user)
+        if instance.has_order():
+            order = instance.get_order()
+            order.set_state(Order.CANCELLED, 'Order reservation was cancelled.')
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)
