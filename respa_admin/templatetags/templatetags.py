@@ -41,3 +41,13 @@ def get_value_from_dict(dict_data, key):
 @register.simple_tag
 def user_has_permission(user, permission, obj):
     return user.has_perm(permission, obj)
+
+
+@register.filter
+def is_truthy(collection):
+    return any([bool(value) for value in collection])
+
+
+@register.filter
+def remove_empty(collection):
+    return [value for value in collection if bool(value)]
