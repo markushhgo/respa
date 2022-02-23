@@ -219,7 +219,12 @@ class UnitAuthorizationQuerySet(models.QuerySet):
             UnitAuthorizationLevel.admin,
             UnitAuthorizationLevel.manager,
         })
-
+    
+    def highest_per_user(self):
+        return self.filter(id__in=[
+            max(self.filter(authorized=user)).id 
+            for user in self.values_list('authorized', flat=True).distinct()
+        ])
 
 class UnitAuthorization(models.Model):
     subject = models.ForeignKey(
@@ -243,6 +248,35 @@ class UnitAuthorization(models.Model):
     def __str__(self):
         return '{unit} / {level}: {user}'.format(
             unit=self.subject, level=self.level, user=self.authorized)
+
+
+    def __gt__(self, other):
+        return self.level > other.level
+
+    def __lt__(self, other):
+        return self.level < other.level
+
+    def __ge__(self, other):
+        return self.level >= other.level
+
+    def __le__(self, other):
+        return self.level <= other.level
+
+    
+    def _ensure_lower_auth(self):
+        """
+        Ensure that the user also has permission levels lower than the given one.
+        """
+
+        auths = UnitAuthorization.objects.filter(subject=self.subject, authorized=self.authorized, level__lt=self.level)
+        if not auths:
+            for level in self.level.below():
+                UnitAuthorization.objects.get_or_create(authorized=self.authorized, subject=self.subject, level=level)
+        else:
+            highest = max(auths)
+            for level in highest.level.below():
+                UnitAuthorization.objects.get_or_create(authorized=self.authorized, subject=self.subject, level=level)
+            
 
 
 class UnitIdentifier(models.Model):
