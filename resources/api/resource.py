@@ -1,6 +1,7 @@
 import collections
 import datetime
 import logging
+from posixpath import basename
 import jsonschema as json
 
 import arrow
@@ -214,7 +215,10 @@ class ResourceImageSerializer(TranslatedModelSerializer):
     type = serializers.ChoiceField(choices=ResourceImage.TYPES, required=True)
     caption = serializers.DictField(required=True)
     image = ImageSerializer(required=False)
-
+    remove = serializers.BooleanField(
+            write_only=True, required=False, 
+            help_text=_('This field is used to remove image from Resource. Fields: id or stamp are required.'))
+    stamp = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = ResourceImage
@@ -226,14 +230,34 @@ class ResourceImageSerializer(TranslatedModelSerializer):
             'caption_fi', 'caption_en', 'caption_sv'
         )
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        initial_data = getattr(self, 'initial_data', None)
+        if initial_data:
+            remove = initial_data.get('remove', False)
+            if remove:
+                for field in ('type', 'caption', ):
+                    self.fields[field].required = False
+
     def validate(self, attrs):
-        request = self.context['request']
+        attrs = super().validate(attrs)
+        remove = attrs.get('remove', False)
+        if remove:
+            ident = attrs.get('stamp', attrs.get('id', None))
+            if not ident:
+                raise serializers.ValidationError({
+                    'image': {
+                        'remove': 'Missing required field: id or stamp'
+                    }
+                })
+            return attrs
+
         if 'image' not in attrs:
             raise serializers.ValidationError({
                 'image': [_('This field is required.')]
             })
 
-        return super().validate(attrs)
+        return attrs
 
     def create(self, validated_data):
         if 'id' in validated_data:
@@ -252,6 +276,14 @@ class ResourceImageSerializer(TranslatedModelSerializer):
         return instance
     
     def update(self, resource, validated_data):
+        remove = validated_data.pop('remove', False)
+        ident = validated_data.pop('stamp', validated_data.get('id', None))
+
+        if remove:
+            query = Q(pk=ident) if isinstance(ident, int) else Q(stamp=ident)
+            ResourceImage.objects.filter(query, resource=resource).delete()
+            return resource
+
         if 'id' not in validated_data:
             return self.create(validated_data)
 
@@ -279,9 +311,10 @@ class ResourceImageSerializer(TranslatedModelSerializer):
 
         instance._process_image()
         return instance
-    
+
 class NestedResourceImageSerializer(TranslatedModelSerializer):
     url = serializers.SerializerMethodField()
+    filename = serializers.SerializerMethodField()
 
     def get_url(self, obj):
         url = reverse('resource-image-view', kwargs={'pk': obj.pk})
@@ -291,9 +324,15 @@ class NestedResourceImageSerializer(TranslatedModelSerializer):
 
     class Meta:
         model = ResourceImage
-        fields = ('url', 'type', 'caption')
+        fields = (
+            'url', 'type', 'caption',
+            'stamp', 'filename', 
+        )
         ordering = ('resource', 'sort_order')
 
+
+    def get_filename(self, obj):
+        return basename(obj.image.name)
 
 class ResourceEquipmentSerializer(TranslatedModelSerializer):
     equipment = EquipmentSerializer()
@@ -1716,10 +1755,6 @@ class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,
 
     def get_queryset(self):
         return self.queryset.visible_for(self.request.user)
-
-    def list(self, request, *args, **kwargs):
-        response = super().list(request, *args, **kwargs)
-        return response
 
 
 class ResourceViewSet(munigeo_api.GeoModelAPIView, mixins.RetrieveModelMixin,
