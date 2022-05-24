@@ -1921,3 +1921,12 @@ msgstr "Alkuajan tulee olla ennen loppuaikaa"
 
 msgid "Overlapping time slot prices"
 msgstr "Päällekkäisiä aikavälihintoja"
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr "Resurssin käyttöasteet ajalta %(start)s - %(end)s"
+
+msgid "Resource utilization"
+msgstr "Resurssin käyttöaste"
+
+msgid "Opening hours total"
+msgstr "Aukiolojat yhteensä"

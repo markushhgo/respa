@@ -2544,3 +2544,12 @@ msgstr ""
 
 msgid "Overlapping time slot prices"
 msgstr ""
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr ""
+
+msgid "Resource utilization"
+msgstr ""
+
+msgid "Opening hours total"
+msgstr ""

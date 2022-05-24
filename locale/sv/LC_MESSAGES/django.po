@@ -1856,3 +1856,12 @@ msgstr "Början måste vara före slutet"
 
 msgid "Overlapping time slot prices"
 msgstr "Överlappande tidsluckornas priser"
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr "Resursens beläggningsgrad för tidsperioden %(start)s - %(end)s"
+
+msgid "Resource utilization"
+msgstr "Resursens beläggningsgrad"
+
+msgid "Opening hours total"
+msgstr "Öppna tider totalt"
