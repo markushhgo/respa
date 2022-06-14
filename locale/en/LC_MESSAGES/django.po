@@ -2553,3 +2553,36 @@ msgstr ""
 
 msgid "Opening hours total"
 msgstr ""
+
+msgid "Add link"
+msgstr ""
+
+msgid "Remove link"
+msgstr ""
+
+msgid "My links only"
+msgstr ""
+
+msgid "My Outlook links"
+msgstr ""
+
+msgid "All Outlook links"
+msgstr ""
+
+msgid "Outlook links"
+msgstr ""
+
+msgid "Something went wrong"
+msgstr ""
+
+msgid "Linked"
+msgstr ""
+
+msgid "Not linked"
+msgstr ""
+
+msgid "Outlook link removed"
+msgstr ""
+
+msgid "No results"
+msgstr ""

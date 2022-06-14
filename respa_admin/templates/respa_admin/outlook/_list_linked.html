@@ -1,0 +1,82 @@
+{% load i18n %}
+{% load thumbnail %}
+{% load templatetags %}
+{% get_current_language as LANGUAGE_CODE %}
+
+
+<section class='outlook'>
+    <div class='container'>
+        <div class='filter-bar container-fluid'>
+            <div class='filter pull-right'>
+                <span class="dropdowns-label">{% trans 'Filter' %}:</span>
+                <form name="filter-dropdowns" method="get">
+                    {% if user_is_any_admin %}
+                    {% if selected_outlook_filter == "has_link" or not selected_outlook_filter %}
+                    <div class="checkbox-option">
+                        <input type="checkbox" name="self_link" value="true" onchange="this.form.submit();"
+                        class="custom-checkbox" {% if selected_self_link %}checked="checked"{% endif %}/>
+                        <label for="self-link">{% trans 'My links only' %}</label>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+                    <div class="select-dropdown btn btn-primary">
+                        <select id="ext-dropdown" name="resource_link" onchange="this.form.submit();">
+                            <option value="has_link"
+                                {% if selected_outlook_filter == "has_link" or not selected_outlook_filter %}
+                                    selected="selected"
+                                {% endif %}
+                                {% if not user_has_link and not user_is_any_admin %}
+                                disabled="disabled"
+                                {% endif %}>
+                                {% trans 'Linked' %}
+                            </option>
+                            <option value="no_link"
+                                {% if selected_outlook_filter == "no_link" %}
+                                    selected="selected"
+                                {% endif %}>
+                                {% trans 'Not linked' %}
+                            </option>
+                        </select>
+                        <span class="glyphicon glyphicon-chevron-down" aria-hidden="true"></span>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <div class='container-fluid'>
+            {% for unit in units %}
+            <span class="sub-header margin-top-5">{{ unit.name }}</span>
+                <div class="list-group-item card-item-list" paginate="{{ unit.id }}" per-page="6">
+                {% for resource in unit.resources.all|dictsort:"created_at" %}
+                {% if selected_outlook_filter != "no_link" %}
+                    {% with resource.outlookcalendarlink as outlook_link %}
+                    {% with outlook_link.user as user %}
+                    {% if outlook_link %}
+                    {% if user_is_any_admin and selected_self_link and request.user == user %}
+                    {% include "respa_admin/forms/_form_card.html" with resource=resource user=user outlook_link=outlook_link form_action="remove" %}            
+                    {% elif user_is_any_admin and not selected_self_link or request.user == user %}
+                    {% include "respa_admin/forms/_form_card.html" with resource=resource user=user outlook_link=outlook_link form_action="remove" %}
+                    {% endif %}
+                    {% endif %}
+                    {% endwith %}
+                    {% endwith %}
+                {% else %}
+                {% with resource.outlookcalendarlink as outlook_link %}
+                {% if not outlook_link %}
+                {% include "respa_admin/forms/_form_card.html" with resource=resource form_action="add" %}
+                {% endif %}
+                {% endwith %}
+                {% endif %}
+                {% endfor %}
+                </div>
+                <div class="card-footer" id="pagination-container-{{ unit.id }}">
+                    <span></span>
+                </div>
+            {% empty %}
+            <div class="list-group-item card-item-list align-center">
+                <span class="text-center">{% trans 'No results' %}</span>
+            </div>
+            {% endfor %}
+            {% include "respa_admin/common/_pagination.html" %}
+        </div>
+    </div>
+</section>

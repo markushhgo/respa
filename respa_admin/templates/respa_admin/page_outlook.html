@@ -1,0 +1,27 @@
+{% extends "respa_admin/_base.html" %}
+{% load static %}
+{% load i18n %}
+
+{% block koro_shape %}
+    <div id="popup-notification" class="popup-notification success">
+        <span id="popup-message" class="text-center"></span>
+    </div>
+    <section class="hero-section bg-light {{ KORO_STYLE }}">
+        <div class="container">
+            <div class="headline">
+                <div class="listing-report row">
+                   <h1 class="col-sm-6">{% trans 'Outlook links' %}</h1>
+                </div>
+            </div>
+        </div>
+    </section>
+{% endblock koro_shape %}
+
+{% block body %}
+    {% include "respa_admin/outlook/_list_linked.html" %}
+{% endblock body %}
+
+
+{% block js_extra %}
+    <script type="text/javascript" src="{% static 'respa_admin/outlookForm-bundle.js' %}"></script>
+{% endblock js_extra %}
