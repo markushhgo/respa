@@ -1,0 +1,9 @@
+services:
+  api:
+    build:
+      context: .
+      target: production
+    restart: always
+
+  db:
+    restart: always
