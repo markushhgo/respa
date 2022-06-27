@@ -1888,3 +1888,84 @@ msgstr "huoltoviestit"
 
 msgid "General"
 msgstr "Yleinen"
+
+msgid "Customer group time slot price"
+msgstr "Asiakasryhmän aikavälin hinta"
+
+msgid "Customer group time slot prices"
+msgstr "Asiakasryhmien aikavälien hinnat"
+
+msgid "Time slot price"
+msgstr "Aikavälin hinta"
+
+msgid "Time slot prices"
+msgstr "Aikavälien hinnat"
+
+msgid "Time slot begins"
+msgstr "Aikaväli alkaa"
+
+msgid "Time slot ends"
+msgstr "Aikaväli loppuu"
+
+msgid "This will override product price when applicable."
+msgstr "Ylikirjoittaa tuotteen hinnan kun sovellettavissa."
+
+msgid "Customer group"
+msgstr "Asiakasryhmä"
+
+msgid "Is archived"
+msgstr "Arkistoitu"
+
+msgid "Begin should be before end"
+msgstr "Alkuajan tulee olla ennen loppuaikaa"
+
+msgid "Overlapping time slot prices"
+msgstr "Päällekkäisiä aikavälihintoja"
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr "Resurssin käyttöasteet ajalta %(start)s - %(end)s"
+
+msgid "Resource utilization"
+msgstr "Resurssin käyttöaste"
+
+msgid "Opening hours total"
+msgstr "Aukiolojat yhteensä"
+
+msgid "Add link"
+msgstr "Lisää liitos"
+
+msgid "Remove link"
+msgstr "Poista liitos"
+
+msgid "My links only"
+msgstr "Vain omat liitokset"
+
+msgid "My Outlook links"
+msgstr "Minun Outlook-liitokset"
+
+msgid "All Outlook links"
+msgstr "Kaikki Outlook-liitokset"
+
+msgid "Outlook links"
+msgstr "Outlook-liitokset"
+
+msgid "Something went wrong"
+msgstr "Jotain meni pieleen"
+
+msgid "Linked"
+msgstr "Liitetyt"
+
+msgid "Not linked"
+msgstr "Ei liitetyt"
+
+msgid "Outlook link removed"
+msgstr "Outlook-liitos poistettu"
+
+msgid "No results"
+msgstr "Ei tuloksia"
+
+msgid "Reservation feedback URL"
+msgstr "Varauksen palautteen URL"
+
+msgid "A link to an external feedback system"
+msgstr "Ulkoisen palautejärjestelmän osoite"

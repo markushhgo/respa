@@ -440,9 +440,6 @@ class ResourceStaffEmailsField(serializers.ListField):
     def validate_empty_values(self, data):
         if data == fields.empty:
             return super().validate_empty_values(data)
-
-        if not data:
-            raise serializers.ValidationError(_('This field cannot be empty.'))
         
         for email in data:
             validate_email(email)
@@ -1452,7 +1449,7 @@ class ResourceCreateSerializer(TranslatedModelSerializer):
     reservation_requested_notification_extra = serializers.DictField(required=False)
     reservation_additional_information = serializers.DictField(required=False)
 
-    resource_staff_emails = ResourceStaffEmailsField(required=False)
+    resource_staff_emails = ResourceStaffEmailsField(required=False, allow_empty=True)
 
     terms_of_use = TermsOfUseSerializer(required=True, many=True)
     tags = ResourceTagSerializer(required=False, many=True)
@@ -1559,17 +1556,17 @@ class ResourceCreateSerializer(TranslatedModelSerializer):
         extra = (
             ('images', 
                 {'kwargs': { 'many': True, 'context': self.context, 'data': validated_data.pop('images', {}), },
-                    'validate': ( (lambda data: len(data) <= 5, _('Invalid length, max: 5')), ),
+                    'validate': ( (lambda data: len(data) <= 20, _('Invalid length, max: 20')), ),
                     'save_kw': { 'resource_fk': True, }, } ),
 
             ('tags',
                 {'kwargs': {'many': True, 'context': self.context, 'data': validated_data.pop('tags', []), },
-                    'validate': ( (lambda data: len(data) <= 20,  _('Invalid length, max: 20')), ),
+                    'validate': ( (lambda data: len(data) <= 100,  _('Invalid length, max: 100')), ),
                     'save_kw': { 'resource_fk': True }, } ),
 
             ('periods', 
                 { 'kwargs': { 'many': True, 'context': self.context, 'data': validated_data.pop('periods', {}), },
-                    'validate': ( (lambda data: len(data) <= 10,  _('Invalid length, max: 10')), ),
+                    'validate': ( (lambda data: len(data) <= 20,  _('Invalid length, max: 20')), ),
                     'save_kw': { 'resource_fk': True }, } ),
     
             ('equipments', 

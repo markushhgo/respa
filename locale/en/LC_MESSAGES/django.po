@@ -2511,3 +2511,84 @@ msgstr ""
 
 msgid "General"
 msgstr ""
+
+msgid "Customer group time slot price"
+msgstr ""
+
+msgid "Customer group time slot prices"
+msgstr ""
+
+msgid "Time slot price"
+msgstr ""
+
+msgid "Time slot prices"
+msgstr ""
+
+msgid "Time slot begins"
+msgstr ""
+
+msgid "Time slot ends"
+msgstr ""
+
+msgid "This will override product price when applicable."
+msgstr ""
+
+msgid "Customer group"
+msgstr ""
+
+msgid "Is archived"
+msgstr ""
+
+msgid "Begin should be before end"
+msgstr ""
+
+msgid "Overlapping time slot prices"
+msgstr ""
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr ""
+
+msgid "Resource utilization"
+msgstr ""
+
+msgid "Opening hours total"
+msgstr ""
+
+msgid "Add link"
+msgstr ""
+
+msgid "Remove link"
+msgstr ""
+
+msgid "My links only"
+msgstr ""
+
+msgid "My Outlook links"
+msgstr ""
+
+msgid "All Outlook links"
+msgstr ""
+
+msgid "Outlook links"
+msgstr ""
+
+msgid "Something went wrong"
+msgstr ""
+
+msgid "Linked"
+msgstr ""
+
+msgid "Not linked"
+msgstr ""
+
+msgid "Outlook link removed"
+msgstr ""
+
+msgid "No results"
+msgstr ""
+
+msgid "Reservation feedback URL"
+msgstr ""
+
+msgid "A link to an external feedback system"
+msgstr ""

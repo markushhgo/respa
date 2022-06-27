@@ -1823,3 +1823,84 @@ msgstr "underhåll meddelanden"
 
 msgid "General"
 msgstr "Allmän"
+
+msgid "Customer group time slot price"
+msgstr "Kundgruppens tidsluckans pris"
+
+msgid "Customer group time slot prices"
+msgstr "Kundgruppernas tidsluckornas priser"
+
+msgid "Time slot price"
+msgstr "Tidsluckans pris"
+
+msgid "Time slot prices"
+msgstr "Tidsluckornas pris"
+
+msgid "Time slot begins"
+msgstr "Tidsluckan börjar"
+
+msgid "Time slot ends"
+msgstr "Tidsluckan slutar"
+
+msgid "This will override product price when applicable."
+msgstr "Skriver över produktens pris när tillämpligt."
+
+msgid "Customer group"
+msgstr "Kundgrupp"
+
+msgid "Is archived"
+msgstr "Arkiverad"
+
+msgid "Begin should be before end"
+msgstr "Början måste vara före slutet"
+
+msgid "Overlapping time slot prices"
+msgstr "Överlappande tidsluckornas priser"
+
+msgid "Resource utilization for period %(start)s - %(end)s"
+msgstr "Resursens beläggningsgrad för tidsperioden %(start)s - %(end)s"
+
+msgid "Resource utilization"
+msgstr "Resursens beläggningsgrad"
+
+msgid "Opening hours total"
+msgstr "Öppna tider totalt"
+
+msgid "Add link"
+msgstr "Lägg till koppling"
+
+msgid "Remove link"
+msgstr "Ta bort koppling"
+
+msgid "My links only"
+msgstr "Bara mina kopplingar"
+
+msgid "My Outlook links"
+msgstr "Mina Outlook kopplingar"
+
+msgid "All Outlook links"
+msgstr "Alla Outlook kopplingar"
+
+msgid "Outlook links"
+msgstr "Outlook kopplingar"
+
+msgid "Something went wrong"
+msgstr "Något gick fel"
+
+msgid "Linked"
+msgstr "Länkad"
+
+msgid "Not linked"
+msgstr "Inte länkad"
+
+msgid "Outlook link removed"
+msgstr "Outlook kopplingen har ta bort"
+
+msgid "No results"
+msgstr "Inga resultat"
+
+msgid "Reservation feedback URL"
+msgstr "Webbadress för bokningsfeedback"
+
+msgid "A link to an external feedback system"
+msgstr "En länk till ett externt återkopplingssystem"

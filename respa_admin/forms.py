@@ -296,6 +296,7 @@ class ResourceForm(forms.ModelForm):
             'reservable_max_days_in_advance',
             'reservable_min_days_in_advance',
             'max_reservations_per_user',
+            'reservation_feedback_url',
             'reservable',
             'need_manual_confirmation',
             'authentication',
@@ -324,7 +325,9 @@ class ResourceForm(forms.ModelForm):
                 choices=(thirty_minute_increment_choices)
             ),
             'cooldown': forms.Select(
-                choices=(hour_increment_choices)
+                choices=(
+                    (('00:00:00', '0 h') , ) + thirty_minute_increment_choices
+                )
             ),
             'need_manual_confirmation': RespaRadioSelect(
                 choices=((True, _('Yes')), (False, _('No')))

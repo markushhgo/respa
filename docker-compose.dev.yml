@@ -1,0 +1,12 @@
+services:
+  api:
+    build:
+      context: .
+      target: development
+    command: dev_server
+    volumes:
+      - .:/srv/app
+      - ./static:/var/www/static/
+
+volumes:
+  static-files:

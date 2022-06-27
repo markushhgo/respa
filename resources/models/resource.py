@@ -121,7 +121,7 @@ class Purpose(ModifiableModel, NameIdentifiedModel):
     id = models.CharField(primary_key=True, max_length=100)
     parent = models.ForeignKey('Purpose', verbose_name=_('Parent'), null=True, blank=True, related_name="children",
                                on_delete=models.SET_NULL)
-    name = models.CharField(verbose_name=_('Name'), max_length=200)
+    name = models.CharField(verbose_name=_('Name'), max_length=100)
     public = models.BooleanField(default=True, verbose_name=_('Public'))
     image = models.FileField(upload_to='purpose_images', validators=[FileExtensionValidator(['svg'])],
                                 null=True, blank=True)
@@ -309,6 +309,11 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
     reservation_home_municipality_set = models.ForeignKey(
         'resources.ReservationHomeMunicipalitySet', verbose_name=_('Reservation home municipality set'),
         null=True, blank=True, on_delete=models.SET_NULL, related_name='home_municipality_included_set'
+    )
+    reservation_feedback_url = models.URLField(
+        verbose_name=_('Reservation feedback URL'),
+        help_text=_('A link to an external feedback system'),
+        blank=True
     )
     external_reservation_url = models.URLField(
         verbose_name=_('External reservation URL'),
@@ -889,6 +894,9 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
 
     def has_products(self):
         return self.products.current().exists()
+
+    def has_outlook_link(self):
+        return getattr(self, 'outlookcalendarlink', False)
 class ResourceImage(ModifiableModel):
     TYPES = (
         ('main', _('Main photo')),
