@@ -286,20 +286,23 @@ class Reservation(ModifiableModel):
             reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         elif self.state == Reservation.CONFIRMED:
             self.approver = None
-
+        old_state = self.state
         self.state = new_state
         self.save()
-        self.handle_notification(new_state, user)
+        self.handle_notification(new_state, user, old_state)
 
-    def handle_notification(self, state, user):
+    def handle_notification(self, state, user, old_state):
         obj_user_is_staff = bool(self.user and self.user.is_staff)
         action_by_official = obj_user_is_staff and self.reserver_email_address != self.user.email
+
+        # only true for reservations that weren't previously waiting for cash payment.
+        reservation_is_confirmed = state == Reservation.CONFIRMED and old_state != Reservation.WAITING_FOR_CASH_PAYMENT
 
         if state == Reservation.REQUESTED:
             self.send_reservation_requested_mail(action_by_official=action_by_official)
             if not action_by_official:
                 self.notify_staff_about_reservation(NotificationType.RESERVATION_REQUESTED_OFFICIAL)
-        elif state == Reservation.CONFIRMED or state == Reservation.WAITING_FOR_CASH_PAYMENT:
+        elif reservation_is_confirmed or state == Reservation.WAITING_FOR_CASH_PAYMENT:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
             elif self.access_code:

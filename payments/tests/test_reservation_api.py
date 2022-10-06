@@ -2,11 +2,14 @@ from datetime import datetime
 from decimal import Decimal
 from unittest.mock import MagicMock, create_autospec, patch
 from urllib.parse import urlencode
-
+from django.utils import translation
+from django.test import override_settings
 import pytest
 from guardian.shortcuts import assign_perm
 from rest_framework.reverse import reverse
 
+from notifications.tests.utils import check_received_mail_exists, get_expected_strings, get_body_with_all_template_vars, check_mail_was_not_sent
+from notifications.models import NotificationTemplate, NotificationType
 from resources.enums import UnitAuthorizationLevel
 from resources.models import Reservation
 from resources.models.reservation import ReservationMetadataField, ReservationMetadataSet
@@ -23,6 +26,44 @@ from .test_order_api import ORDER_LINE_FIELDS, PRODUCT_FIELDS
 LIST_URL = reverse('reservation-list')
 
 ORDER_FIELDS = {'id', 'state', 'price', 'order_lines', 'is_requested_order', 'payment_method'}
+
+
+@pytest.fixture(autouse=True)
+def reservation_requested_notification():
+    NotificationTemplate.objects.filter(type=NotificationType.RESERVATION_REQUESTED).delete()
+    with translation.override('fi'):
+        return NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_REQUESTED,
+            is_default_template=True,
+            short_message='Reservation requested short message.',
+            subject='Reservation requested subject.',
+            body='Reservation requested body. \n' + get_body_with_all_template_vars()
+        )
+
+@pytest.fixture(autouse=True)
+def reservation_modified_notification():
+    NotificationTemplate.objects.filter(type=NotificationType.RESERVATION_MODIFIED).delete()
+    with translation.override('fi'):
+        return NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_MODIFIED,
+            is_default_template=True,
+            short_message='Reservation modified short message.',
+            subject='Reservation modified subject.',
+            body='Reservation modified body. \n' + get_body_with_all_template_vars()
+        )
+
+@pytest.fixture(autouse=True)
+def reservation_confirmed_notification():
+    NotificationTemplate.objects.filter(type=NotificationType.RESERVATION_CONFIRMED).delete()
+    with translation.override('fi'):
+        return NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_CONFIRMED,
+            is_default_template=True,
+            short_message='Reservation confirmed short message.',
+            subject='Reservation confirmed subject.',
+            body='Reservation confirmed body. \n' + get_body_with_all_template_vars()
+        )   
+
 
 
 def get_detail_url(reservation):
@@ -321,18 +362,24 @@ def test_order_payment_methods_for_resources_not_allowing_cash_post(payment_meth
     response = user_api_client.post(LIST_URL, reservation_data)
     assert response.status_code == expected_status, response.data
 
-
+@override_settings(RESPA_MAILS_ENABLED=True)
 def test_cash_paid_reservation_process_flow_works_correctly(
     user_api_client, resource_in_unit, product, api_client, unit_manager_user):
     '''
-    Tests that cash paid reservation process flow gets correct state changes
-    and allows intended operations
+    Tests that cash paid reservation process flow gets correct state changes,
+    allows intended operations and sends the correct email notifications when the state changes.
     '''
+    field_billing_email = ReservationMetadataField.objects.create(field_name='billing_email_address')
+    metadata_set = ReservationMetadataSet.objects.create(name='test_set',)
+    metadata_set.supported_fields.set([field_billing_email])
+    metadata_set.required_fields.set([field_billing_email])
+    resource_in_unit.reservation_metadata_set = metadata_set
     resource_in_unit.need_manual_confirmation = True
     resource_in_unit.cash_payments_allowed = True
     resource_in_unit.save()
 
     reservation_data = build_reservation_data(resource_in_unit)
+    reservation_data.update({'billing_email_address': 'billing@something.here'})
     order = build_order_data(product=product)
     order['payment_method'] = Order.CASH
     reservation_data['order'] = order
@@ -346,20 +393,42 @@ def test_cash_paid_reservation_process_flow_works_correctly(
     assert response.data['state'] == Reservation.REQUESTED
     assert response.data['order']['state'] == Order.WAITING
 
+    # reservation requested email was sent to billing_email_address.
+    check_received_mail_exists(
+        'Reservation requested subject.',
+        response.data['billing_email_address'],
+        get_expected_strings(new_order),
+    )
+
     # user updates their reservation
     reservation_data.update({'reserver_name': 'Test Tester'})
     response = user_api_client.put(get_detail_url(new_reservation), reservation_data)
     assert response.status_code == 200
     assert response.data['state'] == Reservation.REQUESTED
     assert response.data['order']['state'] == Order.WAITING
+    # reservation modified email was sent to billing_email_address.
+    check_received_mail_exists(
+        'Reservation modified subject.',
+        response.data['billing_email_address'],
+        get_expected_strings(new_order),
+    )
 
     # staff confirms reservation to set its state to be waiting for cash payment
     api_client.force_authenticate(user=unit_manager_user)
+    previous_reservation_state = response.data['state'] # reservation state as it was after the reservation was updated.
     reservation_data.update({'state': Reservation.CONFIRMED})
     response = api_client.put(get_detail_url(new_reservation), reservation_data)
     assert response.status_code == 200
-    assert response.data['state'] == Reservation.WAITING_FOR_CASH_PAYMENT
+    assert previous_reservation_state == Reservation.REQUESTED
+    assert response.data['state'] == Reservation.WAITING_FOR_CASH_PAYMENT # current reservation state.
     assert response.data['order']['state'] == Order.WAITING
+    previous_reservation_state = response.data['state'] # update previous reservation state to current.
+    # reservation confirmed email was sent to users billing_email_address.
+    check_received_mail_exists(
+        'Reservation confirmed subject.',
+        response.data['billing_email_address'],
+        get_expected_strings(new_order),
+    )
 
     # user tries to update after confirmation
     reservation_data.update({'reserver_name': 'Test Tester 2'})
@@ -370,8 +439,11 @@ def test_cash_paid_reservation_process_flow_works_correctly(
     reservation_data.update({'state': Reservation.CONFIRMED})
     response = api_client.put(get_detail_url(new_reservation), reservation_data)
     assert response.status_code == 200
-    assert response.data['state'] == Reservation.CONFIRMED
+    assert previous_reservation_state == Reservation.WAITING_FOR_CASH_PAYMENT # previous reservation state.
+    assert response.data['state'] == Reservation.CONFIRMED # current reservation state.
     assert response.data['order']['state'] == Order.CONFIRMED
+    # no mail was sent when reservation state changed from WAITING_FOR_CASH_PAYMENT to CONFIRMED.
+    check_mail_was_not_sent()
 
     # user tries to update after confirmation
     reservation_data.update({'reserver_name': 'Test Tester 3'})
