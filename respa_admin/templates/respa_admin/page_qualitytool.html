@@ -1,0 +1,53 @@
+{% extends "respa_admin/_base.html" %}
+{% load static %}
+{% load i18n %}
+{% load templatetags %}
+
+
+{% block koro_shape %}
+<div id="popup-notification" class="popup-notification success">
+    <span id="popup-message" class="text-center"></span>
+</div>
+{% if qualitytool_redirect_context %}
+<div class="panel panel-default noti {{ qualitytool_redirect_context.type }} closable-notification">
+    <h4 class="center-block">{{ qualitytool_redirect_context.message }}</h4>
+    <button class="remove-click pull-right" type="button">
+        {% trans 'Close' %} <span class="glyphicon glyphicon-remove icon-right" aria-hidden="true"></span>
+    </button>
+</div>
+{% endif %}
+<section class="hero-section bg-light {{ KORO_STYLE }}">
+    <div class="container">
+        <div class="headline">
+            <div class="listing-report row">
+                <h1 class="col-sm-6">{% trans 'All quality tools I manage' %}</h1>
+            </div>
+            <a class="btn resource-control" href="{% url 'respa_admin:ra-qualitytool-create' %}">
+                <span class="glyphicon glyphicon-plus-sign icon-left" aria-hidden="true"></span>
+                {% trans 'Add a new quality tool target' %}<span class="glyphicon glyphicon-chevron-right" aria-hidden="true"></span>
+            </a>
+            <form action="." method="get">
+                <div class="form-group listing-search center-block">
+                    <div class="input-group">
+                        <span class="input-group-addon">{% trans 'Search' %}</span>
+                        <input autofocus type="text" class="form-control text-input" name="search" value="{{ request.GET.search }}">
+                        <span class="input-group-btn">
+                            <button class="btn btn-default" type="submit">
+                                <span class="glyphicon glyphicon-search" aria-hidden="true"></span>
+                            </button>
+                        </span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock koro_shape %}
+{% block body %}
+    {% include "respa_admin/qualitytool/_qualitytool_list.html" with qualitytools=qualitytools %}
+{% endblock body %}
+
+
+{% block js_extra %}
+    <script type="text/javascript" src="{% static 'respa_admin/qualityToolForm-bundle.js' %}"></script>
+{% endblock js_extra %}
