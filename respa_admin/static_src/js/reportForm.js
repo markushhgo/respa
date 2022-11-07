@@ -15,7 +15,7 @@ export function initializeEventHandlers() {
     bindResourceFilter();
     bindSelectPaginatorItems();
     bindResultsPerPageButtons();
-
+    bindSelectDayPickButton();
 }
 
 function bindResultsPerPageButtons() {
@@ -57,8 +57,11 @@ function setDefaultDate() {
     $("#begin-date").attr('value', date.toISOString().substr(0, 10));
 }
 
-function buildUrl(resources, start, end, page_size = 50000, format = 'xlsx') {
-    return `${window.location.origin}/v1/reservation/?format=${format}&resource=${resources.join()}&start=${start}&end=${end}&page_size=${page_size}&state=confirmed`;
+function buildUrl(resources, start, end, selectedDays, page_size = 50000, format = 'xlsx') {
+    return `${window.location.origin}/v1/reservation/` +
+        `?format=${format}&resource=${resources.join()}` +
+        `&start=${start}&end=${end}&page_size=${page_size}` +
+        `&weekdays=${selectedDays.join()}&state=confirmed`;
 }
 
 
@@ -142,6 +145,11 @@ function bindGenerateButton() {
         $(paginator.items)
             .find('input:checked')
             .each((_, resource) => resources.push($(resource).attr('id')));
+        let selectedDays = [];
+
+        $('ul[id=weekday-cal-popup] li input:checked').each((_, day) => {
+            selectedDays.push($(day).data('value'));
+        })
 
         let begin = $("#begin-date").val();
         let end = $("#end-date").val();
@@ -185,7 +193,7 @@ function bindGenerateButton() {
                 }
             }
         }
-        http.open('GET', buildUrl(resources, begin, end));
+        http.open('GET', buildUrl(resources, begin, end, selectedDays));
         http.send();
         $("body").css("cursor", "progress");
         addLoader($(btn).parent(), {
@@ -197,10 +205,38 @@ function bindGenerateButton() {
     });
 
     setInterval(() => {
-        if ($(paginator.items).find('input:checked').length > 0) {
+        if ($(paginator.items).find('input:checked').length > 0 && $('ul[id=weekday-cal-popup] li input:checked').length > 0) {
             $(btn).prop('disabled', false);
         } else {
             $(btn).prop('disabled', true);
         }
     }, 200);
+}
+
+
+let btnState = false;
+function bindSelectDayPickButton() {
+    let weekdayCalendar = $("ul[id=weekday-cal-popup]").parent();
+    let weekdayPopupBtn = $("button[id=weekday-cal-btn]");
+    let weekdayPopupCloseBtn = $("i[id=popup-close-btn]")
+    $(weekdayPopupBtn).on('click', (e) => {
+        if (!$(weekdayCalendar).is(':visible') && !btnState) {
+            btnState = true;
+            $(weekdayCalendar).fadeIn('fast').trigger('focus');
+        } else { btnState = false; }
+    });
+    $(weekdayCalendar).on('focusout', (e) => {
+        if ($(e.relatedTarget).is(weekdayCalendar) || 
+            $(e.relatedTarget).is($(weekdayCalendar).find('input'))) {
+            return;
+        } else if ($(e.relatedTarget).is(weekdayPopupBtn)) {
+            $(weekdayCalendar).hide();
+        } else {
+            $(weekdayCalendar).hide();
+            btnState = false;
+        }
+    });
+    $(weekdayPopupCloseBtn).on('click', (e) => { 
+        $(weekdayCalendar).trigger('focusout');
+    });
 }
