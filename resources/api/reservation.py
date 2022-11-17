@@ -21,17 +21,12 @@ from django.contrib.auth.models import AnonymousUser
 from notifications.models import NotificationType
 from rest_framework import viewsets, serializers, filters, exceptions, permissions
 from rest_framework.authentication import TokenAuthentication, SessionAuthentication
-from rest_framework.decorators import action
 from rest_framework.fields import BooleanField, IntegerField
 from rest_framework import renderers
 from rest_framework.exceptions import NotAcceptable, ValidationError
 from rest_framework.settings import api_settings as drf_settings
-from rest_framework.permissions import IsAdminUser
-from psycopg2.extras import DateTimeTZRange
 
 from munigeo import api as munigeo_api
-from datetime import datetime
-from time import strptime, mktime, sleep
 
 import phonenumbers
 from phonenumbers.phonenumberutil import (
@@ -41,8 +36,8 @@ from payments.models import Order
 
 
 from resources.models import (
-    Reservation, Resource, ReservationMetadataSet, ReservationHomeMunicipalityField,
-    ReservationHomeMunicipalitySet, ReservationBulk, ReservationQuerySet
+    Reservation, Resource, ReservationMetadataSet,
+    ReservationHomeMunicipalityField, ReservationBulk
 )
 from resources.models.reservation import RESERVATION_BILLING_FIELDS, RESERVATION_EXTRA_FIELDS
 from resources.models.utils import build_reservations_ical_file
@@ -55,12 +50,8 @@ from .base import (
     ExtraDataMixin
 )
 
-from random import uniform
-
 from ..models.utils import dateparser
-
 from respa.renderers import ResourcesBrowsableAPIRenderer
-
 from payments.utils import is_free, get_price
 
 User = get_user_model()
@@ -224,7 +215,7 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
             # states where reservation updates can be made
             if state in (
                 Reservation.CONFIRMED, Reservation.CANCELLED, Reservation.DENIED,
-                Reservation.REQUESTED, Reservation.READY_FOR_PAYMENT):
+                Reservation.REQUESTED, Reservation.READY_FOR_PAYMENT, Reservation.WAITING_FOR_CASH_PAYMENT):
                 has_staff_perms = resource.is_manager(request.user) or resource.is_admin(request.user)
                 user_can_modify = self.instance.can_modify(request.user)
                 # staff members never pay after reservation creation and their order can be removed safely here
@@ -260,7 +251,8 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
 
         if instance.resource.can_approve_reservations(request_user):
             allowed_states = (Reservation.REQUESTED, Reservation.CONFIRMED,
-                              Reservation.DENIED, Reservation.WAITING_FOR_PAYMENT)
+                              Reservation.DENIED, Reservation.WAITING_FOR_PAYMENT,
+                              Reservation.WAITING_FOR_CASH_PAYMENT)
             if instance.state in allowed_states and value in allowed_states:
                 return value
         if value == Reservation.WAITING_FOR_PAYMENT:
@@ -394,6 +386,12 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         # even if it exceeds the limit. (one that was created via admin ui for example).
         if reservation is None and not isinstance(request_user, AnonymousUser):
             resource.validate_max_reservations_per_user(request_user)
+
+        request = self.context.get('request')
+        if request.method == 'POST':
+            if 'order' in data:
+                if data.order.payment_method == Order.CASH and not resource.cash_payments_allowed:
+                    raise ValidationError(dict(cash_payments_allowed=_('Cash payments are not allowed')))
 
         # Run model clean
         instance = Reservation(**data)
@@ -748,7 +746,14 @@ class ReservationExcelRenderer(renderers.BaseRenderer):
         if renderer_context['view'].action == 'retrieve':
             return generate_reservation_xlsx([data], request=request)
         elif renderer_context['view'].action == 'list':
-            return generate_reservation_xlsx(data['results'], request=request)
+            weekdays = request.GET.get('weekdays', '').split(',')
+            weekdays = [int(day) for day in weekdays if day]
+            reservations = data['results']
+            for reservation in reservations.copy():
+                begin = reservation['begin']
+                if weekdays and begin.weekday() not in weekdays:
+                    reservations.remove(reservation)
+            return generate_reservation_xlsx(reservations, request=request, weekdays=weekdays)
         else:
             return NotAcceptable()
 
@@ -970,6 +975,10 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         [TokenAuthentication, SessionAuthentication])
     ordering_fields = ('begin',)
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.srs = getattr(self, 'srs', munigeo_api.srid_to_srs(None))
+
     def get_serializer_class(self):
         if settings.RESPA_PAYMENTS_ENABLED:
             from payments.api.reservation import PaymentsReservationSerializer  # noqa
@@ -1013,7 +1022,9 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
 
         # normal users can see only their own reservations and reservations that are confirmed, requested or
         # waiting for payment
-        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED, Reservation.WAITING_FOR_PAYMENT, Reservation.READY_FOR_PAYMENT))
+        filters = Q(state__in=(Reservation.CONFIRMED, Reservation.REQUESTED,
+            Reservation.WAITING_FOR_PAYMENT, Reservation.READY_FOR_PAYMENT,
+            Reservation.WAITING_FOR_CASH_PAYMENT))
         if user.is_authenticated:
             filters |= Q(user=user)
         queryset = queryset.filter(filters)
@@ -1040,6 +1051,9 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         else:
             if order and order.state != Order.CONFIRMED and not resource.can_bypass_manual_confirmation(user):
                 new_state = Reservation.WAITING_FOR_PAYMENT
+            elif order and order.state == Order.WAITING and order.payment_method == Order.CASH \
+                and resource.cash_payments_allowed and resource.can_bypass_manual_confirmation(user):
+                new_state = Reservation.WAITING_FOR_CASH_PAYMENT
             else:
                 new_state = Reservation.CONFIRMED
 
@@ -1060,12 +1074,21 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         if new_state == Reservation.READY_FOR_PAYMENT and \
             order and order.state == Order.WAITING and not can_edit_paid:
             new_state = Reservation.WAITING_FOR_PAYMENT
-        elif new_state == Reservation.CONFIRMED and \
-            order and order.state == Order.WAITING:
-            new_state = Reservation.READY_FOR_PAYMENT
+
+        if new_state == Reservation.CONFIRMED and order and order.state == Order.WAITING:
+            if old_instance.state == Reservation.REQUESTED:
+                if order.payment_method == Order.CASH:
+                    new_state = Reservation.WAITING_FOR_CASH_PAYMENT
+                else:
+                    new_state = Reservation.READY_FOR_PAYMENT
 
         new_instance = serializer.save(modified_by=self.request.user)
         new_instance.set_state(new_state, self.request.user)
+
+        if old_instance.state == Reservation.WAITING_FOR_CASH_PAYMENT and \
+            new_state == Reservation.CONFIRMED:
+            new_instance.get_order().set_state(Order.CONFIRMED, 'Cash payment confirmed.')
+
         if new_state == old_instance.state and new_state not in ['denied'] and self.request.method != 'PATCH': # Reservation was modified, don't send modified upon patch.
             self.send_modified_mail(new_instance, is_staff=self.request.user.is_staff)
 

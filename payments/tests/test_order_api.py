@@ -17,12 +17,12 @@ PRICE_ENDPOINT_ORDER_FIELDS = {
 }
 
 ORDER_LINE_FIELDS = {
-    'product', 'quantity', 'price', 'unit_price'
+    'product', 'quantity', 'price', 'unit_price', 'rounded_price'
 }
 
 PRODUCT_FIELDS = {
     'id', 'type', 'name', 'description', 'price', 'max_quantity',
-    'product_customer_groups', 'time_slot_prices'
+    'product_customer_groups', 'time_slot_prices', 'price_tax_free'
 }
 
 PRICE_FIELDS = {'type'}
@@ -121,9 +121,9 @@ def test_order_price_check_success_customer_group(user_api_client, product_with_
 
     assert order_line is not None
     if no_cost:
-        assert order_line['price'] == '0.00'
+        assert order_line['price'] == Decimal('0.00')
     else:
-        assert order_line['price'] == str(prod_cg.price * 2), price_check_data # Two hour price
+        assert order_line['price'] == prod_cg.price * 2, price_check_data # Two hour price
     assert order_count_before == Order.objects.count()
 
 def test_order_price_check_invalid_customer_group(user_api_client, product, two_hour_reservation):

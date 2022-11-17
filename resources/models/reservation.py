@@ -24,7 +24,8 @@ from .resource import Resource
 from .utils import (
     get_dt, save_dt, is_valid_time_slot, humanize_duration, send_respa_mail,
     DEFAULT_LANG, localize_datetime, format_dt_range, build_reservations_ical_file,
-    get_order_quantity, get_order_tax_price, get_order_pretax_price, get_payment_requested_waiting_time
+    get_order_quantity, get_order_tax_price, get_order_pretax_price, get_payment_requested_waiting_time,
+    calculate_final_product_sums, calculate_final_order_sums
 )
 
 from random import sample
@@ -105,6 +106,7 @@ class Reservation(ModifiableModel):
     REQUESTED = 'requested'
     WAITING_FOR_PAYMENT = 'waiting_for_payment'
     READY_FOR_PAYMENT = 'ready_for_payment'
+    WAITING_FOR_CASH_PAYMENT = 'waiting_for_cash_payment'
     STATE_CHOICES = (
         (CREATED, _('created')),
         (CANCELLED, _('cancelled')),
@@ -113,6 +115,7 @@ class Reservation(ModifiableModel):
         (REQUESTED, _('requested')),
         (WAITING_FOR_PAYMENT, _('waiting for payment')),
         (READY_FOR_PAYMENT, _('ready for payment')),
+        (WAITING_FOR_CASH_PAYMENT, _('waiting for cash payment')),
     )
 
     TYPE_NORMAL = 'normal'
@@ -270,7 +273,7 @@ class Reservation(ModifiableModel):
         assert new_state in (
             Reservation.REQUESTED, Reservation.CONFIRMED, Reservation.DENIED,
             Reservation.CANCELLED, Reservation.WAITING_FOR_PAYMENT,
-            Reservation.READY_FOR_PAYMENT
+            Reservation.READY_FOR_PAYMENT, Reservation.WAITING_FOR_CASH_PAYMENT
         )
         if new_state == self.state and self.state in (Reservation.CONFIRMED, Reservation.REQUESTED):
             reservation_modified.send(sender=self.__class__, instance=self, user=user)
@@ -283,20 +286,23 @@ class Reservation(ModifiableModel):
             reservation_cancelled.send(sender=self.__class__, instance=self, user=user)
         elif self.state == Reservation.CONFIRMED:
             self.approver = None
-
+        old_state = self.state
         self.state = new_state
         self.save()
-        self.handle_notification(new_state, user)
+        self.handle_notification(new_state, user, old_state)
 
-    def handle_notification(self, state, user):
+    def handle_notification(self, state, user, old_state):
         obj_user_is_staff = bool(self.user and self.user.is_staff)
         action_by_official = obj_user_is_staff and self.reserver_email_address != self.user.email
+
+        # only true for reservations that weren't previously waiting for cash payment.
+        reservation_is_confirmed = state == Reservation.CONFIRMED and old_state != Reservation.WAITING_FOR_CASH_PAYMENT
 
         if state == Reservation.REQUESTED:
             self.send_reservation_requested_mail(action_by_official=action_by_official)
             if not action_by_official:
                 self.notify_staff_about_reservation(NotificationType.RESERVATION_REQUESTED_OFFICIAL)
-        elif state == Reservation.CONFIRMED:
+        elif reservation_is_confirmed or state == Reservation.WAITING_FOR_CASH_PAYMENT:
             if self.need_manual_confirmation():
                 self.send_reservation_confirmed_mail()
             elif self.access_code:
@@ -552,7 +558,7 @@ class Reservation(ModifiableModel):
                     context['resource_ground_plan_image_url'] = ground_plan_image_url
 
             order = getattr(self, 'order', None)
-            if order:  
+            if order:
                 '''
                 'RESERVATION_WAITING_FOR_PAYMENT' notifications required payment due date so it's calculated and added to context.
                 e.g. datetime when order was confirmed + RESPA_PAYMENTS_PAYMENT_REQUESTED_WAITING_TIME = payment due date.
@@ -574,7 +580,7 @@ class Reservation(ModifiableModel):
                         'unit_price', 'unit_price_num', 'tax_percentage',
                         'price_type', 'price_period', 'order_number',
                         'decimal_hours', 'pretax_price', 'pretax_price_num',
-                        'tax_price', 'tax_price_num'
+                        'tax_price', 'tax_price_num', 'detailed_price'
                     )
                     '''
                     product_values
@@ -597,6 +603,7 @@ class Reservation(ModifiableModel):
                     pretax_price_num    -   price amount without tax, float e.g. 6.05. See function comments for further explanation.
                     tax_price           -   tax amount, string e.g. 1,45 if total price is 7,5 with 24% vat
                     tax_price_num       -   tax amount, float e.g. 1.45. See function comments for further explanation.
+                    detailed price      -   contains detailed price info, timeslot specific prices used etc
                     '''
                     product_values = {
                         'id': item["product"]["id"],
@@ -614,7 +621,8 @@ class Reservation(ModifiableModel):
                         'pretax_price': item["product"]["pretax_price"],
                         'pretax_price_num': get_order_pretax_price(item),
                         'tax_price': item["product"]["tax_price"],
-                        'tax_price_num': get_order_tax_price(item)
+                        'tax_price_num': get_order_tax_price(item),
+                        'detailed_price': item["detailed_price"],
                     }
 
                     for field in product_fields:
@@ -629,13 +637,34 @@ class Reservation(ModifiableModel):
                             else:
                                 # price_type is 'fixed'
                                 product[field] = 1
+                        elif field == 'detailed_price':
+                            product[field] = product_values[field]
+                            conditional_quantity = 1
+                            if item['product']['price_type'] == 'per_period':
+                                product_quantity = list(set([x['quantity'] for x in item['detailed_price'].values() if 'quantity' in x]))
+                                # product_quantity is only truthy if there are 2 or more of the product.
+                                if len(product_quantity) > 0:
+                                    product['product_quantity'] = float(product_quantity[0])
+                                    conditional_quantity = product_quantity[0]
+                                else:
+                                    # only 1 of the product
+                                    product['product_quantity'] = float(1)
+                                
+                            values = calculate_final_product_sums(product=item, quantity=conditional_quantity)
+                            product['product_taxfree_total'] = values['product_taxfree_total']
+                            product['product_tax_total'] = values['product_tax_total']
+
                         else:
                             product[field] = product_values[field]
 
                     all_products.append(product)
 
+                order_sums = calculate_final_order_sums(all_products)
 
                 context['order_details'] = all_products
+                context['order_taxfree_total'] = order_sums['final_order_totals']['order_taxfree_total']
+                context['order_total'] = order_sums['final_order_totals']['order_total']
+                context['detailed_tax_sums'] = order_sums['final_order_totals']['order_tax_total']
 
         if extra_context:
             context.update({
@@ -753,7 +782,7 @@ class Reservation(ModifiableModel):
             if len(notify_users) > 100:
                 raise Exception("Refusing to notify more than 100 users (%s)" % self)
             for user in notify_users:
-                self.send_reservation_mail(notification, user=user)
+                self.send_reservation_mail(notification, user=user, staff_email=user.email)
 
     def send_reservation_requested_mail(self, action_by_official=False):
         notification = NotificationType.RESERVATION_REQUESTED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_REQUESTED

@@ -1,8 +1,54 @@
+import { alertPopup, Paginate } from './utils';
+
+
+
+let paginator;
+const SELECTED_LANGUAGE = $('html').attr('lang');
+const main = $("div[data-paginate=true]");
+
 export function initializeEventHandlers() {
+    paginator = new Paginate(main);
     setDefaultDate();
-    bindSelectAll();
+
+    bindSelectAllButton();
     bindGenerateButton();
+    bindResourceFilter();
+    bindSelectPaginatorItems();
+    bindResultsPerPageButtons();
+    bindSelectDayPickButton();
 }
+
+function bindResultsPerPageButtons() {
+    let resourceFilter = $("#resource-filter");
+    let menu = $('div[id=per-page-menu]');
+    let options = $(menu).find('label');
+    $(options).find('input').on('click', (e) => {
+        $(options).removeClass('btn-selected');
+        let option = $(e.target)
+        $(option).parent('label').addClass('btn-selected');
+        let perPage = $(option).data('value');
+        paginator.perPage = perPage;
+        let filter = $(resourceFilter).val();
+        filter ? paginator.filter(filter, paginator.page) : paginator.reset(paginator.page);
+    });
+}
+
+function bindResourceFilter() {
+    let resourceFilter = $("#resource-filter");
+    $(resourceFilter).on('input', () => {
+        let search = $(resourceFilter).val();
+        search ? paginator.filter(search) : paginator.reset();
+
+        if (!paginator.current()) {
+            $(main).addClass('justify-center');
+            $(main).removeClass('border-thick');
+        } else {
+            $(main).removeClass('justify-center');
+            $(main).addClass('border-thick');
+        }
+    });
+}
+
 
 function setDefaultDate() {
     let date = new Date();
@@ -11,99 +57,186 @@ function setDefaultDate() {
     $("#begin-date").attr('value', date.toISOString().substr(0, 10));
 }
 
-function buildUrl(resources, start, end, page_size = 50000, format = 'xlsx') {
-    return `${window.location.origin}/v1/reservation/?format=${format}&resource=${resources.join()}&start=${start}&end=${end}&page_size=${page_size}&state=confirmed`;
+function buildUrl(resources, start, end, selectedDays, page_size = 50000, format = 'xlsx') {
+    return `${window.location.origin}/v1/reservation/` +
+        `?format=${format}&resource=${resources.join()}` +
+        `&start=${start}&end=${end}&page_size=${page_size}` +
+        `&weekdays=${selectedDays.join()}&state=confirmed`;
 }
 
 
-let selectState = false;
-let lang = 'en';
+function resetAllStates() {
+    $(paginator.items)
+        .find('input:checked')
+        .each((_, val) => $(val).prop('checked', false));
+}
 
-function bindSelectAll() {
+let removeAllButton = $(`<a href="javascript://"
+                            id="remove-all-btn"
+                            class="btn btn-primary inverse small-text align-middle"
+                            style="margin-top: 10px">
+                            <i class='glyphicon glyphicon-remove icon-left' aria-hidden="true"></i>
+                            <span></span>
+                        </a>`);
+
+function updateSelectAllButton() {
     let selectBtn = $("#select-all-btn");
-    lang = $(selectBtn).attr('lang');
+    $(selectBtn).text(`${{
+        'fi': 'Valitse kaikki',
+        'en': 'Select all',
+        'sv': 'Välj alla'
+    }[SELECTED_LANGUAGE]}`);
+
+    let resources = $(paginator.items).find('input:checked');
+
+    if (resources.length === 0) {
+        $(removeAllButton).remove();
+    } else {
+        $(removeAllButton)
+        .on('click', () => {
+            $(paginator.items)
+                .find('input:checked')
+                .prop('checked', false);
+            resetAllStates();
+            updateSelectAllButton();
+        })
+        .appendTo($(selectBtn).parent())
+        .find('span')
+        .text(`${{
+            'fi': `Poista kaikki ${resources.length} valintaa`,
+            'sv': `Avmarkera alla ${resources.length}`,
+            'en': `Remove all ${resources.length} selected`
+        }[SELECTED_LANGUAGE]}`);
+    }
+}
+
+function bindSelectAllButton() {
+    let selectBtn = $("#select-all-btn");
     $(selectBtn).on('click', () => {
-        selectState = !selectState;
-        $(".resource-card input").each((i, resource) => {
-            $(resource).prop('checked', selectState);
-        });
-        if (selectState) {
-            switch(lang) {
-                case 'fi':
-                    $(selectBtn).text('Poista valinnat');
-                    return;
-                case 'sv':
-                    $(selectBtn).text('Avmarkera alla');
-                    return;
-                default:
-                    $(selectBtn).text('Deselect all');
-                    return;
-            }
-        } else {
-            switch(lang) {
-                case 'fi':
-                    $(selectBtn).text('Valitse kaikki');
-                    return;
-                case 'sv':
-                    $(selectBtn).text('Välj alla');
-                    return;
-                default:
-                    $(selectBtn).text('Select all');
-                    return;
-            }
-        }
+        $(paginator.items)
+            .find('input:visible:not(:checked)')
+            .prop('checked', true);
+        updateSelectAllButton();
     });
 }
 
-function getDateError() {
-    switch(lang) {
-        case 'fi':
-            return 'Alkupäivä ei voi olla suurempi kuin loppupäivä.';
-        case 'sv':
-            return 'Startdatum kan inte vara större än slutdatum.';
-        default:
-            return 'Start date cannot be greater than end date.';
-    }
+
+
+function bindSelectPaginatorItems() { $(paginator.items).on('click', updateSelectAllButton); }
+
+
+function addLoader(element, labelText) {
+    $(`
+    <div id="ld-spinner" class="col-wrap-container fluid justify-center align-items-center">
+        <div class="ld-spinner"></div>
+        <label for="ld-spinner" class="control-label input-label small-text align-center">${labelText[SELECTED_LANGUAGE]}</label>
+    </div>`
+    ).appendTo(element);
+}
+
+function removeLoader(element) {
+    $(element).find('#ld-spinner').remove();
 }
 
 function bindGenerateButton() {
     let btn = $("#generate-btn");
     $(btn).on('click', () => {
         let resources = [];
-        $(".resource-card input:checked").each((i, resource) => {
-            resources.push($(resource).attr('id'));
-        });
+        $(paginator.items)
+            .find('input:checked')
+            .each((_, resource) => resources.push($(resource).attr('id')));
+        let selectedDays = [];
+
+        $('ul[id=weekday-cal-popup] li input:checked').each((_, day) => {
+            selectedDays.push($(day).data('value'));
+        })
 
         let begin = $("#begin-date").val();
         let end = $("#end-date").val();
 
         if (new Date(begin) > new Date(end)) {
-            alert(getDateError());
+            alert({
+                'fi': 'Alkupäivä ei voi olla suurempi kuin loppupäivä.',
+                'en': 'Start date cannot be greater than end date.',
+                'sv': 'Startdatum kan inte vara större än slutdatum.'
+            }[SELECTED_LANGUAGE]);
             return;
         }
 
         var http = new XMLHttpRequest();
         http.responseType = 'blob';
         http.onreadystatechange = () => {
-            if (http.status === 200 && http.readyState === 4) {
-                var url = window.URL.createObjectURL(http.response);
-                let dl = document.createElement('a');
-                dl.href = url;
-                dl.download = 'report.xlsx';
-                dl.click();
-                $("body").css("cursor", "default");
+            if (http.readyState === 4) {
+                switch(http.status) {
+                    case 200: {
+                        var url = window.URL.createObjectURL(http.response);
+                        let dl = document.createElement('a');
+                        dl.href = url;
+                        dl.download = 'report.xlsx';
+                        dl.click();
+                        $("body").css("cursor", "default");
+                        removeLoader($(btn).parent());
+                        $(btn).show();
+                        break;
+                    }
+                    default: { 
+                        $("body").css("cursor", "default"); 
+                        removeLoader($(btn).parent());
+                        $(btn).show();
+                        alertPopup({
+                            'fi': 'Jotain meni pieleen',
+                            'sv': 'Något gick fel',
+                            'en': 'Something went wrong',
+                        }[SELECTED_LANGUAGE], 'error');
+                        break; 
+                    }
+                }
             }
         }
-        http.open('GET', buildUrl(resources, begin, end));
+        http.open('GET', buildUrl(resources, begin, end, selectedDays));
         http.send();
         $("body").css("cursor", "progress");
+        addLoader($(btn).parent(), {
+            'fi': 'Raporttia luodaan',
+            'sv': 'Generating report',
+            'en': 'Generating report'
+        });
+        $(btn).hide();
     });
 
     setInterval(() => {
-        if ($(".resource-card input:checked").length > 0) {
+        if ($(paginator.items).find('input:checked').length > 0 && $('ul[id=weekday-cal-popup] li input:checked').length > 0) {
             $(btn).prop('disabled', false);
         } else {
             $(btn).prop('disabled', true);
         }
     }, 200);
+}
+
+
+let btnState = false;
+function bindSelectDayPickButton() {
+    let weekdayCalendar = $("ul[id=weekday-cal-popup]").parent();
+    let weekdayPopupBtn = $("button[id=weekday-cal-btn]");
+    let weekdayPopupCloseBtn = $("i[id=popup-close-btn]")
+    $(weekdayPopupBtn).on('click', (e) => {
+        if (!$(weekdayCalendar).is(':visible') && !btnState) {
+            btnState = true;
+            $(weekdayCalendar).fadeIn('fast').trigger('focus');
+        } else { btnState = false; }
+    });
+    $(weekdayCalendar).on('focusout', (e) => {
+        if ($(e.relatedTarget).is(weekdayCalendar) || 
+            $(e.relatedTarget).is($(weekdayCalendar).find('input'))) {
+            return;
+        } else if ($(e.relatedTarget).is(weekdayPopupBtn)) {
+            $(weekdayCalendar).hide();
+        } else {
+            $(weekdayCalendar).hide();
+            btnState = false;
+        }
+    });
+    $(weekdayPopupCloseBtn).on('click', (e) => { 
+        $(weekdayCalendar).trigger('focusout');
+    });
 }

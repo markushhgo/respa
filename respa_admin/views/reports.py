@@ -1,11 +1,9 @@
-from django.http import HttpResponse, HttpResponseRedirect
-from django.urls import reverse_lazy
-from django.utils.translation import ugettext as _
+from django.utils.translation import override as translation_override, ugettext as _
 from django.views.generic.base import TemplateView
-from resources.models import Unit, UnitAuthorization, Resource
+from resources.models import Unit, UnitAuthorization, Resource, Day
 from resources.auth import is_general_admin
+from resources.models.utils import generate_id
 from respa_admin.views.base import ExtraContextMixin
-
 
 
 class ReportView(ExtraContextMixin, TemplateView):
@@ -30,6 +28,9 @@ class ReportView(ExtraContextMixin, TemplateView):
             for unit in context['units']:
                 if unit.id in self.query_params:
                     setattr(unit, 'checked', True)
+        context['random_id_str'] = generate_id()
+        with translation_override('en'):
+            context['WEEKDAYS'] = [dict(value=value, day=day, short=day[:3]) for value, day in Day.DAYS_OF_WEEK]
         return context
 
 

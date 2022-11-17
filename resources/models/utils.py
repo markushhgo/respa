@@ -1,6 +1,6 @@
 import base64
 import datetime
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 import struct
 import time
 import io
@@ -163,6 +163,7 @@ def generate_reservation_xlsx(reservations, **kwargs):
         return string
 
     request = kwargs.get('request', None)
+    weekdays = kwargs.get('weekdays', None)
     output = io.BytesIO()
     workbook = xlsxwriter.Workbook(output)
     worksheet = workbook.add_worksheet()
@@ -190,12 +191,15 @@ def generate_reservation_xlsx(reservations, **kwargs):
     resource_usage_info = {}
 
     if request:
-        query_start = datetime\
-            .datetime\
-            .strptime(request.query_params.get('start', '1970-01-01'), '%Y-%m-%d')
+        query_start = datetime \
+            .datetime \
+            .strptime(request.query_params.get('start', '1970-01-01'), '%Y-%m-%d') \
+            .replace(hour=0, minute=0, second=0)
         query_end = datetime\
             .datetime\
-            .strptime(request.query_params.get('end', '1970-01-01'), '%Y-%m-%d')
+            .strptime(request.query_params.get('end', '1970-01-01'), '%Y-%m-%d') \
+            .replace(hour=23, minute=59, second=59)
+
 
         try:
             resources = request.query_params.get('resource').split(',')
@@ -213,6 +217,10 @@ def generate_reservation_xlsx(reservations, **kwargs):
                 opens, closes = time_slot.items()
                 if not opens[1] or not closes[1]:
                     continue
+
+                if weekdays and opens[1].weekday() not in weekdays:
+                    continue
+
                 if resource not in resource_usage_info:
                     resource_usage_info[resource] = {'total_opening_hours': 0, 'total_reservation_hours': 0}
                 resource_usage_info[resource]['total_opening_hours'] += (closes[1] - opens[1]).total_seconds() / 3600
@@ -265,16 +273,19 @@ def generate_reservation_xlsx(reservations, **kwargs):
 
 
     worksheet.write(row+2, 0, '', col_format)
-    worksheet.write(row+2, 1, '', col_format)
     if request:
-        worksheet.write(row+2, 2, ugettext('Resource utilization for period %(start)s - %(end)s') % ({
+        fmt_extra = f"({ugettext('Selected days: %(selected)s') % ({'selected': _build_weekday_string(weekdays)})})" if weekdays else ''
+        worksheet.write(row+2, 1, ugettext('Resource utilization for period %(start)s - %(end)s %(extra)s') % ({
             'start': query_start.date(),
-            'end': query_end.date()
+            'end': query_end.date(),
+            'extra': fmt_extra
         }), col_format)
     else:
-        worksheet.write(row+2, 2, ugettext('Resource utilization'), col_format)
+        worksheet.write(row+2, 1, ugettext('Resource utilization'), col_format)
+    worksheet.write(row+2, 2, '', col_format)
     worksheet.write(row+2, 3, '', col_format)
     worksheet.write(row+2, 4, '', col_format)
+    worksheet.write(row+2, 5, '', col_format)
 
 
     col_format = workbook.add_format({'color': 'black'})
@@ -304,6 +315,9 @@ def generate_reservation_xlsx(reservations, **kwargs):
     workbook.close()
     return output.getvalue()
 
+def _build_weekday_string(weekdays):
+    from resources.models import Day
+    return ', '.join(str(Day.DAYS_OF_WEEK[weekday][1]).capitalize() for weekday in weekdays)
 
 def get_object_or_none(cls, **kwargs):
     try:
@@ -533,3 +547,81 @@ def get_payment_requested_waiting_time(reservation):
     rounded_value = exact_value.replace(microsecond=0, second=0, minute=0)
 
     return rounded_value.astimezone(reservation.resource.unit.get_tz()).strftime('%d.%m.%Y %H:%M')
+
+def calculate_final_product_sums(product: dict, quantity: int = 1):
+    '''
+    Calculate and return the following product values:
+    product_taxfree_total - sum of all pricings taxfree value
+    product_tax_total - sum of all pricings tax value
+    '''
+    tax_raw = 0
+    taxfree_price = 0
+    for x in product['detailed_price'].values():
+        tax_raw += x['tax_total']
+        taxfree_price += x['taxfree_price_total']
+
+    tax_total = quantity * tax_raw
+    
+    return {
+        'product_tax_total': tax_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
+        'product_taxfree_total': taxfree_price * quantity
+    }
+
+def calculate_final_order_sums(all_products):
+    '''
+    Used to calculate and return the following values:
+    final_order_totals - dict containing the following:
+
+    order_total     -   the final price of this order
+    order_tax_total -   dict containing keys for each VAT % and total tax for each VAT%, eg.
+        example order with 3 products that have VAT 24, 14 and 10
+        {'24.00':Decimal('3.48'), '14.00':Decimal('0.61'), '10.00':Decimal('1.36')}
+
+    order_taxfree_total -   the final tax free price of this order.
+    '''
+    # contains order totals using the new taxfree values
+    order_totals = {'order_taxfree_total': Decimal('0.0'), 'order_tax_total': {}, 'order_total': Decimal('0.0')}
+    # iterate through each unique tax % found 
+    for perc in list(set(x['tax_percentage'] for x in all_products)):
+        # list containing products with tax_percentage == perc
+        perc_products = filter(lambda seq: product_has_given_tax_percentage(seq, perc), all_products)
+        # total tax free price for products of this specific VAT %.
+        perc_taxfree_total = Decimal('0.0')
+        for prod in list(perc_products):
+            '''
+            iterate through all products that have tax_percentage == perc.
+            perc_taxfree_total - sum of the tax free total for each product.
+            '''
+            perc_taxfree_total += prod['product_taxfree_total']
+
+        # add total taxfree price for this VAT% to the orders taxfree total
+        order_totals['order_taxfree_total'] += perc_taxfree_total
+
+        # add total taxfree price for this VAT to the orders total
+        order_totals['order_total'] += perc_taxfree_total
+
+        # calculate exact vat value for total taxfree price, 36.30 * 24 / 100
+        # this contains all of the decimals.
+        exact_vat_amount_value = (perc_taxfree_total * Decimal(perc.replace(',','.'))) / 100
+
+        # rounded version of the VAT total
+        rounded_vat_amount_value = exact_vat_amount_value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+        # add the total rounded VAT value to the orders tax_total 
+        order_totals['order_tax_total'][perc] = rounded_vat_amount_value
+
+        # add total rounded VAT value for this VAT to the orders total.
+        order_totals['order_total'] += rounded_vat_amount_value
+
+    return {
+        'final_order_totals': order_totals
+    }
+
+def product_has_given_tax_percentage(product, percentage):
+    '''
+    Return True if product['tax_percentage'] is percentage.
+    '''
+    if product['tax_percentage'] == percentage:
+        return True
+    
+    return False

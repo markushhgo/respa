@@ -4,6 +4,9 @@
 
 
 {% block koro_shape %}
+<div id="popup-notification" class="popup-notification">
+    <span id="popup-message" class="text-center"></span>
+</div>
 <section class="hero-section bg-light {{ KORO_STYLE }}">
     <form action="." method="get">
         <div class="container reports">
@@ -32,7 +35,70 @@
 </section>
 {% endblock koro_shape %}
 {% block body %}
-    {% include "respa_admin/reports/_list_selected.html" with resources=resources %}
+<section class='resources'>
+    <div class='container reports'>
+        {% if resources %}
+        <div class="col-wrap-container row-wrap fluid space-between">
+            <div class="col-wrap-container">
+                <button type="button" class="btn btn-default" id="select-all-btn">{% trans 'Select all' %}</button>
+            </div>
+            <div class="form-group listing-search col-wrap-container fluid align-items-center">
+                <div class="input-group">
+                    <span class="input-group-addon">{% trans 'Filter' %}</span>
+                    <input type="text" class="form-control text-input" id="resource-filter">
+                </div>
+            </div>
+        </div>
+        {% include "respa_admin/common/_paginated_resource_list.html" with resources=resources per_page=20 paginator_id=random_id_str %}
+        <div class="col-wrap-container row-wrap space-between">
+            <div class="col-wrap-container fluid row-wrap space-between">
+                <div class="col-wrap-container">
+                    <input type="date" class="margin-sm-left border-thick align-center" name="begin-date" id="begin-date" />
+                    <label for="begin-date" class="control-label input-label align-center no-select">{% trans "Start date" %}</label>
+                </div>
+                <div class="col-wrap-container">
+                    <input type="date" class="margin-sm-left border-thick align-center" name="end-date" id="end-date" />
+                    <label for="end-date" class="control-label input-label align-center no-select">{% trans "End date" %}</label>
+                </div>
+                <div class="form-group col-wrap-container margin-sm-left">
+                    <div class="reports-weekday-calendar" tabindex="-1">
+                        <ul id="weekday-cal-popup">
+                            <div class="calendar-header">
+                                <i id="popup-close-btn" class="glyphicon glyphicon-remove small-text"></i>
+                            </div>
+                            {% for weekday in WEEKDAYS %}
+                            <li>
+                                <label class="control-label input-label align-center no-select">
+                                    <input 
+                                        id="{{ weekday.day }}"
+                                        class="margin-sm-left border-thick align-center"
+                                        type="checkbox" 
+                                        title="{{ weekday.day|title }}"
+                                        data-value="{{ weekday.value }}" 
+                                        checked />
+                                    <span>{% trans weekday.short|title %}</span>
+                                 </label>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    <div class="input-group">
+                        <button id="weekday-cal-btn" class="btn btn-default border-thick">
+                            <i class="glyphicon glyphicon-calendar"></i>
+                            {% trans 'Weekdays'|title %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="button-container row-reverse align-center">
+                <button type="button" class="resources-button button-border" id="generate-btn" disabled>
+                    {% trans 'Download' %}
+                </button>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</section>
 {% endblock body %}
 
 

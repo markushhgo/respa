@@ -1857,8 +1857,8 @@ msgstr "Början måste vara före slutet"
 msgid "Overlapping time slot prices"
 msgstr "Överlappande tidsluckornas priser"
 
-msgid "Resource utilization for period %(start)s - %(end)s"
-msgstr "Resursens beläggningsgrad för tidsperioden %(start)s - %(end)s"
+msgid "Resource utilization for period %(start)s - %(end)s %(extra)s"
+msgstr "Resursens beläggningsgrad för tidsperioden %(start)s - %(end)s %(extra)s"
 
 msgid "Resource utilization"
 msgstr "Resursens beläggningsgrad"
@@ -1910,3 +1910,82 @@ msgstr "Utspelar sig virtuellt"
 
 msgid "Virtual address"
 msgstr "Virtuell adress"
+
+msgid "online payment"
+msgstr "Online betalning"
+
+msgid "cash payment"
+msgstr "Kontant betalning"
+
+msgid "payment method"
+msgstr "Betalningsmetod"
+
+msgid "Cash payments are not allowed for this resource"
+msgstr "Kontantbetalningar är inte tillåtna för denna resurs"
+
+msgid "Cash payments are not allowed"
+msgstr "Kontantbetalningar är inte tillåtna"
+
+msgid "waiting for cash payment"
+msgstr "Väntar på kontant betalning"
+
+msgid "Cash payments allowed"
+msgstr "Kontantbetalning tillåten"
+
+msgid "Allows cash payment option for paid reservations. Can only be set when resource needs manual confirmation."
+msgstr "Tillåter kontantbetalningsalternativ för betalda bokningar. Kan endast ställas in när resursen behöver manuell bekräftelse."
+
+msgid "Cash payments are only allowed when reservations need manual confirmation"
+msgstr "Kontantbetalningar är endast tillåtna när bokningar kräver manuell bekräftelse"
+
+msgid ""
+    "Note! If there are any products with per_period pricing that are attached to this resource, "
+    "make sure that slot_size value is the same size as the products price_period value."
+msgstr ""
+    "Obs! Om det finns produkter med per period priser för denna resurs, "
+    "så kolla att spårstorlek värdet är lika stort som produktens prisperiod värde."
+
+msgid "Results per page"
+msgstr "Resultat per sida"
+
+msgid "Quality tool"
+msgstr "Kvalitetsverktyg"
+
+msgid "resource quality tool"
+msgstr "resurs kvalitetsverktyg"
+
+msgid "resource quality tools"
+msgstr "resurs kvalitetsverktyg"
+
+msgid "All quality tools I manage"
+msgstr "Alla mina kvalitetsverktyg"
+
+msgid "Add a new quality tool target"
+msgstr "Skapa ny kvalitetsverktyg mål"
+
+msgid "All quality tools"
+msgstr "Alla kvalitetsverktyg"
+
+msgid "Create quality tool target"
+msgstr "Skapa kvalitetsverktyg mål"
+
+msgid "Manage quality tool target"
+msgstr "Kontrollera kvalitetsverktyg mål"
+
+msgid "Search for Suomi.fi quality tool targets"
+msgstr "Sök efter Suomi.fi kvalitetsverktyg mål"
+
+msgid "Quality tool target created"
+msgstr "Kvalitetsverktyg mål skapad"
+
+msgid "Quality tool target updated"
+msgstr "Kvalitetsverktyg mål uppdaterad"
+
+msgid "No target options found"
+msgstr "Inga mål hittades"
+
+msgid "Selected days: %(selected)s"
+msgstr "Utvalda dagar: %(selected)s"
+
+msgid "Weekdays"
+msgstr "Veckodagar"

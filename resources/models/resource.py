@@ -185,7 +185,7 @@ class ResourceQuerySet(models.QuerySet):
         units_where_role = Unit.objects.by_roles(user, allowed_roles)
 
         return self.filter(Q(unit__in=list(units) + list(units_where_role)) | Q(groups__in=resource_groups)).distinct()
-    
+
     def external(self):
         return self.filter(is_external=True)
 
@@ -253,7 +253,8 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
     cooldown = models.DurationField(verbose_name=_('Reservation cooldown'), null=True, blank=True, default=datetime.timedelta(minutes=0))
 
     slot_size = models.DurationField(verbose_name=_('Slot size for reservation time'), null=True, blank=True,
-                                     default=datetime.timedelta(minutes=30))
+                                     default=datetime.timedelta(minutes=30), help_text=_('Note! If there are any products with per_period pricing that are attached to this resource'
+                                     ', make sure that slot_size value is the same size as the products price_period value.'))
 
     equipment = EquipmentField(Equipment, through='ResourceEquipment', verbose_name=_('Equipment'))
     max_reservations_per_user = models.PositiveIntegerField(verbose_name=_('Maximum number of active reservations per user'),
@@ -281,7 +282,10 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
     price_type = models.CharField(
         max_length=32, verbose_name=_('price type'), choices=PRICE_TYPE_CHOICES, default=PRICE_TYPE_HOURLY
     )
-
+    cash_payments_allowed = models.BooleanField(verbose_name=_('Cash payments allowed'), default=False,
+        help_text=_('Allows cash payment option for paid reservations.'
+            ' Can only be set when resource needs manual confirmation.')
+    )
     payment_requested_waiting_time = models.PositiveIntegerField(
         verbose_name=_('Preliminary reservation payment waiting time'),
         help_text=_('Amount of hours before confirmed preliminary reservations with payments expire.'
@@ -883,6 +887,12 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
                             _('Unauthenticated')]
                         )}
                 )
+
+        if self.cash_payments_allowed and not self.need_manual_confirmation:
+            raise ValidationError({
+                'cash_payments_allowed': _('Cash payments are only allowed when reservations need manual confirmation')
+            })
+
         if self.timmi_resource and not self.timmi_room_id:
             TimmiManager().get_room_part_id(self)
 
@@ -1091,10 +1101,10 @@ class MaintenanceMessage(ModifiableModel):
                 {timezone.localtime(self.end).replace(tzinfo=None)}" \
                 .capitalize()
 
-    
+
     def clean(self):
         super().clean()
         if self.end <= self.start:
             raise ValidationError(_("Invalid start or end time"))
-        
-        
+
+

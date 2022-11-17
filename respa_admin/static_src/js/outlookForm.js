@@ -1,5 +1,7 @@
-import { alertPopup, Paginate } from './utils';
+import { alertPopup, Paginate, getErrorMessage } from './utils';
 
+
+let paginators = [];
 
 export function initializeEventHandlers() {
     bindRemoveLinkButton();
@@ -8,18 +10,9 @@ export function initializeEventHandlers() {
 }
 
 function handlePagination() {
-  $("div[paginate]").each((i, div) => {
-    let paginationId = $(div).attr('paginate');
-    let array =  $(div).find("form").toArray();
-    let perPage = $(div).attr("per-page");
-    let pagination = $(div).parent().find(`div[id=pagination-container-${paginationId}]`);
-    new Paginate(paginationId, array, perPage, pagination);
+  $("div[data-paginate=true]").each((_, div) => {
+    paginators.push(new Paginate(div));
   });
-}
-
-function getErrorMessage(response) {
-  let error = $.parseJSON(response.responseText);
-  return error.message;
 }
 
 
