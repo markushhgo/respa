@@ -1951,6 +1951,9 @@ msgstr "Resultat per sida"
 msgid "Quality tool"
 msgstr "Kvalitetsverktyg"
 
+msgid "Quality tools"
+msgstr "Kvalitetsverktyg"
+
 msgid "resource quality tool"
 msgstr "resurs kvalitetsverktyg"
 
@@ -2017,6 +2020,12 @@ msgstr "Återställ"
 msgid "Restore resources"
 msgstr "Återställ resurs"
 
+msgid "Add e-mail"
+msgstr "Skapa ny e-mail"
+
+msgid "Filter reservations by reservation email"
+msgstr "Filtrera bokningar enligt e-postadress"
+
 msgid "Universal form field"
 msgstr "Universal bokningsformulär fält"
 
@@ -2052,3 +2061,15 @@ msgstr "Lägg till som iframe inbäddning"
 
 msgid "Universal data preview label"
 msgstr "Förhandsvisning av inbäddningen:"
+
+msgid "Save changes"
+msgstr "Spara ändringar"
+
+msgid "Suomi.fi e-service"
+msgstr "Suomi.fi transaktionstjänster"
+
+msgid "Suomi.fi e-service connected resources"
+msgstr "Suomi.fi transaktionstjänster länkad resurser"
+
+msgid "Limitation for calculating usage volume"
+msgstr "Gränser för beräkning av användningsmängder"
