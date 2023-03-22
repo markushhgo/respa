@@ -2062,6 +2062,12 @@ msgstr "Lägg till som iframe inbäddning"
 msgid "Universal data preview label"
 msgstr "Förhandsvisning av inbäddningen:"
 
+msgid "Created at"
+msgstr "Skapad vid"
+
+msgid "Staff event"
+msgstr "Personalhändelse"
+
 msgid "Save changes"
 msgstr "Spara ändringar"
 
