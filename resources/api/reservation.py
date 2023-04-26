@@ -264,6 +264,9 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         reservation = self.instance
         request_user = self.context['request'].user
         # this check is probably only needed for PATCH
+
+        obj_user_is_staff = bool(request_user and request_user.is_staff)
+
         try:
             resource = data['resource']
         except KeyError:
@@ -347,8 +350,11 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 raise ValidationError({'type': _('You are not allowed to make a reservation of this type')})
 
         if 'comments' in data:
-            if not resource.can_comment_reservations(request_user):
-                raise ValidationError(dict(comments=_('Only allowed to be set by staff members')))
+            perm_skip = (obj_user_is_staff and (is_resource_admin or is_resource_manager)) or \
+                obj_user_is_staff and resource.reservable_by_all_staff
+            if perm_skip is False:
+                if not resource.can_comment_reservations(request_user):
+                    raise ValidationError(dict(comments=_('Only allowed to be set by staff members')))
 
         if 'takes_place_virtually' in data:
             if not resource.can_create_staff_event(request_user):
@@ -461,8 +467,16 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 'require_workstation': instance.require_workstation,
             })
 
+        # true if user is not admin, manager or viewer for the resource.
         if not resource.can_access_reservation_comments(user):
-            del data['comments']
+            insufficient_rights = [
+                not user.is_staff and not resource.reservable_by_all_staff,
+                user.is_staff and not resource.reservable_by_all_staff,
+                not user.is_staff and resource.reservable_by_all_staff,
+                instance.user != user
+            ]
+            if any(insufficient_rights):
+                del data['comments']
 
         if not resource.can_view_reservation_user(user):
             del data['user']
