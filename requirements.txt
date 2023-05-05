@@ -31,8 +31,6 @@ babel==2.11.0
     # via
     #   -r requirements.in
     #   delorean
-backports-zoneinfo==0.2.1
-    # via exchangelib
 beautifulsoup4==4.11.2
     # via -r requirements.in
 cached-property==1.5.2
@@ -206,10 +204,6 @@ ecdsa==0.18.0
     # via
     #   -r requirements.in
     #   python-jose
-exceptiongroup==1.1.0
-    # via
-    #   cattrs
-    #   pytest
 exchangelib==4.9.0
     # via -r requirements.in
 factory-boy==3.2.1
@@ -450,9 +444,7 @@ ruamel-yaml==0.17.21
     #   -r requirements.in
     #   drf-yasg
 ruamel-yaml-clib==0.2.7
-    # via
-    #   -r requirements.in
-    #   ruamel-yaml
+    # via -r requirements.in
 sentry-sdk==1.15.0
     # via -r requirements.in
 six==1.16.0
@@ -475,7 +467,7 @@ social-auth-core==4.3.0
     #   social-auth-app-django
 soupsieve==2.4
     # via beautifulsoup4
-sqlparse==0.4.3
+sqlparse==0.4.4
     # via
     #   -r requirements.in
     #   django
@@ -485,20 +477,13 @@ tendo==0.3.0
     # via -r requirements.in
 text-unidecode==1.3
     # via -r requirements.in
-tomli==2.0.1
-    # via
-    #   coverage
-    #   pylint
-    #   pytest
 tomlkit==0.11.6
     # via pylint
 typed-ast==1.5.4
     # via -r requirements.in
 typing-extensions==4.5.0
     # via
-    #   astroid
     #   django-modeltranslation
-    #   pylint
     #   swagger-spec-validator
 tzdata==2022.7
     # via
