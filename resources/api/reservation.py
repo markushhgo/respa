@@ -7,7 +7,7 @@ from guardian.core import ObjectPermissionChecker
 from django.contrib.auth import get_user_model
 from django.conf import settings
 from django.http import JsonResponse
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import (
     PermissionDenied, ValidationError as DjangoValidationError
 )
@@ -50,7 +50,7 @@ from .base import (
     ExtraDataMixin
 )
 
-from ..models.utils import dateparser
+from ..models.utils import dateparser, is_reservation_metadata_or_times_different
 from respa.renderers import ResourcesBrowsableAPIRenderer
 from payments.utils import is_free, get_price
 
@@ -154,9 +154,9 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         model = Reservation
         fields = [
             'url', 'id', 'resource', 'user', 'begin', 'end', 'comments', 'is_own', 'state',
-            'need_manual_confirmation', 'require_assistance', 'require_workstation', 'staff_event',
-            'access_code', 'user_permissions', 'preferred_language', 'type',
-            'has_arrived', 'takes_place_virtually', 'virtual_address'
+            'need_manual_confirmation', 'require_assistance', 'require_workstation', 'private_event',
+            'staff_event', 'access_code', 'user_permissions', 'preferred_language', 'type',
+            'has_arrived', 'takes_place_virtually', 'virtual_address', 'universal_data'
         ] + list(RESERVATION_EXTRA_FIELDS)
         read_only_fields = list(RESERVATION_EXTRA_FIELDS)
 
@@ -264,6 +264,9 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         reservation = self.instance
         request_user = self.context['request'].user
         # this check is probably only needed for PATCH
+
+        obj_user_is_staff = bool(request_user and request_user.is_staff)
+
         try:
             resource = data['resource']
         except KeyError:
@@ -347,8 +350,11 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 raise ValidationError({'type': _('You are not allowed to make a reservation of this type')})
 
         if 'comments' in data:
-            if not resource.can_comment_reservations(request_user):
-                raise ValidationError(dict(comments=_('Only allowed to be set by staff members')))
+            perm_skip = (obj_user_is_staff and (is_resource_admin or is_resource_manager)) or \
+                obj_user_is_staff and resource.reservable_by_all_staff
+            if perm_skip is False:
+                if not resource.can_comment_reservations(request_user):
+                    raise ValidationError(dict(comments=_('Only allowed to be set by staff members')))
 
         if 'takes_place_virtually' in data:
             if not resource.can_create_staff_event(request_user):
@@ -461,8 +467,16 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
                 'require_workstation': instance.require_workstation,
             })
 
+        # true if user is not admin, manager or viewer for the resource.
         if not resource.can_access_reservation_comments(user):
-            del data['comments']
+            insufficient_rights = [
+                not user.is_staff and not resource.reservable_by_all_staff,
+                user.is_staff and not resource.reservable_by_all_staff,
+                not user.is_staff and resource.reservable_by_all_staff,
+                instance.user != user
+            ]
+            if any(insufficient_rights):
+                del data['comments']
 
         if not resource.can_view_reservation_user(user):
             del data['user']
@@ -1089,8 +1103,11 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
             new_state == Reservation.CONFIRMED:
             new_instance.get_order().set_state(Order.CONFIRMED, 'Cash payment confirmed.')
 
-        if new_state == old_instance.state and new_state not in ['denied'] and self.request.method != 'PATCH': # Reservation was modified, don't send modified upon patch.
-            self.send_modified_mail(new_instance, is_staff=self.request.user.is_staff)
+        # Reservation was modified, don't send modified upon patch.
+        if new_state == old_instance.state and new_state not in ['denied'] and self.request.method != 'PATCH':
+            # dont send if main reservation fields are not different e.g. only comments changes
+            if is_reservation_metadata_or_times_different(old_instance, new_instance):
+                self.send_modified_mail(new_instance, is_staff=self.request.user.is_staff)
 
     def perform_destroy(self, instance):
         instance.set_state(Reservation.CANCELLED, self.request.user)

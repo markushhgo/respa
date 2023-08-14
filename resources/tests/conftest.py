@@ -10,6 +10,8 @@ from resources.enums import UnitAuthorizationLevel
 from resources.models import Resource, ResourceType, Unit, Purpose, Day, Period
 from resources.models import Equipment, EquipmentAlias, ResourceEquipment, EquipmentCategory, TermsOfUse, ResourceGroup
 from resources.models import AccessibilityValue, AccessibilityViewpoint, ResourceAccessibility, UnitAccessibility, MaintenanceMessage
+from resources.models import ResourceUniversalFormOption, ResourceUniversalField, UniversalFormFieldType
+from resources.models import ReservationMetadataSet, ReservationMetadataField
 from munigeo.models import Municipality
 
 
@@ -78,6 +80,15 @@ def test_unit3():
 
 
 @pytest.fixture
+def test_unit4():
+    return Unit.objects.create(
+            name="unit 4",
+            time_zone='Europe/Helsinki',
+            disallow_overlapping_reservations=True
+        )
+
+
+@pytest.fixture
 def generic_terms():
     return TermsOfUse.objects.create(
         name_fi='testikäyttöehdot',
@@ -95,6 +106,30 @@ def payment_terms():
         text_fi='kaikki on maksullista',
         text_en='everything is chargeable',
         terms_type=TermsOfUse.TERMS_TYPE_PAYMENT
+    )
+
+@pytest.fixture
+def metadataset_1():
+    name_field = ReservationMetadataField.objects.get(field_name='reserver_name')
+    email_field = ReservationMetadataField.objects.get(field_name='reserver_email_address')
+    phone_field = ReservationMetadataField.objects.get(field_name='reserver_phone_number')
+    metadata_set = ReservationMetadataSet.objects.create(
+        name='test_metadataset_1',
+        )
+    metadata_set.supported_fields.set([name_field, email_field, phone_field])
+    return metadata_set
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_with_metadata(space_resource_type, metadataset_1, test_unit):
+    return Resource.objects.create(
+        type=space_resource_type,
+        authentication="none",
+        name="resource with metadata",
+        reservation_metadata_set=metadataset_1,
+        unit=test_unit,
+        reservable=True,
     )
 
 
@@ -143,6 +178,53 @@ def resource_in_unit3(space_resource_type, test_unit3):
         max_period=datetime.timedelta(hours=4),
         reservable=True,
     )
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_in_unit4_1(space_resource_type, test_unit4):
+    resource = Resource.objects.create(
+        type=space_resource_type,
+        authentication="none",
+        name="resource in unit 4 first",
+        unit=test_unit4,
+        max_reservations_per_user=5,
+        max_period=datetime.timedelta(hours=4),
+        reservable=True,
+    )
+    p1 = Period.objects.create(start=datetime.date(2115, 1, 1),
+                               end=datetime.date(2115, 12, 31),
+                               resource=resource, name='regular hours')
+    for weekday in range(0, 7):
+        Day.objects.create(period=p1, weekday=weekday,
+                           opens=datetime.time(8, 0),
+                           closes=datetime.time(18, 0))
+    resource.update_opening_hours()
+    return resource
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_in_unit4_2(space_resource_type, test_unit4):
+    resource = Resource.objects.create(
+        type=space_resource_type,
+        authentication="none",
+        name="resource in unit 4 second",
+        unit=test_unit4,
+        max_reservations_per_user=5,
+        max_period=datetime.timedelta(hours=4),
+        reservable=True,
+    )
+    p1 = Period.objects.create(start=datetime.date(2115, 1, 1),
+                               end=datetime.date(2115, 12, 31),
+                               resource=resource, name='regular hours')
+    for weekday in range(0, 7):
+        Day.objects.create(period=p1, weekday=weekday,
+                           opens=datetime.time(8, 0),
+                           closes=datetime.time(18, 0))
+    resource.update_opening_hours()
+    return resource
+
 
 @pytest.mark.django_db
 @pytest.fixture
@@ -303,6 +385,22 @@ def unit_manager_user(resource_in_unit):
     )
     user.unit_authorizations.create(subject=resource_in_unit.unit, level=UnitAuthorizationLevel.manager)
     return user
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def unit4_manager_user(resource_in_unit4_1):
+    user = get_user_model().objects.create(
+        username='test_manager_user',
+        first_name='Inspector',
+        last_name='Lestrade',
+        email='lestrade@scotlandyard.co.uk',
+        is_staff=True,
+        preferred_language='en'
+    )
+    user.unit_authorizations.create(subject=resource_in_unit4_1.unit, level=UnitAuthorizationLevel.manager)
+    return user
+
 
 @pytest.mark.django_db
 @pytest.fixture
@@ -487,3 +585,47 @@ def maintenance_message():
         message_en='This is a notice',
         message_sv='Detta är ett meddelande'
     )
+
+@pytest.mark.django_db
+@pytest.fixture
+def universal_form_field_type():
+    return UniversalFormFieldType.objects.create(
+        type='Select'
+    )
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_universal_field_no_options(resource_in_unit, universal_form_field_type):
+    return ResourceUniversalField.objects.create(
+        name='Selection field',
+        resource=resource_in_unit,
+        field_type=universal_form_field_type,
+        label_fi='Suomenkielinen otsikko kentälle',
+        label_en='English header for the field',
+        label_sv='Svensk rubrik för fältet',
+        description_fi='Suomenkielinen kuvaus kentälle',
+        description_en='English description for the field',
+        description_sv='Svensk beskrivning för fältet',
+    )
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_universal_field_with_options(resource_universal_field_no_options):
+    options = [
+        {'en':'First', 'fi': 'Ensimmäinen', 'sv': 'Första'},
+        {'en':'Second', 'fi': 'Toinen', 'sv': 'Andra'},
+        {'en':'Third', 'fi': 'Kolmas', 'sv': 'Tredje'},
+        {'en':'Fourth', 'fi': 'Neljäs', 'sv': 'Fjärde'},
+    ]
+    for index, option in enumerate(options):
+        ResourceUniversalFormOption.objects.create(
+        name=f"{option['en']} option",
+        resource_universal_field=resource_universal_field_no_options,
+        resource=resource_universal_field_no_options.resource,
+        text_fi=option['fi'],
+        text_en=option['en'],
+        text_sv=option['sv'],
+        sort_order = index + 1
+        )
+
+    return resource_universal_field_no_options

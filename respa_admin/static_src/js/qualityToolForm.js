@@ -1,4 +1,4 @@
-import { alertPopup, Paginate, getErrorMessage } from './utils';
+import { alertPopup, Paginate, getErrorMessage, ajaxRequest } from './utils';
 
 
 let paginator;
@@ -12,6 +12,76 @@ export function initializeEventHandlers() {
     bindResourceFilter();
     bindSelectAllButton();
     bindSelectPaginatorItems();
+    bindQualityToolEmailsHandler();
+}
+
+
+function bindQualityToolEmailsHandler() {
+    let emailInput = $("#email-input");
+    let emailList = $("#quality-tool-emails");
+    let addEmailBtn = $("#add-email-btn");
+    let removeEmailBtn = $("#remove-email-btn");
+
+    $(removeEmailBtn).on('click', (e) => {
+        e.preventDefault();
+        $(emailList).find('li').each((_, element) => {
+            if ($(element).hasClass('active')) {
+                $(element).remove();
+            }
+        })
+    })
+
+    function testValue(value) {
+        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    function updateListItems() {
+        $(emailList).find('li').each((_, element) => {
+            $(element).unbind('click');
+            $(element).bind('click', (_) => {
+                if ($(element).hasClass('active')) {
+                    $(element).removeClass('active');
+                  } else {
+                    $(element).addClass('active');
+                  }
+            });
+        });
+    }
+
+
+    function append(value) {
+        if (!testValue(value)) { return; }
+        $(emailList).append(`<li title=${value} data-value=${value}>${value}</li>`);
+        $(emailInput).val('');
+    }
+
+    function addInputValue() {
+        if ($(emailInput).val().length > 0) {
+            $.each($(emailInput).val().split(','), (_, value) => {
+              append(value.trim());
+            });
+        }
+        updateListItems();
+    }
+
+    $(emailInput).on('keydown', (e) => {
+        if (e.key == 'Enter') {
+            e.preventDefault();
+            if ($(emailInput).val().length > 0) {
+                $.each($(emailInput).val().split(','), (_, value) => {
+                    append(value.trim());
+                });
+            }
+            updateListItems();
+        }
+    });
+
+    $(addEmailBtn).on('click', (e) => {
+        e.preventDefault();
+        addInputValue();
+    })
+
+    updateListItems();
 }
 
 function bindResultsPerPageButtons() {
@@ -104,34 +174,6 @@ function bindSelectAllButton() {
     });
 }
 
-
-function ajaxRequest(type, url, data, csrfmiddlewaretoken) {
-    $.ajax({
-        type: type,
-        url: url,
-        dataType: 'json',
-        contentType: 'application/json',
-        beforeSend: (xhr) => {
-            xhr.setRequestHeader('X-CSRFToken', csrfmiddlewaretoken)
-        },
-        data: JSON.stringify(data),
-        success: (response) => {
-            window.location = response.redirect_url;
-        },
-        error: (response) => {
-            alertPopup(getErrorMessage(response), 'error');
-        }
-    })
-}
-
-function getSelectedResources() {
-    let resources = [];
-    $(paginator.items)
-        .find('input:checked')
-        .each((_, resource) => resources.push($(resource).attr('id')));
-    return resources;
-}
-
 function getTargetNames(target) {
     let name = {};
     $('[id=all-languages] data').each((_, lang) => {
@@ -147,16 +189,22 @@ function bindQualityToolLinkEditCreateButton() {
         let target = $("div[data-qualitytool-target=true]").find('input:checked');
         let name = getTargetNames(target);
         let csrf_token = $(btn).parent().find('input[name=csrfmiddlewaretoken]');
+        let emails = $("#quality-tool-emails").find('li').map((_, email) => {
+            return $(email).data('value');
+        }).get();
 
         ajaxRequest(
             'POST', 
             `${window.location}`.replace('#',''),
             {
-                'resources': getSelectedResources(),
+                'resources': paginator.getSelectedItems('id'),
                 'target_id': target.data('value'),
-                'name': name
+                'name': name,
+                'emails': emails
             },
-            csrf_token.val()
+            csrf_token.val(),
+            (response) => { window.location = response.redirect_url; },
+            (response) => { alertPopup(getErrorMessage(response), 'error'); }
         )
     });
 

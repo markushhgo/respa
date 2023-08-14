@@ -21,8 +21,8 @@ from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
 from django.contrib.auth import get_user_model
 from rest_framework.permissions import DjangoModelPermissionsOrAnonReadOnly
-from django.core.exceptions import ValidationError, ObjectDoesNotExist
-from django.utils.translation import ugettext_lazy as _
+from django.core.exceptions import ValidationError, ObjectDoesNotExist, PermissionDenied
+from django.utils.translation import gettext_lazy as _
 from payments.api.reservation import PaymentsReservationSerializer
 from resources.timmi import TimmiManager
 from PIL import Image
@@ -32,7 +32,8 @@ from resources.pagination import PurposePagination
 from rest_framework import (
     exceptions, filters, mixins, 
     serializers, viewsets, response, 
-    status, generics, permissions, fields
+    status, generics, permissions, fields,
+    views
 )
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, TokenAuthentication
@@ -43,13 +44,14 @@ from resources.models import (
     AccessibilityValue, AccessibilityViewpoint, Purpose, Reservation, Resource, ResourceAccessibility,
     ResourceImage, ResourceType, ResourceEquipment, TermsOfUse, Equipment, ReservationMetadataSet,
     ReservationMetadataField, ReservationHomeMunicipalityField,
-    ReservationHomeMunicipalitySet, ResourceDailyOpeningHours, UnitAccessibility, Unit, ResourceTag
+    ReservationHomeMunicipalitySet, ResourceDailyOpeningHours, UnitAccessibility, Unit, ResourceTag,
+    ResourceUniversalField, ResourceUniversalFormOption, UniversalFormFieldType
 )
 from resources.models.resource import determine_hours_time_range
 from payments.models import Product
 from respa_admin.models import DisabledFieldsSet
 
-from ..auth import has_permission, is_general_admin, is_staff
+from ..auth import has_permission, is_general_admin, is_staff, has_api_permission
 from .accessibility import ResourceAccessibilitySerializer
 from .base import (
     ExtraDataMixin, TranslatedModelSerializer, register_view,
@@ -59,10 +61,13 @@ from .base import (
 from .reservation import ReservationSerializer
 from .unit import UnitSerializer
 from .equipment import EquipmentSerializer
+from .resource_field import UniversalFormFieldTypeSerializer
 from rest_framework.settings import api_settings as drf_settings
+from rest_framework.relations import PrimaryKeyRelatedField
 from resources.models.utils import log_entry
 
-from random import sample
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 
 
 logger = logging.getLogger(__name__)
@@ -337,6 +342,133 @@ class NestedResourceImageSerializer(TranslatedModelSerializer):
     def get_filename(self, obj):
         return basename(obj.image.name)
 
+class UniversalOptionSimpleSerializer(TranslatedModelSerializer):
+    text = serializers.DictField(required=True)
+
+    class Meta:
+        model = ResourceUniversalFormOption
+        fields = ('id','text')
+        required_translations = ('text_fi', 'text_sv', 'text_en')
+        
+    def validate(self, attrs):
+        request = self.context['request']
+        if request.method == 'POST':
+            init_data = getattr(self, 'initial_data')
+            sort_order = init_data.get('sort_order', None)
+            if sort_order is not None and sort_order == 0:
+                # set new option to be last if sort_order is 0.
+                resource_id = init_data.get('resource')
+                field_id = init_data.get('resource_universal_field')
+                count = ResourceUniversalFormOption.objects.filter(resource=resource_id, resource_universal_field=field_id).count()
+                attrs['sort_order'] = count + 1
+        # add original values to 'missing' language vals when updating specific vals.
+        if request.method == 'PATCH':
+            expected_keys = {'fi','sv','en'}
+            texts = attrs.get('text')
+            if texts and texts.keys():
+                updated_keys = set(texts.keys())
+                missing_keys = list(expected_keys.difference(updated_keys))
+                for x in missing_keys:
+                    attrs['text'][x] = getattr(self.instance, f'text_{x}')
+        return super().validate(attrs)
+
+class UniversalOptionDetailedSerializer(UniversalOptionSimpleSerializer):
+    text = serializers.DictField(required=True)
+
+    class Meta:
+        model = ResourceUniversalFormOption
+        fields = ('id','text', 'resource_universal_field', 'name','sort_order', 'resource')
+        required_translations = ('text_fi', 'text_sv', 'text_en')
+
+class ResourceUniversalOptionViewSet(viewsets.ModelViewSet):
+    queryset = ResourceUniversalFormOption.objects.all().order_by('id')
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly,)
+
+    def get_serializer_class(self):
+        method = self.request.method
+        retrieve_one = method == 'GET' and self.action == 'retrieve'
+
+        if retrieve_one is True or method in ('PUT', 'PATCH', 'POST'):
+            return UniversalOptionDetailedSerializer
+
+        return UniversalOptionSimpleSerializer
+    
+register_view(ResourceUniversalOptionViewSet, 'resource_universal_option')
+ 
+class ResourceUniversalFieldSerializer(TranslatedModelSerializer):
+    field_type = UniversalFormFieldTypeSerializer()
+    options = UniversalOptionSimpleSerializer(many=True, read_only=True)
+    description = serializers.DictField(required=True)
+    label = serializers.DictField(required=True)
+
+    class Meta:
+        model = ResourceUniversalField
+        fields = ('id','field_type','data', 'description', 'label', 'resource', 'options', 'name')
+        required_translations = (
+            'label_fi','label_sv','label_en',
+            'description_fi','description_sv','description_en'
+            )
+
+    def validate(self, attrs):
+        request = self.context['request']
+        if request.method == 'PATCH':
+            # add original values to 'missing' language vals when updating specific language vals.
+            if attrs.get('description'):
+                attrs = self.set_missing_values(attrs, attrs.get('description'), 'description')
+            if attrs.get('label'):
+                attrs = self.set_missing_values(attrs, attrs.get('label'), 'label')
+
+        return super().validate(attrs)
+
+    def set_missing_values(self, attrs, values, key):
+        # set missing language values to attr
+        expected_lang_keys = {'fi','sv','en'}
+        updated_lang_keys = values.keys()
+        missing_lang_keys = list(expected_lang_keys.difference(updated_lang_keys))
+        for x in missing_lang_keys:
+            attrs[key][x] = getattr(self.instance, f'{key}_{x}')
+        return attrs
+
+    def create(self, validated_data):
+        if 'field_type' in validated_data:
+            # make sure that given field_type.type actually exists.
+            try:
+                field_type_value = UniversalFormFieldType.objects.get(type=validated_data['field_type']['type'])
+                validated_data['field_type'] = field_type_value
+            except ObjectDoesNotExist:
+                raise serializers.ValidationError({
+                    'field_type': {
+                        'type': _('Invalid type provided')
+                    }
+                })
+        return super().create(validated_data) 
+
+class ResourceUniversalFieldCreateSerializer(ResourceUniversalFieldSerializer):
+    field_type = UniversalFormFieldTypeSerializer()
+    description = serializers.DictField(required=True)
+    label = serializers.DictField(required=True)
+
+    class Meta:
+        model = ResourceUniversalField
+        fields = ('field_type','data', 'description', 'label', 'resource', 'name')
+        required_translations = (
+            'label_fi','label_sv','label_en',
+            'description_fi','description_sv','description_en'
+            )
+
+class ResourceUniversalFieldViewSet(viewsets.ModelViewSet):
+    queryset = ResourceUniversalField.objects.all().order_by('id')
+    filter_backends = (django_filters.rest_framework.DjangoFilterBackend,)
+    permission_classes = (DjangoModelPermissionsOrAnonReadOnly,)
+
+    def get_serializer_class(self):
+        if self.request.method in ('POST'):
+            return ResourceUniversalFieldCreateSerializer
+        return ResourceUniversalFieldSerializer
+
+register_view(ResourceUniversalFieldViewSet, 'resource_universal_field')
+
 class ResourceEquipmentSerializer(TranslatedModelSerializer):
     equipment = EquipmentSerializer()
 
@@ -481,6 +613,8 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
     max_price_per_hour = serializers.SerializerMethodField()
     min_price_per_hour = serializers.SerializerMethodField()
     resource_staff_emails = ResourceStaffEmailsField()
+    universal_field = ResourceUniversalFieldSerializer(many=True, read_only=True, source='resource_universal_field')
+    reservable_by_all_staff = serializers.BooleanField(required=False)
 
     def get_max_price_per_hour(self, obj):
         """Backwards compatibility for 'max_price_per_hour' field that is now deprecated"""
@@ -527,8 +661,10 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
         if request:
             user = prefetched_user or request.user
 
+        can_make_reservations_for_customers = obj.can_create_reservations_for_other_users(user) if request else False
         return {
             'can_make_reservations': obj.can_make_reservations(user) if request else False,
+            **({'can_make_reservations_for_customer': can_make_reservations_for_customers} if (request and can_make_reservations_for_customers) else {}),
             'can_ignore_opening_hours': obj.can_ignore_opening_hours(user) if request else False,
             'is_admin': obj.is_admin(user) if request else False,
             'is_manager': obj.is_manager(user) if request else False,
@@ -693,7 +829,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
         model = Resource
         exclude = ('reservation_requested_notification_extra', 'reservation_confirmed_notification_extra',
                    'access_code_type', 'reservation_metadata_set', 'reservation_home_municipality_set', 
-                   'created_by', 'modified_by', 'configuration', 'resource_email')
+                   'created_by', 'modified_by', 'configuration', 'resource_email', 'soft_deleted')
 
 
 class ResourceDetailsSerializer(ResourceSerializer):
@@ -1675,7 +1811,6 @@ class ResourceCreateSerializer(TranslatedModelSerializer):
         return serializer(**kwargs)
 
 
-
 class ResourceUpdateSerializer(ResourceCreateSerializer):
     id = serializers.CharField(read_only=True)
     terms_of_use = TermsOfUseSerializer(required=False, many=True)
@@ -1737,6 +1872,91 @@ class ResourceUpdateView(generics.UpdateAPIView):
         )
     serializer_class = ResourceUpdateSerializer
     permission_classes = (permissions.DjangoModelPermissions, )
+
+
+class ResourceRestorePermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return super().has_permission(request, view) and has_api_permission(user, 'unit:resource', 'can_restore_resource')
+
+
+class ResourceRestoreView(views.APIView):
+    """
+    Restore soft deleted resources.
+    """
+
+    permission_classes = (ResourceRestorePermission, )
+    http_method_names = ('post', )
+
+    @swagger_auto_schema(
+        request_body=openapi.Schema(
+            title='ResourceRestore',
+            type=openapi.TYPE_OBJECT,
+            required=['id'],
+            properties={ 'id': openapi.Schema(type=openapi.TYPE_STRING) },
+        ),
+        responses={200: ResourceSerializer},
+        tags=['v1']
+    )
+    def post(self, request, **kwargs):
+        data = request.data
+        if not isinstance(data, dict):
+            return Response(
+                {'message': 'Invalid data type: %s' % data.__class__.__name__},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        if not data.get('id', None):
+            return Response(
+                {'id': 'Missing id'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        if not isinstance(data['id'], str):
+            return Response(
+                {'id': 'Invalid data type: %s' % data.__class__.__name__},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            resource = Resource.objects.with_soft_deleted.get(pk=data['id'])
+        except Resource.DoesNotExist:
+            return Response(
+                {'resource': '404 not found'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        resource.restore()
+
+        return Response(ResourceSerializer(resource, context={'request': request}).data)
+
+class ResourceDeletePermission(permissions.BasePermission):
+    def has_permission(self, request, view):
+        user = request.user
+        return super().has_permission(request, view) and has_api_permission(user, 'unit:resource', 'can_delete_resource')
+
+class ResourceDeleteView(views.APIView):
+    """
+    Soft delete resource.
+    """
+
+    permission_classes = (ResourceDeletePermission, )
+    http_method_names = ('delete', )
+
+
+    @swagger_auto_schema(
+        responses=None,
+        tags=['v1']
+    )
+    def delete(self, request, **kwargs):
+        pk = kwargs.get('pk', None)
+        if not pk:
+            raise ValidationError()
+        try:
+            resource = Resource.objects.get(pk=pk)
+        except Resource.DoesNotExist:
+            raise ValidationError({'resource': 'Resource does not exist.'})
+        resource.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ResourceListViewSet(munigeo_api.GeoModelAPIView, mixins.ListModelMixin,

@@ -1,12 +1,16 @@
 import itertools
 from django.conf import settings
 from django.contrib import messages
-from django.db.models import FieldDoesNotExist, Q
-from django.http import Http404, HttpResponseRedirect
+from django.db.models import Q
+from django.core.exceptions import FieldDoesNotExist
+from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.forms import ValidationError
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
-from django.utils.translation import ugettext_lazy as _
-from django.views.generic import CreateView, ListView, UpdateView
+from django.utils.translation import gettext_lazy as _
+from django.shortcuts import redirect
+from django.views.generic import CreateView, ListView, UpdateView, TemplateView
+from django.views.generic.base import View
 from django.contrib.admin.utils import construct_change_message
 from guardian.shortcuts import assign_perm, remove_perm
 from respa_admin.views.base import ExtraContextMixin
@@ -32,10 +36,14 @@ from respa_admin.forms import (
     UserForm,
     get_period_formset,
     get_resource_image_formset,
-    get_unit_authorization_formset
+    get_unit_authorization_formset,
+    get_resource_universal_formset,
+    get_universal_options_formset,
 )
 from respa_admin.views.base import PeriodMixin
-from resources.models.utils import log_entry
+from resources.models.utils import log_entry, generate_id
+
+import json
 
 
 class ResourceListView(ExtraContextMixin, ListView):
@@ -65,6 +73,10 @@ class ResourceListView(ExtraContextMixin, ListView):
         context['selected_resource_unit'] = self.resource_unit or ''
         context['selected_resource_integration'] = self.resource_integration or ''
         context['order_by'] = self.order_by or ''
+        context['CAN_RESTORE_RESOURCES'] = self.model._default_manager \
+            .with_soft_deleted \
+            .modifiable_by(self.request.user) \
+            .filter(soft_deleted=True).count() > 0
         return context
 
     def get_unfiltered_queryset(self):
@@ -269,6 +281,61 @@ class RespaAdminIndex(ResourceListView):
 def admin_office(request):
     return TemplateResponse(request, 'respa_admin/page_office.html')
 
+class SoftDeleteRestoreResourceView(ExtraContextMixin, TemplateView):
+    template_name = 'respa_admin/resources/_restore_resources_list.html'
+    model = Resource
+    
+
+    def get_queryset(self):
+        queryset = self.model.objects.with_soft_deleted.filter(soft_deleted=True)
+        return queryset
+
+    
+    def restore_resources(self, payload):
+        resources = payload['resources']
+        return self.get_queryset().filter(pk__in=resources).restore()
+
+        
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['random_id_str'] = generate_id()
+        context['resources'] = self.get_queryset()
+        return context
+    
+    def post(self, request, *args, **kwargs):
+        payload = json.loads(request.body)
+        self.restore_resources(payload)
+        return JsonResponse({
+            'redirect_url': reverse_lazy('respa_admin:resources')
+        })
+
+class SoftDeleteResourceView(ExtraContextMixin, View):
+    context_object_name = 'resource'
+    model = Resource
+    pk_url_kwarg = 'resource_id'
+
+    def process_request(self, request, *args, **kwargs):
+        resource_id = kwargs.pop('resource_id', None)
+        if not resource_id:
+            raise ValidationError(_('Something went wrong'), 500)
+        try:
+            self.object = self.model.objects.get(pk=resource_id)
+        except self.model.DoesNotExist:
+            raise ValidationError(_('Something went wrong'), 400)
+
+
+    def post(self, request, *args, **kwargs):
+        try:
+            self.process_request(request, *args, **kwargs)
+        except ValidationError as exc:
+            return JsonResponse(
+                {'message': exc.message, 'type': 'error'},
+                status=exc.code
+            )
+        self.object.delete()
+        return redirect('respa_admin:resources')
+
 
 class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
     """
@@ -313,7 +380,19 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
             instance=self.object,
         )
 
+        resource_universal_formset = get_resource_universal_formset(
+            self.request,
+            instance=self.object,
+        )
+
+        resource_options_formset = get_universal_options_formset(
+            self.request,
+            instance=self.object,
+        )
+
         trans_fields = forms.get_translated_field_count(resource_image_formset)
+        trans_fields.update(forms.get_translated_field_count(resource_universal_formset))
+        trans_fields.update(forms.get_translated_field_count(resource_options_formset))
 
         accessibility_data_link = self._get_accessibility_data_link(request)
 
@@ -335,6 +414,8 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
                 accessibility_data_link=accessibility_data_link,
                 form=form,
                 resource_image_formset=resource_image_formset,
+                resource_universal_formset=resource_universal_formset,
+                resource_options_formset=resource_options_formset,
                 trans_fields=trans_fields,
                 page_headline=page_headline,
                 **extra
@@ -377,14 +458,17 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
         period_formset_with_days = self.get_period_formset()
         resource_image_formset = get_resource_image_formset(request=request, instance=self.object)
 
+        resource_universal_formset = get_resource_universal_formset(request=request, instance=self.object)
+        resource_options_formset = get_universal_options_formset(request=request, instance=self.object)
 
-        if self._validate_forms(form, period_formset_with_days, resource_image_formset):
+
+        if self._validate_forms(form, period_formset_with_days, resource_image_formset, resource_universal_formset, resource_options_formset):
             try:
-                return self.forms_valid(form, period_formset_with_days, resource_image_formset)
+                return self.forms_valid(form, period_formset_with_days, resource_image_formset, resource_universal_formset, resource_options_formset)
             except:
-                return self.forms_invalid(form, period_formset_with_days, resource_image_formset)
+                return self.forms_invalid(form, period_formset_with_days, resource_image_formset, resource_universal_formset, resource_options_formset)
         else:
-            return self.forms_invalid(form, period_formset_with_days, resource_image_formset)
+            return self.forms_invalid(form, period_formset_with_days, resource_image_formset, resource_universal_formset, resource_options_formset)
 
     def get_form(self, form_class=None):
         form = super().get_form(form_class)
@@ -395,7 +479,7 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
             unit_field.disabled = True
         return form
 
-    def forms_valid(self, form, period_formset_with_days, resource_image_formset):
+    def forms_valid(self, form, period_formset_with_days, resource_image_formset, universal_formset, options_formset):
         user = self.request.user
         is_edit = self.object is not None
         self.object = form.save()
@@ -406,9 +490,17 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
         ))
 
         if not df_set or \
+            (df_set and 'universal' not in df_set) or \
+            (df_set and 'universal' in df_set and not is_edit):
+                self._save_resource_universal(universal_formset)
+        if not df_set or \
+            (df_set and 'options' not in df_set) or \
+            (df_set and 'options' in df_set and not is_edit):
+                self._save_universal_options(options_formset)
+        if not df_set or \
             (df_set and 'purposes' not in df_set) or \
             (df_set and 'purposes' in df_set and not is_edit):
-            self._save_resource_purposes()
+                self._save_resource_purposes()
         if not df_set or \
             (df_set and 'images' not in df_set) or \
             (df_set and 'images' in df_set and not is_edit):
@@ -420,7 +512,7 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
             self.save_period_formset(period_formset_with_days)
         return HttpResponseRedirect(self.get_success_url())
 
-    def forms_invalid(self, form, period_formset_with_days, resource_image_formset):
+    def forms_invalid(self, form, period_formset_with_days, resource_image_formset, resource_universal_formset, resource_options_formset):
         messages.error(self.request, _('Failed to save. Please check the form for errors.'))
 
         # Extra forms are not added upon post so they
@@ -430,6 +522,9 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
         resource_image_formset.forms.append(temp_image_formset.forms[0])
         period_formset_with_days = self.add_empty_forms(period_formset_with_days)
         trans_fields = forms.get_translated_field_count(resource_image_formset)
+        opt_fields = forms.get_translated_field_count(resource_options_formset)
+        trans_fields.update(opt_fields)
+
         # resource_staff_emails and resource_tags are treated as single string,
         # re-fill resource_staff_emails from initial data, return as list,
         # re-fetch tags, return as list.
@@ -445,12 +540,14 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
                 form=form,
                 period_formset_with_days=period_formset_with_days,
                 resource_image_formset=resource_image_formset,
+                resource_universal_formset=resource_universal_formset,
+                resource_options_formset=resource_options_formset,
                 trans_fields=trans_fields,
                 page_headline=_('Edit resource'),
             )
         )
 
-    def _validate_forms(self, form, period_formset, image_formset):
+    def _validate_forms(self, form, period_formset, image_formset, universal_formset, options_formset):
         df_set = []
         is_valid = []
     
@@ -462,6 +559,10 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
             is_valid.append(period_formset.is_valid())
         if not df_set or (df_set and 'images' not in df_set):
             is_valid.append(image_formset.is_valid())
+        if not df_set or (df_set and 'universal' not in df_set):
+            is_valid.append(universal_formset.is_valid())
+        if not df_set or (df_set and 'options' not in df_set):
+            is_valid.append(options_formset.is_valid())
 
         return all(is_valid)
 
@@ -482,6 +583,12 @@ class SaveResourceView(ExtraContextMixin, PeriodMixin, CreateView):
             if image_key in self.request.FILES:
                 resource_image.image = self.request.FILES[image_key]
             resource_image.save()
+
+    def _save_resource_universal(self, resource_universal_formset):
+        resource_universal_formset.save()
+
+    def _save_universal_options(self, resource_options_formset):
+        resource_options_formset.save()
 
     def _delete_extra_images(self, resource_images_formset):
         data = resource_images_formset.data

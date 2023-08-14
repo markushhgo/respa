@@ -135,6 +135,34 @@ def reservation3(resource_in_unit2, user2):
 
 @pytest.mark.django_db
 @pytest.fixture
+def reservation4(resource_in_unit4_1, user):
+    # reservation in unit 4 which has overlap restriction
+    return Reservation.objects.create(
+        resource=resource_in_unit4_1,
+        begin='2115-04-04T09:00:00+02:00',
+        end='2115-04-04T10:00:00+02:00',
+        user=user,
+        reserver_name='testi testaaja',
+        state=Reservation.CONFIRMED
+    )
+
+
+@pytest.mark.django_db
+@pytest.fixture
+def reservation5(resource_in_unit4_2, user):
+    # reservation in unit 4 which has overlap restriction
+    return Reservation.objects.create(
+        resource=resource_in_unit4_2,
+        begin='2115-04-04T12:00:00+02:00',
+        end='2115-04-04T13:00:00+02:00',
+        user=user,
+        reserver_name='testi testaaja',
+        state=Reservation.CONFIRMED
+    )
+
+
+@pytest.mark.django_db
+@pytest.fixture
 def other_resource(space_resource_type, test_unit):
     return Resource.objects.create(
         type=space_resource_type,
@@ -172,6 +200,30 @@ def reservation_created_notification():
             short_message='Normal reservation created short message.',
             subject='Normal reservation created subject.',
             body='Normal reservation created body.',
+        )
+
+
+@pytest.fixture
+def reservation_modified_by_official_notification():
+    with translation.override('en'):
+        return NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_MODIFIED_BY_OFFICIAL,
+            is_default_template=True,
+            short_message='reservation modified by official short message.',
+            subject='reservation modified by official subject.',
+            body='reservation modified by official body.',
+        )
+
+
+@pytest.fixture
+def reservation_modified_notification():
+    with translation.override('en'):
+        return NotificationTemplate.objects.create(
+            type=NotificationType.RESERVATION_MODIFIED,
+            is_default_template=True,
+            short_message='reservation modified short message.',
+            subject='reservation modified subject.',
+            body='reservation modified body.',
         )
 
 
@@ -414,6 +466,119 @@ def test_comments_are_only_for_admins(
     response = api_client.get(response.data['url'])
     assert 'comments' not in response.data
 
+@pytest.mark.parametrize('user_fixture, expected_status', [
+    (None, 401),
+    ('user', 400),
+    ('user2', 201),
+    ('staff_user', 201),
+    ('unit4_manager_user', 201),
+])
+
+@pytest.mark.django_db
+def test_comments_can_be_created_by_correct_people_when_resource_sets_is_reservable_by_all(
+        api_client, list_url, resource_in_unit, resource_in_unit3, reservation_data, user_fixture, expected_status,
+        user, user2, staff_user, unit4_manager_user):
+    """
+    Tests that only staff users that have rights to some unit can create
+    reservations for customers to a resource which has reservable_by_all_staff set to True.
+    """
+    # update resource metadata_set to include these fields.
+    field_1 = ReservationMetadataField.objects.get(field_name='reserver_name')
+    field_2 = ReservationMetadataField.objects.get(field_name='reserver_phone_number')
+    field_3 = ReservationMetadataField.objects.get(field_name='reserver_email_address')
+    metadata_set = ReservationMetadataSet.objects.create(
+        name='updated_metadata',
+    )
+    metadata_set.supported_fields.set([field_1, field_2, field_3])
+    resource_in_unit.reservation_metadata_set = ReservationMetadataSet.objects.get(name='updated_metadata')
+    resource_in_unit.reservable_by_all_staff = True
+    resource_in_unit.save()
+
+
+    test_comment = 'test comment abc'
+    reservation_data.update({
+        'comments': test_comment,
+        'reserver_email_address': 'test.reserver@test.com',
+        'reserver_name': 'Veikko Varaaja'
+    })
+
+    if user_fixture:
+        test_user = locals().get(user_fixture)
+        if test_user == user2:
+            # user2 is an admin in another unit.
+            reservation_data.update({'reserver_email_address': user2.email})
+            UnitAuthorization.objects.create(
+                subject=resource_in_unit3.unit, level=UnitAuthorizationLevel.admin, authorized=test_user)
+            test_user.is_staff = True
+            test_user.save()
+
+        api_client.force_authenticate(test_user)
+
+    response = api_client.post(list_url, data=reservation_data)
+
+    assert response.status_code == expected_status
+    if response.status_code == 201:
+        assert response.data['comments'] == test_comment
+
+@pytest.mark.parametrize('user_fixture, expected_status_post, expected_status_put ', [
+    (None, 401, 400),
+    ('user', 400, 400),
+    ('user2', 201, 200),
+    ('staff_user', 201, 200),
+    ('unit4_manager_user', 201, 200),
+])
+
+@pytest.mark.django_db
+def test_comments_can_be_updated_by_correct_people_when_resource_sets_is_reservable_by_all(
+        api_client, list_url, resource_in_unit, resource_in_unit3, reservation_data, user_fixture, expected_status_post, expected_status_put,
+        user, user2, staff_user, unit4_manager_user):
+    """
+    Tests that only staff users that have rights to some unit, can create and update
+    reservations that they've created for customers to a resource where reservable_by_all_staff is True.
+    """
+    # update resource metadata_set to include these fields.
+    field_1 = ReservationMetadataField.objects.get(field_name='reserver_name')
+    field_2 = ReservationMetadataField.objects.get(field_name='reserver_phone_number')
+    field_3 = ReservationMetadataField.objects.get(field_name='reserver_email_address')
+    metadata_set = ReservationMetadataSet.objects.create(
+        name='updated_metadata',
+    )
+    metadata_set.supported_fields.set([field_1, field_2, field_3])
+    resource_in_unit.reservation_metadata_set = ReservationMetadataSet.objects.get(name='updated_metadata')
+    resource_in_unit.reservable_by_all_staff = True
+    resource_in_unit.save()
+    # create initial reservation
+    reservation_data.update({
+        'comments': 'test comment abc',
+        'reserver_email_address': 'test.reserver@test.com',
+        'reserver_name': 'Veikko Varaaja'
+    })
+
+    if user_fixture:
+        test_user = locals().get(user_fixture)
+        if test_user == user2:
+            # user2 is an admin in another unit.
+            UnitAuthorization.objects.create(
+                subject=resource_in_unit3.unit, level=UnitAuthorizationLevel.admin, authorized=test_user)
+            test_user.is_staff = True
+            test_user.save()
+
+        api_client.force_authenticate(test_user)
+
+    response = api_client.post(list_url, data=reservation_data)
+    assert response.status_code == expected_status_post
+    if response.status_code is 201:
+        reservation = Reservation.objects.filter(user=test_user).first()
+        updated_comment = 'updated comment text'
+        # update comment
+        reservation_data.update({
+            'comments': updated_comment
+        })
+        detail_url = reverse('reservation-detail', kwargs={'pk': reservation.pk})
+        response = api_client.put(detail_url, data=reservation_data, format='json')
+        assert response.status_code == expected_status_put
+        if response.status_code == 200:
+            assert response.data['comments'] == updated_comment
 
 @pytest.mark.django_db
 def test_anon_and_other_users_cannot_see_virtual_event_data(api_client, reservation, user2):
@@ -863,7 +1028,7 @@ def test_reservation_excels(staff_api_client, list_url, detail_url, reservation,
         HTTP_ACCEPT_LANGUAGE='en',
     )
     assert response.status_code == 200
-    assert response._headers['content-disposition'] == ('Content-Disposition', 'attachment; filename=reservations.xlsx')
+    assert response.headers['Content-Disposition'] == 'attachment; filename=reservations.xlsx'
     assert len(response.content) > 0
 
     response = staff_api_client.get(
@@ -872,8 +1037,7 @@ def test_reservation_excels(staff_api_client, list_url, detail_url, reservation,
         HTTP_ACCEPT_LANGUAGE='en',
     )
     assert response.status_code == 200
-    assert response._headers['content-disposition'] == (
-        'Content-Disposition', 'attachment; filename=reservation-{}.xlsx'.format(reservation.pk))
+    assert response.headers['Content-Disposition'] == 'attachment; filename=reservation-{}.xlsx'.format(reservation.pk)
     assert len(response.content) > 0
 
 
@@ -1607,6 +1771,43 @@ def test_reservation_mail_images(user_api_client, user, list_url, reservation_da
         'image url: https://foo.bar/baz/resource_image/{}'.format(main_image.id),
         html_body='image: <img src="https://foo.bar/baz/resource_image/{}">'.format(last_ground_plan_image.id),
     )
+
+
+@override_settings(RESPA_MAILS_ENABLED=True)
+@pytest.mark.django_db
+def test_reservation_modified_email_by_official(reservation, reservation_data, staff_api_client, staff_user,
+                                    reservation_modified_by_official_notification):
+    reservation.reserver_email_address = 'test@tester.com'
+    reservation.save()
+    UnitAuthorization.objects.create(subject=reservation.resource.unit, level=UnitAuthorizationLevel.manager, authorized=staff_user)
+    reservation_data['preferred_language'] = 'en'
+    reservation_data['reserver_name'] = 'new name'
+    detail_url = reverse('reservation-detail', kwargs={'pk': reservation.pk})
+    response = staff_api_client.put(detail_url, data=reservation_data, format='json')
+    assert response.status_code == 200
+    assert len(mail.outbox) == 1
+    check_received_mail_exists(
+        'reservation modified by official subject.',
+        'test@tester.com',
+        'reservation modified by official body.'
+    )
+
+
+@override_settings(RESPA_MAILS_ENABLED=True)
+@pytest.mark.django_db
+def test_reservation_modified_email_by_official_comment_only(reservation, reservation_data, staff_api_client, staff_user,
+                                    reservation_modified_by_official_notification):
+    reservation.reserver_email_address = 'test@tester.com'
+    reservation.save()
+    UnitAuthorization.objects.create(subject=reservation.resource.unit, level=UnitAuthorizationLevel.manager, authorized=staff_user)
+    reservation_data['preferred_language'] = 'en'
+    reservation_data['comments'] = 'test comment'
+    reservation_data['begin'] = reservation.begin
+    reservation_data['end'] = reservation.end
+    detail_url = reverse('reservation-detail', kwargs={'pk': reservation.pk})
+    response = staff_api_client.put(detail_url, data=reservation_data, format='json')
+    assert response.status_code == 200
+    assert len(mail.outbox) == 0
 
 
 @pytest.mark.parametrize('perm_type', ['unit', 'resource_group'])
@@ -2771,3 +2972,211 @@ def test_disallow_overlapping_reservations(resource_in_unit, resource_in_unit2, 
 
     response2 = user_api_client.post(list_url, reservation_data2)
     assert response2.status_code == 201
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_made_to_unit_with_overlap_restriction_when_no_overlap(
+        api_client, reservation_data, user, list_url, resource_in_unit4_1
+    ):
+    """
+    Tests that a reservation can be made to a resource in unit with overlap restriction
+    when there is no overlap
+    """
+    api_client.force_authenticate(user=user)
+    reservation_data['resource'] = resource_in_unit4_1.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == 201
+
+
+@pytest.mark.parametrize("resource,is_staff,expected", [
+    (1, False, 400),
+    (2, False, 400),
+    (1, True, 400),
+    (2, True, 201),
+])
+@pytest.mark.django_db
+def test_reservations_made_to_unit_with_overlap_restriction_when_overlapping(
+        resource, is_staff, expected, api_client, reservation_data,
+        user, unit4_manager_user, list_url, resource_in_unit4_1, resource_in_unit4_2, reservation4
+    ):
+    """
+    Tests that reservations are handled correctly to resources in units with overlap
+    restrictions
+    """
+    if is_staff:
+        api_client.force_authenticate(user=unit4_manager_user)
+    else:
+        api_client.force_authenticate(user=user)
+
+    reservation_data['resource'] = resource_in_unit4_1.pk if resource == 1 else resource_in_unit4_2.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == expected
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_updated_in_unit_with_overlap_restriction_when_no_overlap(
+        api_client, reservation_data, user, resource_in_unit4_1, reservation4
+    ):
+    """
+    Tests that a reservation can be updated to a resource in unit with overlap restriction
+    when there is no overlap
+    """
+    api_client.force_authenticate(user=user)
+    detail_url = reverse('reservation-detail', kwargs={'pk': reservation4.pk})
+
+    reservation_data['resource'] = resource_in_unit4_1.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T12:00:00+02:00'
+    response = api_client.put(detail_url, reservation_data)
+    assert response.status_code == 200
+    reservation = Reservation.objects.get(pk=reservation4.pk)
+    assert reservation.begin == dateparse.parse_datetime('2115-04-04T09:00:00+02:00')
+    assert reservation.end == dateparse.parse_datetime('2115-04-04T12:00:00+02:00')
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_made_to_unit_with_per_user_overlap_restriction_when_no_overlap(
+        api_client, reservation_data, user, list_url, resource_in_unit4_1
+    ):
+    """
+    Tests that a reservation can be made to a resource in unit with per user overlap restriction
+    when there is no overlap
+    """
+    resource_in_unit4_1.disallow_overlapping_reservations_per_user = True
+    resource_in_unit4_1.save()
+    api_client.force_authenticate(user=user)
+    reservation_data['resource'] = resource_in_unit4_1.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == 201
+
+
+@pytest.mark.parametrize("same_user,expected", [
+    (True, 400),
+    (False, 201),
+])
+@pytest.mark.django_db
+def test_reservations_made_to_unit_with_per_user_overlap_restriction(
+        api_client, reservation_data, user, user2, list_url, test_unit4, resource_in_unit4_2,
+        reservation4, same_user, expected
+    ):
+    """
+    Tests that reservations are handled correctly to a resource in unit with per user overlap restriction
+    when same or other user has made a reservation to another resource in the same unit with overlapping time
+    """
+    test_unit4.disallow_overlapping_reservations_per_user = True
+    test_unit4.save()
+    if same_user:
+        api_client.force_authenticate(user=user)
+    else:
+        api_client.force_authenticate(user=user2)
+
+    reservation_data['resource'] = resource_in_unit4_2.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == expected
+    if expected == 400:
+        assert response.data.get('non_field_errors')[0].code == 'conflicting_reservation'
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_made_to_unit_with_per_user_overlap_restriction_and_anon_user(
+    api_client, reservation_data, list_url, test_unit4, resource_in_unit4_2, reservation4
+):
+    """Tests that anon users can bypass per user overlap restriction"""
+    test_unit4.disallow_overlapping_reservations_per_user = True
+    test_unit4.save()
+    resource_in_unit4_2.authentication = 'unauthenticated'
+    resource_in_unit4_2.save()
+
+    reservation_data['resource'] = resource_in_unit4_2.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == 201
+
+
+@pytest.mark.django_db
+def test_reservation_can_be_updated_in_unit_with_per_user_overlap_restriction_when_no_overlap(
+        api_client, reservation_data, user, resource_in_unit4_1, reservation4, test_unit4
+    ):
+    """
+    Tests that a reservation can be updated to a resource in unit with per user overlap restriction
+    when there is no overlap
+    """
+    test_unit4.disallow_overlapping_reservations_per_user = True
+    test_unit4.save()
+    api_client.force_authenticate(user=user)
+    detail_url = reverse('reservation-detail', kwargs={'pk': reservation4.pk})
+
+    reservation_data['resource'] = resource_in_unit4_1.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T12:00:00+02:00'
+    response = api_client.put(detail_url, reservation_data)
+    assert response.status_code == 200
+    reservation = Reservation.objects.get(pk=reservation4.pk)
+    assert reservation.begin == dateparse.parse_datetime('2115-04-04T09:00:00+02:00')
+    assert reservation.end == dateparse.parse_datetime('2115-04-04T12:00:00+02:00')
+
+
+@pytest.mark.django_db
+def test_reservation_cannot_be_updated_in_unit_with_per_user_overlap_restriction_when_overlapping(
+        api_client, reservation_data, user, resource_in_unit4_1, reservation4, reservation5, test_unit4
+    ):
+    """
+    Tests that a reservation cannot be updated to a resource in unit with per user overlap restriction
+    when there is overlap
+    """
+    test_unit4.disallow_overlapping_reservations_per_user = True
+    test_unit4.save()
+    api_client.force_authenticate(user=user)
+    detail_url = reverse('reservation-detail', kwargs={'pk': reservation4.pk})
+
+    # update reservation to overlap with reservation5
+    reservation_data['resource'] = resource_in_unit4_1.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T13:00:00+02:00'
+    response = api_client.put(detail_url, reservation_data)
+    assert response.status_code == 400
+    assert response.data.get('non_field_errors')[0].code == 'conflicting_reservation'
+
+
+@pytest.mark.parametrize("begin,end,expected", [
+    ('2115-04-03T09:00:00+02:00', '2115-04-03T09:30:00+02:00', 201),
+    ('2115-04-04T08:00:00+02:00', '2115-04-04T08:30:00+02:00', 201),
+    ('2115-04-04T08:30:00+02:00', '2115-04-04T09:00:00+02:00', 201),
+    ('2115-04-04T08:30:00+02:00', '2115-04-04T09:30:00+02:00', 400),
+    ('2115-04-04T08:30:00+02:00', '2115-04-04T10:00:00+02:00', 400),
+    ('2115-04-04T08:30:00+02:00', '2115-04-04T11:00:00+02:00', 400),
+    ('2115-04-04T09:00:00+02:00', '2115-04-04T09:30:00+02:00', 400),
+    ('2115-04-04T09:00:00+02:00', '2115-04-04T10:00:00+02:00', 400),
+    ('2115-04-04T09:00:00+02:00', '2115-04-04T11:00:00+02:00', 400),
+    ('2115-04-04T09:30:00+02:00', '2115-04-04T10:00:00+02:00', 400),
+    ('2115-04-04T09:30:00+02:00', '2115-04-04T11:00:00+02:00', 400),
+    ('2115-04-04T10:00:00+02:00', '2115-04-04T10:30:00+02:00', 201),
+    ('2115-04-04T10:30:00+02:00', '2115-04-04T11:00:00+02:00', 201),
+    ('2115-04-05T09:00:00+02:00', '2115-04-05T09:30:00+02:00', 201),
+])
+@pytest.mark.django_db
+def test_reservations_made_to_unit_with_overlap_restriction_with_different_times(
+        begin, end, expected, api_client, reservation_data, user, list_url,
+        resource_in_unit4_1, resource_in_unit4_2, reservation4, reservation5
+    ):
+    """
+    Tests that reservations are handled correctly to resources in units with overlap
+    restrictions when reserving different length reservations and with different overlaps
+    """
+    api_client.force_authenticate(user=user)
+    reservation_data['resource'] = resource_in_unit4_2.pk
+    reservation_data['begin'] = begin
+    reservation_data['end'] = end
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == expected
+    if expected == 400:
+        assert response.data.get('non_field_errors')[0].code == 'conflicting_reservation'

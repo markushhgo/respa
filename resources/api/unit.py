@@ -146,7 +146,6 @@ class UnitSerializer(ExtraDataMixin, TranslatedModelSerializer):
                     not has_permission(user, 'resources.view_unit')):
                         del ret['created_by']
                         del ret['modified_by']
-
         return ret
 
     

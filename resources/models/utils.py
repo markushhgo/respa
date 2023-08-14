@@ -15,13 +15,11 @@ from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.contrib.admin.models import LogEntry, ADDITION, CHANGE, ContentType
-from django.utils.translation import ugettext
-from django.utils.translation import ungettext
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext, ngettext, gettext_lazy as _
 from django.utils import timezone
 from django.utils.timezone import localtime
 from rest_framework.reverse import reverse
-from icalendar import Calendar, Event, vDatetime, vText, vGeo
+from icalendar import Calendar, Event, vDatetime, vText, vGeo, vCalAddress
 from modeltranslation.translator import NotRegistered, translator
 
 import xlsxwriter
@@ -101,8 +99,8 @@ def humanize_duration(duration):
     """
     hours = duration.days * 24 + duration.seconds // 3600
     mins = duration.seconds // 60 % 60
-    hours_string = ungettext('%(count)d hour', '%(count)d hours', hours) % {'count': hours} if hours else None
-    mins_string = ungettext('%(count)d minute', '%(count)d minutes', mins) % {'count': mins} if mins else None
+    hours_string = ngettext('%(count)d hour', '%(count)d hours', hours) % {'count': hours} if hours else None
+    mins_string = ngettext('%(count)d minute', '%(count)d minutes', mins) % {'count': mins} if mins else None
     return ' '.join(filter(None, (hours_string, mins_string)))
 
 
@@ -224,7 +222,7 @@ def generate_reservation_xlsx(reservations, **kwargs):
                 if resource not in resource_usage_info:
                     resource_usage_info[resource] = {'total_opening_hours': 0, 'total_reservation_hours': 0}
                 resource_usage_info[resource]['total_opening_hours'] += (closes[1] - opens[1]).total_seconds() / 3600
-    
+
     date_format = workbook.add_format({'num_format': 'dd.mm.yyyy hh:mm', 'align': 'left'})
     total_reservation_hours = 0
     row = 0
@@ -262,8 +260,8 @@ def generate_reservation_xlsx(reservations, **kwargs):
     if row > 0:
         row = row+2
         col_format = workbook.add_format({'color': 'red', 'font': 'bold'})
-        worksheet.write(row, 0, ugettext('Reservation hours total'), col_format)
-        worksheet.write(row, 1, ugettext('%(hours)s hours') % ({'hours': int((total_reservation_hours / 60) / 60)}), col_format)
+        worksheet.write(row, 0, gettext('Reservation hours total'), col_format)
+        worksheet.write(row, 1, gettext('%(hours)s hours') % ({'hours': int((total_reservation_hours / 60) / 60)}), col_format)
 
 
     col_format = workbook.add_format()
@@ -274,14 +272,14 @@ def generate_reservation_xlsx(reservations, **kwargs):
 
     worksheet.write(row+2, 0, '', col_format)
     if request:
-        fmt_extra = f"({ugettext('Selected days: %(selected)s') % ({'selected': _build_weekday_string(weekdays)})})" if weekdays else ''
-        worksheet.write(row+2, 1, ugettext('Resource utilization for period %(start)s - %(end)s %(extra)s') % ({
+        fmt_extra = f"({gettext('Selected days: %(selected)s') % ({'selected': _build_weekday_string(weekdays)})})" if weekdays else ''
+        worksheet.write(row+2, 1, gettext('Resource utilization for period %(start)s - %(end)s %(extra)s') % ({
             'start': query_start.date(),
             'end': query_end.date(),
             'extra': fmt_extra
         }), col_format)
     else:
-        worksheet.write(row+2, 1, ugettext('Resource utilization'), col_format)
+        worksheet.write(row+2, 1, gettext('Resource utilization'), col_format)
     worksheet.write(row+2, 2, '', col_format)
     worksheet.write(row+2, 3, '', col_format)
     worksheet.write(row+2, 4, '', col_format)
@@ -292,11 +290,11 @@ def generate_reservation_xlsx(reservations, **kwargs):
     col_format.set_bold()
 
 
-    worksheet.write(row+3, 0, ugettext('Unit'), col_format)
-    worksheet.write(row+3, 1, ugettext('Resource'), col_format)
-    worksheet.write(row+3, 2, ugettext('Resource utilization'), col_format)
-    worksheet.write(row+3, 3, ugettext('Opening hours total'), col_format)
-    worksheet.write(row+3, 4, ugettext('Reservation hours total'), col_format)
+    worksheet.write(row+3, 0, gettext('Unit'), col_format)
+    worksheet.write(row+3, 1, gettext('Resource'), col_format)
+    worksheet.write(row+3, 2, gettext('Resource utilization'), col_format)
+    worksheet.write(row+3, 3, gettext('Opening hours total'), col_format)
+    worksheet.write(row+3, 4, gettext('Reservation hours total'), col_format)
 
     row = row+4
     for idx, resource_info in enumerate(resource_usage_info.items()):
@@ -373,6 +371,8 @@ def build_reservations_ical_file(reservations):
     """
 
     cal = Calendar()
+    cal.add('prodid', '-//Varaamo Turku//')
+    cal.add('version', '2.0')
     for reservation in reservations:
         event = Event()
         begin_utc = timezone.localtime(reservation.begin, timezone.utc)
@@ -380,11 +380,37 @@ def build_reservations_ical_file(reservations):
         event['uid'] = 'respa_reservation_{}'.format(reservation.id)
         event['dtstart'] = vDatetime(begin_utc)
         event['dtend'] = vDatetime(end_utc)
+        if reservation.created_at:
+            event['dtstamp'] = vDatetime(reservation.created_at)
         unit = reservation.resource.unit
         event['location'] = vText('{} {} {}'.format(unit.name, unit.street_address, unit.address_zip))
         if unit.location:
             event['geo'] = vGeo(unit.location)
         event['summary'] = vText('{} {}'.format(unit.name, reservation.resource.name))
+        universal_data = getattr(reservation, 'universal_data', None)
+        description_text = None
+
+        if universal_data:
+            # reservation contains universal_data
+            selected_option = universal_data.get('selected_option')
+            universal_field =universal_data.get('field')
+            if selected_option and universal_field:
+                selected_values = [x['text'] for x in universal_field.get('options') if x['id'] == int(selected_option)]
+                description_text = '{}: {}'.format(universal_field.get('label'), selected_values[0])
+
+        if description_text is not None:
+            if reservation.comments:
+                event['description'] = vText('{}, {}, {}'.format(reservation.reserver_name, description_text, reservation.comments))
+            else:
+                event['description'] = vText('{}, {}'.format(reservation.reserver_name, description_text))
+        else:
+            event['description'] = vText('{}'.format(reservation.reserver_name))
+
+        if reservation.reserver_email_address:
+            attendee = vCalAddress(f'MAILTO:{reservation.reserver_email_address}')
+            attendee.params['cn'] = vText(reservation.reserver_name)
+            event.add('attendee', attendee, encode=0)
+
         cal.add_component(event)
     return cal.to_ical()
 
@@ -453,7 +479,7 @@ def get_order_quantity(item):
         return float(quantity)
 
     return float(item["quantity"])
-  
+
 
 def get_order_tax_price(item):
     '''
@@ -469,13 +495,13 @@ def get_order_tax_price(item):
         if item["product"]["type"] != "rent":
             # Use the precalculated tax price if type is not 'rent'
             return float(item["reservation_tax_price"])
-        
+
         quantity = float(item["unit_price"].replace(',','.')) / float(item["product"]["price"].replace(',','.'))
         if quantity > 1:
             return float(item["product"]["tax_price"].replace(',','.'))
 
     return float(item["reservation_tax_price"])
-  
+
 
 def get_order_pretax_price(item):
     '''
@@ -491,7 +517,7 @@ def get_order_pretax_price(item):
         quantity = float(item["unit_price"].replace(',','.')) / float(item["product"]["price"].replace(',','.'))
         if quantity < 1 or item["product"]["type"] != "rent":
             return float(item['reservation_pretax_price'])
-            
+
         return float(item["product"]["pretax_price"].replace(',','.'))
 
     return float(item['reservation_pretax_price'])
@@ -561,7 +587,7 @@ def calculate_final_product_sums(product: dict, quantity: int = 1):
         taxfree_price += x['taxfree_price_total']
 
     tax_total = quantity * tax_raw
-    
+
     return {
         'product_tax_total': tax_total.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP),
         'product_taxfree_total': taxfree_price * quantity
@@ -581,7 +607,7 @@ def calculate_final_order_sums(all_products):
     '''
     # contains order totals using the new taxfree values
     order_totals = {'order_taxfree_total': Decimal('0.0'), 'order_tax_total': {}, 'order_total': Decimal('0.0')}
-    # iterate through each unique tax % found 
+    # iterate through each unique tax % found
     for perc in list(set(x['tax_percentage'] for x in all_products)):
         # list containing products with tax_percentage == perc
         perc_products = filter(lambda seq: product_has_given_tax_percentage(seq, perc), all_products)
@@ -607,7 +633,7 @@ def calculate_final_order_sums(all_products):
         # rounded version of the VAT total
         rounded_vat_amount_value = exact_vat_amount_value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
-        # add the total rounded VAT value to the orders tax_total 
+        # add the total rounded VAT value to the orders tax_total
         order_totals['order_tax_total'][perc] = rounded_vat_amount_value
 
         # add total rounded VAT value for this VAT to the orders total.
@@ -623,5 +649,20 @@ def product_has_given_tax_percentage(product, percentage):
     '''
     if product['tax_percentage'] == percentage:
         return True
-    
+
+    return False
+
+
+def is_reservation_metadata_or_times_different(old_reservation, new_reservation) -> bool:
+    '''
+    Return True if metadata fields or reservation begin or end changed
+    '''
+    field_names = new_reservation.resource.get_supported_reservation_extra_field_names()
+    for field_name in field_names:
+        if hasattr(old_reservation, field_name) and getattr(old_reservation, field_name) != getattr(new_reservation, field_name):
+            return True
+
+    if old_reservation.end != new_reservation.end or old_reservation.begin != new_reservation.begin:
+        return True
+
     return False

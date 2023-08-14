@@ -1,4 +1,4 @@
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.db.models import Q
 from django import forms
 from django.core.exceptions import ValidationError
@@ -23,7 +23,9 @@ from resources.models import (
     ResourceTag,
     Unit,
     UnitAuthorization,
-    TermsOfUse
+    TermsOfUse,
+    ResourceUniversalField,
+    ResourceUniversalFormOption,
 )
 
 from users.models import User
@@ -126,10 +128,16 @@ class DaysForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        is_empty_hours = not cleaned_data['opens'] or not cleaned_data['closes']
-        is_closed = cleaned_data['closed']
-        if is_empty_hours and not is_closed:
-            raise ValidationError('Missing opening hours')
+        opens = cleaned_data.get('opens', None)
+        closes = cleaned_data.get('closes', None)
+        is_closed = cleaned_data.get('closed', False)
+        if (not opens or not closes):
+            if not is_closed and (not self.has_error('opens') and not self.has_error('closes')):
+                self.add_error('period', _('Missing opening or closing time'))
+        else:
+            if opens > closes:
+                self.add_error('period', _('Opening time cannot be greater than closing time'))
+
         return cleaned_data
 
 
@@ -199,6 +207,7 @@ class ResourceTagField(forms.CharField):
                 data['create'].append(tag)
         return data
 
+
 class RespaMultiEmailField(MultiEmailField):
     def to_python(self, value):
         if not value:
@@ -231,7 +240,6 @@ class ResourceForm(forms.ModelForm):
         label=_('Keywords')
     )
 
-
     resource_staff_emails = RespaMultiEmailField(
         required=False,
         label=_('E-mail addresses for client correspondence')
@@ -246,8 +254,6 @@ class ResourceForm(forms.ModelForm):
             if df_set:
                 for field in set(df_set) - set(['groups', 'periods', 'images', 'free_of_charge']):
                     self.fields[field].disabled = True
-
-
 
     class Meta:
         model = Resource
@@ -312,7 +318,8 @@ class ResourceForm(forms.ModelForm):
             'reservation_home_municipality_set',
             'resource_tags',
             'payment_requested_waiting_time',
-            'cash_payments_allowed'
+            'cash_payments_allowed',
+            'reservable_by_all_staff'
         ] + translated_fields
 
         widgets = {
@@ -327,7 +334,7 @@ class ResourceForm(forms.ModelForm):
             ),
             'cooldown': forms.Select(
                 choices=(
-                    (('00:00:00', '0 h') , ) + thirty_minute_increment_choices
+                    (('00:00:00', '0 h'), ) + thirty_minute_increment_choices
                 )
             ),
             'need_manual_confirmation': RespaRadioSelect(
@@ -340,6 +347,9 @@ class ResourceForm(forms.ModelForm):
                 choices=((False, _('Can not be reserved')), (True, _('Bookable')))
             ),
             'cash_payments_allowed': RespaRadioSelect(
+                choices=((True, _('Yes')), (False, _('No')))
+            ),
+            'reservable_by_all_staff': RespaRadioSelect(
                 choices=((True, _('Yes')), (False, _('No')))
             ),
         }
@@ -378,10 +388,16 @@ class ResourceForm(forms.ModelForm):
 
         return self.instance
 
+
 class UnitForm(forms.ModelForm):
     name_fi = forms.CharField(
         required=True,
         label='Nimi [fi]',
+    )
+
+    street_address_fi = forms.CharField(
+        required=True,
+        label=f"{_('Street address')} [fi]"
     )
 
     class Meta:
@@ -463,7 +479,7 @@ class PeriodFormset(forms.BaseInlineFormSet):
             valid_days.append(form.days.is_valid())
             if not form.days.is_valid():
                 if hasattr(form, 'cleaned_data'):
-                    form.add_error(None, _('Please check the opening hours.'))
+                    form.add_error(None, form.days.errors)
 
         return valid_form and all(valid_days)
 
@@ -495,10 +511,9 @@ def get_period_formset(request=None, extra=1, instance=None, parent_class=Resour
             field.disabled = 'periods' in df_set
             if field.disabled:
                 field.required = False
-    else: # fields are getting cached?
+    else:  # fields are getting cached?
         for _, field in period_formset_with_days.form.base_fields.items():
             field.disabled = False
-
 
     if not request:
         return period_formset_with_days(instance=instance)
@@ -506,6 +521,123 @@ def get_period_formset(request=None, extra=1, instance=None, parent_class=Resour
         return period_formset_with_days(instance=instance)
     else:
         return period_formset_with_days(data=request.POST, instance=instance)
+
+
+class UniversalFieldForm(forms.ModelForm):
+    class Meta:
+        model = ResourceUniversalField
+        translated_fields = ['description_fi', 'description_en', 'description_sv', 'label_fi', 'label_en', 'label_sv']
+        fields = ['field_type', 'name', 'data'] + translated_fields
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['label_fi'].help_text = _('Universal value inherit info')
+        self.fields['description_fi'].help_text = _('Universal value inherit info')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        label_val = cleaned_data.get('label_fi')
+        desc_val = cleaned_data.get('description_fi')
+        # set missing language values to same value as the required finnish value.
+        for x in ['label_en', 'label_sv', 'description_en', 'description_sv']:
+            if not cleaned_data[x]:
+                if 'label' in x and label_val:
+                    cleaned_data[x] = label_val
+                elif 'description' in x and desc_val:
+                    cleaned_data[x] = desc_val
+                else:
+                    raise ValidationError("Missing values for 'label_fi' and 'description_fi'.")
+
+        return cleaned_data
+
+
+def get_resource_universal_formset(request=None, extra=1, instance=None):
+    parent = Resource
+    resource_universal_formset = inlineformset_factory(
+        parent,
+        ResourceUniversalField,
+        fk_name=parent._meta.model_name,
+        form=UniversalFieldForm,
+        extra=extra,
+        can_delete=True,
+        max_num=1,
+    )
+
+    for _, field in resource_universal_formset.form.base_fields.items():
+        if _ in ['name', 'description_fi', 'label_fi', 'field_type']:
+            # field_type,name, description_fi and label_fi set to required.
+            field.required = True
+        else:
+            field.required = False
+
+    if not request:
+        return resource_universal_formset(instance=instance)
+    if request.method == 'GET':
+        return resource_universal_formset(instance=instance)
+    else:
+        return resource_universal_formset(data=request.POST, instance=instance)
+
+
+class OptionsForm(forms.ModelForm):
+    class Meta:
+        model = ResourceUniversalFormOption
+        translated_fields = ['text_fi', 'text_sv', 'text_en']
+        fields = ['resource_universal_field', 'name', 'sort_order'] + translated_fields
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['text_fi'].help_text = _('Universal value inherit info')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        text_fi_value = cleaned_data.get('text_fi')
+        if text_fi_value:
+            # set missing language texts to same value as 'text_fi'
+            for x in ['text_sv', 'text_en']:
+                if not cleaned_data[x]:
+                    cleaned_data[x] = text_fi_value
+
+        return cleaned_data
+
+
+def get_universal_options_formset(request=None, extra=1, instance=None):
+    parent = Resource
+    universal_options_formset = inlineformset_factory(
+        parent,
+        ResourceUniversalFormOption,
+        fk_name=parent._meta.model_name,
+        form=OptionsForm,
+        can_delete=True,
+        can_order=True,
+        extra=extra,
+    )
+    # option forms is enabled if the resource has a saved universal field.
+    if instance and ResourceUniversalField.objects.filter(resource=instance).count():
+        for _, field in universal_options_formset.form.base_fields.items():
+            # the following fields are set as required fields.
+            if _ in ['name', 'resource_universal_field', 'sort_order', 'text_fi']:
+                field.required = True
+                if _ == 'sort_order':
+                    # set initial order to current options count + 1
+                    current_options_count = ResourceUniversalFormOption.objects.filter(resource=instance).count()
+                    field.initial = current_options_count + 1
+                if _ == 'resource_universal_field':
+                    # Select options should only include ResourceUniversalField objects that have this resource.
+                    field.queryset = ResourceUniversalField.objects.filter(resource=instance)
+            else:
+                field.required = False
+    else:
+        for _, field in universal_options_formset.form.base_fields.items():
+            field.disabled = True
+            field.required = False
+
+    if not request:
+        return universal_options_formset(instance=instance)
+
+    if request.method == 'GET':
+        return universal_options_formset(instance=instance)
+    else:
+        return universal_options_formset(data=request.POST, instance=instance)
 
 
 def get_resource_image_formset(request=None, extra=1, instance=None):
@@ -522,13 +654,12 @@ def get_resource_image_formset(request=None, extra=1, instance=None):
             field.disabled = 'images' in df_set
             if field.disabled:
                 field.required = False
-    else: # fields are getting cached?
+    else:  # fields are getting cached?
         for _, field in resource_image_formset.form.base_fields.items():
             field.disabled = False
 
     if not request:
         return resource_image_formset(instance=instance)
-
 
     if request.method == 'GET':
         return resource_image_formset(instance=instance)

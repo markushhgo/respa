@@ -6,10 +6,11 @@ import pytz
 from django.utils import timezone
 import django.contrib.postgres.fields as pgfields
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.gis.db import models
 from django.utils import translation
 from django.utils.timezone import now
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError, ObjectDoesNotExist
 from django.db.models import Q
 from psycopg2.extras import DateTimeTZRange
@@ -41,7 +42,7 @@ RESERVATION_BILLING_FIELDS = ('billing_first_name', 'billing_last_name', 'billin
 RESERVATION_EXTRA_FIELDS = ('reserver_name', 'reserver_phone_number', 'reserver_address_street', 'reserver_address_zip',
                             'reserver_address_city', 'company', 'event_description', 'event_subject', 'reserver_id',
                             'number_of_participants', 'participants', 'reserver_email_address', 'require_assistance',
-                            'require_workstation', 'host_name', 'reservation_extra_questions', 'home_municipality'
+                            'require_workstation', 'private_event', 'host_name', 'reservation_extra_questions', 'home_municipality'
                             ) + RESERVATION_BILLING_FIELDS
 
 
@@ -162,9 +163,10 @@ class Reservation(ModifiableModel):
     host_name = models.CharField(verbose_name=_('Host name'), max_length=100, blank=True)
     require_assistance = models.BooleanField(verbose_name=_('Require assistance'), default=False)
     require_workstation = models.BooleanField(verbose_name=_('Require workstation'), default=False)
+    private_event = models.BooleanField(verbose_name=_('Private event'), default=False)
     home_municipality = models.ForeignKey('ReservationHomeMunicipalityField', verbose_name=_('Home municipality'),
                                             null=True, blank=True, on_delete=models.SET_NULL)
-
+    universal_data = models.JSONField(verbose_name=_('Data'), null=True, blank=True)
     # extra detail fields for manually confirmed reservations
 
     reserver_name = models.CharField(verbose_name=_('Reserver name'), max_length=100, blank=True)
@@ -437,17 +439,24 @@ class Reservation(ModifiableModel):
         # Check if Unit has disallow_overlapping_reservations value of True
         if (
             self.resource.unit.disallow_overlapping_reservations and not
-            self.resource.can_create_overlapping_reservations(user)
+            self.resource.can_create_overlapping_reservations(user) and not
+            isinstance(user, AnonymousUser)
         ):
             if self.resource.unit.disallow_overlapping_reservations_per_user:
                 reservations_for_same_unit = Reservation.objects.filter(user=user, resource__unit=self.resource.unit)
             else:
                 reservations_for_same_unit = Reservation.objects.filter(resource__unit=self.resource.unit)
+
+            original = kwargs.get('original_reservation', None)
+            if original:
+                reservations_for_same_unit = reservations_for_same_unit.exclude(id=original.id)
+
             valid_reservations_for_same_unit = reservations_for_same_unit.exclude(state=Reservation.CANCELLED)
             user_has_conflicting_reservations = valid_reservations_for_same_unit.filter(
                 Q(begin__gt=self.begin, begin__lt=self.end)
                 | Q(begin__lt=self.begin, end__gt=self.begin)
                 | Q(begin__gte=self.begin, end__lte=self.end)
+                | Q(begin__lte=self.begin, end__gt=self.end)
             )
 
             if user_has_conflicting_reservations:
@@ -503,6 +512,7 @@ class Reservation(ModifiableModel):
                 'reserver_email_address': reserver_email_address,
                 'require_assistance': self.require_assistance,
                 'require_workstation': self.require_workstation,
+                'private_event': self.private_event,
                 'extra_question': self.reservation_extra_questions,
                 'home_municipality_id': reserver_home_municipality
             }
@@ -533,6 +543,14 @@ class Reservation(ModifiableModel):
             if self.user and self.user.is_staff:
                 context['staff_name'] = self.user.get_display_name()
 
+            # Comments should only be added to notifications that are sent to staff.
+            if notification_type in [NotificationType.RESERVATION_CREATED_OFFICIAL] and self.comments:
+                context['comments'] = self.comments
+
+            # Generic 'additional information' value
+            if self.resource.reservation_additional_information:
+                context['additional_information'] = self.resource.reservation_additional_information
+
             if notification_type in [NotificationType.RESERVATION_CONFIRMED, NotificationType.RESERVATION_CREATED]:
                 if self.resource.reservation_confirmed_notification_extra:
                     context['extra_content'] = self.resource.reservation_confirmed_notification_extra
@@ -556,6 +574,18 @@ class Reservation(ModifiableModel):
                 ground_plan_image_url = ground_plan_image.get_full_url()
                 if ground_plan_image_url:
                     context['resource_ground_plan_image_url'] = ground_plan_image_url
+
+            universal_data = getattr(self, 'universal_data', None)
+            if universal_data:
+                # reservation contains universal_data
+                selected_option = universal_data.get('selected_option')
+                universal_field =universal_data.get('field')
+                if selected_option and universal_field:
+                    selected_values = [x['text'] for x in universal_field.get('options') if x['id'] == int(selected_option)]
+                    context['universal_data'] = {
+                        'label': universal_field.get('label'),
+                        'selected_value': selected_values[0]
+                        }
 
             order = getattr(self, 'order', None)
             if order:
@@ -649,7 +679,7 @@ class Reservation(ModifiableModel):
                                 else:
                                     # only 1 of the product
                                     product['product_quantity'] = float(1)
-                                
+
                             values = calculate_final_product_sums(product=item, quantity=conditional_quantity)
                             product['product_taxfree_total'] = values['product_taxfree_total']
                             product['product_tax_total'] = values['product_tax_total']
@@ -775,8 +805,11 @@ class Reservation(ModifiableModel):
 
     def notify_staff_about_reservation(self, notification):
         if self.resource.resource_staff_emails:
+            reservations = [self]
+            ical_file = build_reservations_ical_file(reservations)
+            attachment = ('reservation.ics', ical_file, 'text/calendar')
             for email in self.resource.resource_staff_emails:
-                self.send_reservation_mail(notification, staff_email=email)
+                self.send_reservation_mail(notification, staff_email=email, attachments=[attachment])
         else:
             notify_users = self.resource.get_users_with_perm('can_approve_reservation')
             if len(notify_users) > 100:
@@ -791,6 +824,9 @@ class Reservation(ModifiableModel):
     def send_reservation_modified_mail(self, action_by_official=False):
         notification = NotificationType.RESERVATION_MODIFIED_BY_OFFICIAL if action_by_official else NotificationType.RESERVATION_MODIFIED
         self.send_reservation_mail(notification, action_by_official=action_by_official)
+        if action_by_official:
+            # staff should also get notification with the updated reservations details.
+            self.notify_staff_about_reservation(NotificationType.RESERVATION_MODIFIED_OFFICIAL)
 
     def send_reservation_denied_mail(self):
         self.send_reservation_mail(NotificationType.RESERVATION_DENIED)

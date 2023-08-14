@@ -8,7 +8,7 @@ import environ
 import raven
 import datetime
 from sys import platform
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ImproperlyConfigured
 
 
@@ -69,7 +69,7 @@ env = environ.Env(
     OUTLOOK_POLLING_RATE=(float, 5.0),
     HELUSERS_PROVIDER=(str, 'helusers.providers.helsinki'),
     HELUSERS_SOCIALACCOUNT_ADAPTER=(str, 'helusers.adapter.SocialAccountAdapter'),
-    AUTHENTICATION_CLASSES=(list, ['helusers.jwt.JWTAuthentication']),
+    AUTHENTICATION_CLASSES=(list, ['respa.providers.turku_oidc.jwt.JWTAuthentication']),
     HELUSERS_AUTHENTICATION_BACKEND=(str, 'helusers.tunnistamo_oidc.TunnistamoOIDCAuth'),
     USE_SWAGGER_OPENAPI_VIEW=(bool, False),
     USE_RESPA_EXCHANGE=(bool, False),
@@ -187,9 +187,10 @@ INSTALLED_APPS = [
     'django.contrib.gis',
     'django.contrib.postgres',
     'rest_framework',
-    'rest_framework_jwt',
+    'rest_framework_simplejwt',
     'rest_framework.authtoken',
     'django_filters',
+    'django_jsonform',
     'corsheaders',
     'easy_thumbnails',
     'image_cropping',
@@ -272,7 +273,7 @@ TEMPLATES = [
     },
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [root],
+        'DIRS': [''],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -361,6 +362,7 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = env('DJANGO_ADMIN_LOGOUT_REDIRECT_URL')
 RESPA_ADMIN_LOGOUT_REDIRECT_URL = env('RESPA_ADMIN_LOGOUT_REDIRECT_URL')
 ACCOUNT_LOGOUT_ON_GET = True
+SOCIALACCOUNT_LOGIN_ON_GET = True
 SOCIALACCOUNT_ADAPTER = env('HELUSERS_SOCIALACCOUNT_ADAPTER')
 HELUSERS_PROVIDER = env('HELUSERS_PROVIDER')
 
@@ -411,14 +413,14 @@ OIDC_AUTH = {
     'OIDC_LEEWAY': env('OIDC_LEEWAY')
 }
 
-JWT_AUTH = {
-    'JWT_PAYLOAD_GET_USER_ID_HANDLER': 'helusers.jwt.get_user_id_from_payload_handler',
-    'JWT_AUDIENCE': env('TOKEN_AUTH_ACCEPTED_AUDIENCE'),
-    'JWT_SECRET_KEY': env('TOKEN_AUTH_SHARED_SECRET'),
-    'JWT_AUTH_HEADER_PREFIX': env('JWT_AUTH_HEADER_PREFIX'),
-    'JWT_LEEWAY': env('JWT_LEEWAY'),
-    'JWT_EXPIRATION_DELTA': datetime.timedelta(seconds=env('JWT_LIFETIME')),
-    'JWT_PAYLOAD_HANDLER': env('JWT_PAYLOAD_HANDLER')
+SIMPLE_JWT = {
+    'AUTH_HEADER_TYPES': ('JWT', ),
+    'LEEWAY': env('JWT_LEEWAY'),
+    'AUDIENCE': env('TOKEN_AUTH_ACCEPTED_AUDIENCE'),
+    'SIGNING_KEY': env('TOKEN_AUTH_SHARED_SECRET'),
+    'AUTH_HEADER_PREFIX': env('JWT_AUTH_HEADER_PREFIX'),
+    'EXPIRATION_DELTA': datetime.timedelta(seconds=env('JWT_LIFETIME')),
+    'PAYLOAD_HANDLER': env('JWT_PAYLOAD_HANDLER')
 }
 
 # toggles auth token api endpoint url
@@ -443,6 +445,8 @@ O365_CALENDAR_AVAILABILITY_EVENT_PREFIX=env('O365_CALENDAR_AVAILABILITY_EVENT_PR
 O365_CALENDAR_RESERVATION_EVENT_PREFIX=env('O365_CALENDAR_RESERVATION_EVENT_PREFIX')
 O365_CALENDAR_RESERVER_INFO_MARK=env('O365_CALENDAR_RESERVER_INFO_MARK')
 O365_CALENDAR_COMMENTS_MARK=env('O365_CALENDAR_COMMENTS_MARK')
+
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 from easy_thumbnails.conf import Settings as thumbnail_settings  # noqa
 THUMBNAIL_PROCESSORS = (
@@ -535,16 +539,20 @@ if os.path.exists(local_settings_path):
 
 # If a secret key was not supplied from elsewhere, generate a random one
 # and store it into a file called .django_secret.
+
+def get_random_string():
+    import random
+    system_random = random.SystemRandom()
+    return ''.join([system_random.choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(64)])
+
 if 'SECRET_KEY' not in locals():
     secret_file = os.path.join(BASE_DIR, '.django_secret')
     try:
         with open(secret_file) as f:
             SECRET_KEY = f.read().strip()
     except IOError:
-        import random
-        system_random = random.SystemRandom()
         try:
-            SECRET_KEY = ''.join([system_random.choice('abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*(-_=+)') for i in range(64)])
+            SECRET_KEY = get_random_string()
             secret = open(secret_file, 'w')
             os.chmod(secret_file, 0o0600)
             secret.write(SECRET_KEY)
