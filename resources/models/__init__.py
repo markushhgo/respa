@@ -7,8 +7,8 @@ from .reservation import (
 )
 from .resource import (
     Purpose, Resource, ResourceType, ResourceImage, ResourceEquipment, ResourceGroup,
-    ResourceDailyOpeningHours, TermsOfUse, ResourceTag, MaintenanceMessage, ResourceUniversalField,
-    ResourceUniversalFormOption,
+    ResourceDailyOpeningHours, TermsOfUse, ResourceTag, ResourceUniversalField,
+    ResourceUniversalFormOption
 )
 from .equipment import Equipment, EquipmentAlias, EquipmentCategory
 from .unit import Unit, UnitAuthorization, UnitIdentifier
@@ -52,7 +52,6 @@ __all__ = [
     'UnitIdentifier',
     'get_opening_hours',
     'TimmiPayload',
-    'MaintenanceMessage',
     'UniversalFormFieldType',
     'ResourceUniversalField',
     'ResourceUniversalFormOption',

@@ -54,6 +54,8 @@ from ..models.utils import dateparser, is_reservation_metadata_or_times_differen
 from respa.renderers import ResourcesBrowsableAPIRenderer
 from payments.utils import is_free, get_price
 
+from maintenance.models import MaintenanceMode
+
 User = get_user_model()
 
 # FIXME: Make this configurable?
@@ -265,6 +267,11 @@ class ReservationSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_a
         # this check is probably only needed for PATCH
 
         obj_user_is_staff = bool(request_user and request_user.is_staff)
+
+        if (not reservation or (reservation and reservation.state != Reservation.WAITING_FOR_PAYMENT)) \
+            and MaintenanceMode.objects.active().exists():
+                raise ValidationError(_('Reservations are disabled at this moment.'))
+
 
         try:
             resource = data['resource']

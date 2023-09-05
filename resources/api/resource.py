@@ -65,6 +65,7 @@ from .resource_field import UniversalFormFieldTypeSerializer
 from rest_framework.settings import api_settings as drf_settings
 from rest_framework.relations import PrimaryKeyRelatedField
 from resources.models.utils import log_entry
+from maintenance.models import MaintenanceMode
 
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
@@ -615,6 +616,7 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
     resource_staff_emails = ResourceStaffEmailsField()
     universal_field = ResourceUniversalFieldSerializer(many=True, read_only=True, source='resource_universal_field')
     reservable_by_all_staff = serializers.BooleanField(required=False)
+    reservable = serializers.SerializerMethodField()
 
     def get_max_price_per_hour(self, obj):
         """Backwards compatibility for 'max_price_per_hour' field that is now deprecated"""
@@ -662,7 +664,8 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
             user = prefetched_user or request.user
 
         can_make_reservations_for_customers = obj.can_create_reservations_for_other_users(user) if request else False
-        return {
+
+        permissions = {
             'can_make_reservations': obj.can_make_reservations(user) if request else False,
             **({'can_make_reservations_for_customer': can_make_reservations_for_customers} if (request and can_make_reservations_for_customers) else {}),
             'can_ignore_opening_hours': obj.can_ignore_opening_hours(user) if request else False,
@@ -671,6 +674,12 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
             'is_viewer': obj.is_viewer(user) if request else False,
             'can_bypass_payment': obj.can_bypass_payment(user) if request else False,
         }
+
+
+        if MaintenanceMode.objects.active().exists():
+            return permissions.fromkeys(permissions, False)
+
+        return permissions
 
     def get_is_favorite(self, obj):
         request = self.context.get('request', None)
@@ -683,6 +692,11 @@ class ResourceSerializer(ExtraDataMixin, TranslatedModelSerializer, munigeo_api.
     def get_payment_terms(self, obj):
         data = TermsOfUseSerializer(obj.payment_terms).data
         return data['text']
+
+    def get_reservable(self, obj):
+        if MaintenanceMode.objects.active().exists():
+            return False
+        return obj.reservable
 
     def get_reservable_before(self, obj):
         request = self.context.get('request')
