@@ -67,10 +67,9 @@ def _check_permissions_dict(api_client, resource, is_admin, is_manager, is_viewe
 
     url = reverse('resource-detail', kwargs={'pk': resource.pk})
     response = api_client.get(url)
-    print(response.data)
     assert response.status_code == 200
     permissions = response.data['user_permissions']
-    
+
     if can_create_reservations_for_other_users:
         # exists and is True if user is staff for the resource
         # OR the user is staff and the resource has reservable_by_all_staff set to True
@@ -1265,3 +1264,37 @@ def test_user_permissions_external_resources(api_client, resource_in_unit, user,
     _check_permissions_dict(api_client, resource_in_unit3, is_admin=False, is_manager=False,
                             is_viewer=False, can_make_reservations=True, can_ignore_opening_hours=False,
                             can_bypass_payment=False, can_create_reservations_for_other_users=False)
+
+
+@pytest.mark.django_db
+def test_user_permissions_in_resource_endpoint_during_maintenance_mode(
+    maintenance_mode, resource_in_unit, 
+    user, api_client,
+    staff_user, staff_api_client):
+    resource_in_unit.unit.create_authorization(staff_user, 'manager')
+    url = reverse('resource-detail', kwargs={'pk': resource_in_unit.pk})
+
+    expected = {
+        'can_bypass_payment': False,
+        'can_ignore_opening_hours': False,
+        'can_make_reservations': False,
+        'is_admin': False,
+        'is_manager': False,
+        'is_viewer': False
+    }
+
+
+    api_client.force_authenticate(user=user)
+    response = api_client.get(url)
+    assert response.status_code == 200
+    assert response.data['user_permissions'] == expected
+
+    
+    expected.update({
+        'can_make_reservations_for_customer': False
+    })
+
+    staff_api_client.force_authenticate(user=staff_user)
+    response = staff_api_client.get(url)
+    assert response.status_code == 200
+    assert response.data['user_permissions'] == expected

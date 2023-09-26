@@ -5,6 +5,8 @@ from django.conf.urls import re_path
 from django.contrib import admin
 from django.contrib.admin import site as admin_site
 from django.contrib.admin.utils import unquote
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.admin.options import InlineModelAdmin
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.gis.admin import OSMGeoAdmin
@@ -28,7 +30,7 @@ from ..models import (
     ReservationHomeMunicipalityField, ReservationHomeMunicipalitySet, Resource, ResourceTag, ResourceAccessibility,
     ResourceEquipment, ResourceGroup, ResourceImage, ResourceType, TermsOfUse,
     Unit, UnitAuthorization, UnitIdentifier, UnitGroup, UnitGroupAuthorization,
-    MaintenanceMessage, UniversalFormFieldType, ResourceUniversalField, ResourceUniversalFormOption,
+    UniversalFormFieldType, ResourceUniversalField, ResourceUniversalFormOption
 )
 from ..models.utils import generate_id
 from munigeo.models import Municipality
@@ -229,7 +231,7 @@ class ResourceAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, Transla
 
     def has_change_permission(self, request, obj=None):
         return super().has_change_permission(request, obj) and (obj and not obj.soft_deleted)
-    
+
     def has_delete_permission(self, request, obj=None):
         return False
 
@@ -378,13 +380,22 @@ class TermsOfUseAdmin(PopulateCreatedAndModifiedMixin, CommonExcludeMixin, Trans
 
 
 class ReservationMetadataSetForm(forms.ModelForm):
+    supported_fields = forms.ModelMultipleChoiceField(
+        ReservationMetadataField.objects.all(),
+        widget=FilteredSelectMultiple(_('Supported fields'), False),
+        required=False)
+    required_fields = forms.ModelMultipleChoiceField(
+        ReservationMetadataField.objects.all(),
+        widget=FilteredSelectMultiple(_('Required fields'), False),
+        required=False)
+
     class Meta:
         model = ReservationMetadataSet
         exclude = CommonExcludeMixin.exclude + ('id',)
 
     def clean(self):
-        supported = set(self.cleaned_data.get('supported_fields'))
-        required = set(self.cleaned_data.get('required_fields'))
+        supported = set(self.cleaned_data.get('supported_fields', []))
+        required = set(self.cleaned_data.get('required_fields', []))
         if not required.issubset(supported):
             raise ValidationError(_('Required fields must be a subset of supported fields'))
         return self.cleaned_data
@@ -519,32 +530,6 @@ class RespaTokenAdmin(admin.ModelAdmin):
     raw_id_fields = ('user',)
 
 
-class MaintenanceMessageAdminForm(forms.ModelForm):
-    class Meta:
-        model = MaintenanceMessage
-        fields = ('start', 'end', 'message', )
-
-    def clean(self):
-        start = self.cleaned_data['start']
-        end = self.cleaned_data['end']
-        query = Q(end__gt=start, start__lt=end)
-        if self.instance and self.instance.pk:
-            query &= ~Q(pk=self.instance.pk)
-        collision = MaintenanceMessage.objects.filter(query)
-        if collision.exists():
-            raise ValidationError(_('maintenance message already exists.'))
-
-class MaintenanceMessageAdmin(TranslationAdmin):
-    form = MaintenanceMessageAdminForm
-    fieldsets = (
-        (_('General'), {
-            'fields': (
-                'start',
-                'end',
-                'message'
-            ),
-        }),
-    )
 
 admin_site.register(ResourceImage, ResourceImageAdmin)
 admin_site.register(Resource, ResourceAdmin)
@@ -574,6 +559,5 @@ admin.site.register(ResourceAccessibility, ResourceAccessibilityAdmin)
 if admin.site.is_registered(Token):
     admin.site.unregister(Token)
 admin_site.register(Token, RespaTokenAdmin)
-admin_site.register(MaintenanceMessage, MaintenanceMessageAdmin)
 admin_site.register(UniversalFormFieldType, UniversalFieldAdmin)
 admin_site.register(ResourceUniversalFormOption, ResourceUniversalFormOptionAdmin)
