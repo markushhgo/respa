@@ -293,7 +293,7 @@ packaging==23.0
     #   pytest
 phonenumbers==8.13.6
     # via -r requirements.in
-pillow==9.4.0
+pillow==10.0.1
     # via
     #   -r requirements.in
     #   easy-thumbnails
