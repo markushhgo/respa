@@ -18,7 +18,7 @@ from resources.enums import UnitAuthorizationLevel
 from resources.models import (
     Period, Day, Reservation, 
     Resource, ResourceGroup, ReservationMetadataField,
-    ReservationMetadataSet, UnitAuthorization
+    ReservationMetadataSet, UnitAuthorization, ReservationReminder
 )
 from notifications.models import NotificationTemplate, NotificationType
 from notifications.tests.utils import check_received_mail_exists
@@ -3273,3 +3273,19 @@ def test_reservation_not_allowed_during_maintenance_mode(
     response = api_client.post(list_url, data=reservation_data_extra)
     assert response.status_code == 400
     assert_non_field_errors_contain(response, 'Reservations are disabled at this moment')
+
+
+@pytest.mark.django_db
+def test_reservation_reminder_create(
+    api_client, user, list_url, reservation_data, 
+    resource_with_reservation_reminders):
+    api_client.force_authenticate(user=user)
+    reservation_data['resource'] = resource_with_reservation_reminders.pk
+    reservation_data['begin'] = '2115-04-04T09:00:00+02:00'
+    reservation_data['end'] = '2115-04-04T10:00:00+02:00'
+    reservation_data['reserver_name'] = 'Nordea Demo'
+    reservation_data['reserver_email_address'] = 'jey@example.com'
+    reservation_data['reserver_phone_number'] = '+358404040404'
+    response = api_client.post(list_url, data=reservation_data, HTTP_ACCEPT_LANGUAGE='en')
+    assert response.status_code == 201
+    assert ReservationReminder.objects.count() == 1
