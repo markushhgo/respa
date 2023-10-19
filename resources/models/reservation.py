@@ -88,6 +88,12 @@ class ReservationQuerySet(models.QuerySet):
         allowed_resources = Resource.objects.with_perm('can_view_reservation_catering_orders', user)
         return self.filter(Q(user=user) | Q(resource__in=allowed_resources))
 
+    def cancel(self, user):
+        for reservation in self:
+            reservation.set_state(Reservation.CANCELLED, user)
+            if reservation.has_order():
+                order = reservation.get_order()
+                order.set_state('cancelled', 'Order reservation was cancelled.')
 class ReservationBulkQuerySet(models.QuerySet):
     def current(self):
         return self
