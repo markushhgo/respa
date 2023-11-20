@@ -17,7 +17,7 @@ daemonize
 database-sanitizer>=0.4.0
 defusedxml
 Delorean
-Django==3.2.20
+Django==3.2.23
 django-admin-json-editor==0.2.3
 django-allauth
 django-anymail
@@ -73,6 +73,7 @@ more-itertools
 ntlm-auth
 oauthlib
 packaging
+paramiko
 phonenumbers
 Pillow>7.0.0
 pluggy

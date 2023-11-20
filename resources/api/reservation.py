@@ -967,7 +967,6 @@ class ReservationBulkViewSet(viewsets.ModelViewSet, ReservationCacheMixin):
             attachment = ('reservation.ics', ical_file, 'text/calendar')
             res.send_reservation_mail(
                 NotificationType.RESERVATION_BULK_CREATED,
-                action_by_official=res.user.is_staff,
                 attachments=[attachment],
                 extra_context=reservation_dates_context
             )
@@ -1127,7 +1126,7 @@ class ReservationViewSet(munigeo_api.GeoModelAPIView, viewsets.ModelViewSet, Res
         instance.set_state(Reservation.CANCELLED, self.request.user)
         if instance.has_order():
             order = instance.get_order()
-            order.set_state(Order.CANCELLED, 'Order reservation was cancelled.')
+            order.set_state(Order.CANCELLED, 'Order reservation was cancelled.', user = self.request.user)
 
     def list(self, request, *args, **kwargs):
         response = super().list(request, *args, **kwargs)

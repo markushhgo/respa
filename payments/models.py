@@ -804,11 +804,12 @@ class Order(models.Model):
     def get_price(self) -> Decimal:
         total_sum = sum(order_line.get_price() for order_line in self.get_order_lines())
         # The final total is rounded, NO ROUNDING BEFORE THIS.
-        return total_sum.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        return Decimal(total_sum).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
     def set_state(
             self, new_state: str, log_message: str = None,
-            save: bool = True, update_reservation_state: bool = True
+            save: bool = True, update_reservation_state: bool = True,
+            **kwargs
         ) -> None:
         assert new_state in (Order.WAITING, Order.CONFIRMED, Order.REJECTED, Order.EXPIRED, Order.CANCELLED)
 
@@ -843,9 +844,9 @@ class Order(models.Model):
 
                 if update_reservation_state:
                     if new_state == Order.CONFIRMED:
-                        self.reservation.set_state(Reservation.CONFIRMED, None)
+                        self.reservation.set_state(Reservation.CONFIRMED, kwargs.get('user', self.reservation.user))
                     elif new_state in (Order.REJECTED, Order.EXPIRED, Order.CANCELLED):
-                        self.reservation.set_state(Reservation.CANCELLED, None)
+                        self.reservation.set_state(Reservation.CANCELLED, kwargs.get('user', self.reservation.user))
 
                 if save:
                     self.save()

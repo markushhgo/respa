@@ -7,7 +7,7 @@ from django.utils import timezone
 from rest_framework.test import APIClient, APIRequestFactory
 
 from resources.enums import UnitAuthorizationLevel
-from resources.models import Resource, ResourceType, Unit, Purpose, Day, Period
+from resources.models import Resource, ResourceType, Unit, Purpose, Day, Period, Reservation
 from resources.models import Equipment, EquipmentAlias, ResourceEquipment, EquipmentCategory, TermsOfUse, ResourceGroup
 from resources.models import AccessibilityValue, AccessibilityViewpoint, ResourceAccessibility, UnitAccessibility
 from resources.models import ResourceUniversalFormOption, ResourceUniversalField, UniversalFormFieldType
@@ -87,6 +87,15 @@ def test_unit4():
             disallow_overlapping_reservations=True
         )
 
+@pytest.mark.django_db
+@pytest.fixture
+def test_unit_with_reminders_enabled():
+    return Unit.objects.create(
+        name="unit",
+        time_zone='Europe/Helsinki',
+        sms_reminder=True,
+        sms_reminder_delay=24
+    )
 
 @pytest.fixture
 def generic_terms():
@@ -251,6 +260,18 @@ def strong_resource(resource_with_opening_hours):
     resource_with_opening_hours.authentication = "strong"
     resource_with_opening_hours.save()
     return resource_with_opening_hours
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_with_reservation_reminders(
+    resource_with_opening_hours, 
+    metadataset_1,
+    test_unit_with_reminders_enabled):
+    resource_with_opening_hours.unit = test_unit_with_reminders_enabled
+    resource_with_opening_hours.reservation_metadata_set = metadataset_1
+    resource_with_opening_hours.save()
+    return resource_with_opening_hours
+
 
 
 @pytest.mark.django_db
@@ -636,3 +657,15 @@ def resource_universal_field_with_options(resource_universal_field_no_options):
         )
 
     return resource_universal_field_no_options
+
+@pytest.mark.django_db
+@pytest.fixture
+def resource_with_active_reservations(resource_in_unit):
+    Reservation.objects.bulk_create(
+        [Reservation(
+            resource=resource_in_unit,
+            begin=datetime.datetime(year=2115, month=4, day=4, hour=i, minute=0, second=0),
+            end=datetime.datetime(year=2115, month=4, day=4, hour=i+1, minute=0, second=0)) \
+                for i in range(1,11)
+        ])
+    return resource_in_unit

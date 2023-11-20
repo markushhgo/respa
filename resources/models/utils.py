@@ -110,23 +110,30 @@ notification_logger = logging.getLogger('respa.notifications')
 def send_respa_mail(email_address, subject, body, html_body=None, attachments=None):
     if not getattr(settings, 'RESPA_MAILS_ENABLED', False):
         notification_logger.info('Respa mail is not enabled.')
-        return False
-
     try:
         from_address = (getattr(settings, 'RESPA_MAILS_FROM_ADDRESS', None) or
                         'noreply@%s' % Site.objects.get_current().domain)
-
-        notification_logger.info('Sending notification email to %s: "%s"' % (email_address, subject))
 
         text_content = body
         msg = EmailMultiAlternatives(subject, text_content, from_address, [email_address], attachments=attachments)
         if html_body:
             msg.attach_alternative(html_body, 'text/html')
         msg.send()
-        return True
     except Exception as exc:
         notification_logger.error('Respa mail error %s', exc)
-        return False
+
+
+def send_respa_sms(phone_number, subject, short_message):
+    if not getattr(settings, 'RESPA_SMS_ENABLED', False):
+        notification_logger.info('Respa SMS is not enabled.')
+    try:
+        from_address = (getattr(settings, 'RESPA_MAILS_FROM_ADDRESS', None) or
+                        'noreply@%s' % Site.objects.get_current().domain)
+        sms = EmailMultiAlternatives(subject, short_message, from_address, [f'{phone_number}@{settings.GSM_NOTIFICATION_ADDRESS}'])
+        sms.send()
+    except Exception as exc:
+        notification_logger.error('Respa SMS error %s', exc)
+
 
 def generate_reservation_xlsx(reservations, **kwargs):
     """
@@ -353,6 +360,45 @@ def format_dt_range(language, begin, end):
     else:
         # default to English
         begin_format = r'D j/n/Y G:i'
+        if begin.date() == end.date():
+            end_format = 'G:i'
+            sep = '–'
+        else:
+            end_format = begin_format
+            sep = ' – '
+
+        res = sep.join([formats.date_format(begin, begin_format), formats.date_format(end, end_format)])
+
+    return res
+
+
+def format_dt_range_alt(language: str, begin, end) -> str:
+    if language == 'fi':
+        # 1.11.2023 klo 12.00-13.00
+        begin_format = r'j.n.Y \k\l\o G.i'
+        if begin.date() == end.date():
+            end_format = 'G.i'
+            sep = '–'
+        else:
+            end_format = begin_format
+            sep = ' – '
+
+        res = sep.join([formats.date_format(begin, begin_format), formats.date_format(end, end_format)])
+    elif language == 'sv':
+        # 1.11.2023 kl 12.00-13.00
+        begin_format = r'j.n.Y \k\l G.i'
+        if begin.date() == end.date():
+            end_format = 'G.i'
+            sep = '–'
+        else:
+            end_format = begin_format
+            sep = ' – '
+
+        res = sep.join([formats.date_format(begin, begin_format), formats.date_format(end, end_format)])
+    else:
+        # default to English
+        # 1.11.2023 12:00-13:00
+        begin_format = r'j.n.Y G:i'
         if begin.date() == end.date():
             end_format = 'G:i'
             sep = '–'

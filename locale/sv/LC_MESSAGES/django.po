@@ -241,6 +241,13 @@ msgstr "Bokningskommentar skapad"
 msgid "Catering order comment created"
 msgstr "Catering beställning komment skapad"
 
+#: notifications/models.py:98
+msgid "Reservation bulk created"
+msgstr "Reservationssats skapad"
+
+msgid "Reservation reminder"
+msgstr "Påminnelse om reservation"
+
 msgid "Type"
 msgstr "Typ"
 
@@ -985,6 +992,9 @@ msgstr "Syften"
 msgid "Need manual confirmation"
 msgstr "Kräver manuell bekräftelse"
 
+msgid "E-mail addresses for client correspondence"
+msgstr "E-postadresser för att ta emot meddelanden om kundreservationer"
+
 msgid "Authentication"
 msgstr "Autentisering"
 
@@ -1439,7 +1449,7 @@ msgid "E-mail notifications"
 msgstr "E-post notifikationer"
 
 msgid "A notification will be sent when a space is booked."
-msgstr "Ett meddelande kommer att skickas då ett utrymme har bokats."
+msgstr "Meddelanden skickas angående kundbokningar, inklusive deras bekräftelser, ändringar och avbokningar."
 
 msgid "Extra questions for reservation"
 msgstr "Extra frågor för bokning"
