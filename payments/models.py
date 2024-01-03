@@ -668,9 +668,11 @@ class OrderQuerySet(models.QuerySet):
     def update_expired(self) -> int:
         earliest_allowed_timestamp = now() - timedelta(minutes=settings.RESPA_PAYMENTS_PAYMENT_WAITING_TIME)
         log_entry_timestamps = OrderLogEntry.objects.filter(order=OuterRef('pk')).order_by('id').values('timestamp')
+        # Expire only online payments. Cash payments should not expire.
         too_old_waiting_orders = self.filter(
             state=Order.WAITING,
-            is_requested_order=False
+            is_requested_order=False,
+            payment_method=Order.ONLINE
         ).annotate(
             created_at=Subquery(
                 log_entry_timestamps[:1]
