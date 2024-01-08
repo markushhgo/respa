@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import datetime
+import base64
 
 from django.core.exceptions import ValidationError
 from django.core.files.base import ContentFile
@@ -197,3 +198,22 @@ def check_keys(data, expected_keys):
 def is_partial_dict_in_list(partial, dicts):
     partial_items = partial.items()
     return any([partial_items <= d.items() for d in dicts])
+
+
+def get_test_image_payload(
+    image, *,
+    type = "main",
+    caption = "test caption",
+    name = "test_image.jpg"):
+	return {
+		"type": type,
+		"caption": {
+			"fi": caption,
+			"sv": caption,
+			"en": caption
+		},
+		"image": {
+			"name": name,
+			"data": base64.b64encode(image).decode()
+		}
+	}
