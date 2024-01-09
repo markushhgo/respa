@@ -1,5 +1,6 @@
 import datetime
 import pytest
+import base64
 from copy import deepcopy
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -10,13 +11,21 @@ from django.utils import timezone
 from freezegun import freeze_time
 from guardian.shortcuts import assign_perm, remove_perm
 
-from resources.models.resource import Resource
+from resources.models.resource import (
+    Resource, ResourceImage, InvalidImage
+)
 from ..enums import UnitAuthorizationLevel, UnitGroupAuthorizationLevel
 
-from resources.models import (Day, Equipment, Period, Reservation, ReservationMetadataSet, ResourceEquipment,
-                              ResourceType, Unit, UnitAuthorization, UnitGroup)
-from .utils import assert_response_objects, check_only_safe_methods_allowed, is_partial_dict_in_list, MAX_QUERIES
-
+from resources.models import (
+    Day, Equipment, Period, Reservation,
+    ReservationMetadataSet, ResourceEquipment,
+    ResourceType, Unit, UnitGroup
+)
+from .utils import (
+    assert_response_objects, check_only_safe_methods_allowed, 
+    is_partial_dict_in_list, MAX_QUERIES, 
+    get_test_image_data, get_test_image_payload
+)
 
 @pytest.fixture
 def list_url():
@@ -1333,3 +1342,67 @@ def test_resource_mass_cancel_reservation_permitted_for_admin_user(
     response = staff_api_client.delete(url, data=payload, HTTP_ACCEPT_LANGUAGE='en')
     assert response.status_code == 204
     assert resource_with_active_reservations.reservations.current().count() == 0
+
+
+@pytest.mark.django_db
+@pytest.mark.parametrize('image_size, gets_processed', (
+    ((128, 128), False),
+    ((1980, 1200), True),
+))
+def test_resource_create_through_api(
+    staff_api_client, staff_user,
+    resource_create_data, list_url,
+    image_size, gets_processed
+):
+    url = f'{list_url[:-1]}/new/'
+    assign_perm('resources.add_resource', staff_user)
+    staff_api_client.force_authenticate(user=staff_user)
+    image = get_test_image_data(image_size)
+    resource_create_data['images'] = [get_test_image_payload(image)]
+    response = staff_api_client.post(url, data=resource_create_data)
+    assert response.status_code == 201
+    resource = Resource.objects.get(pk=response.data['id'])
+
+    resource_image = resource.images.first().image
+
+    if gets_processed:
+        assert (resource_image.width, resource_image.height) < (1921, 1081)
+    else:
+        assert (resource_image.width, resource_image.height) == image_size
+
+
+@pytest.mark.django_db
+def test_resource_create_through_api_invalid_image(
+    staff_api_client, staff_user,
+    resource_create_data, list_url
+):
+    image = get_test_image_data((64, 64))
+
+    url = f'{list_url[:-1]}/new/'
+    assign_perm('resources.add_resource', staff_user)
+    staff_api_client.force_authenticate(user=staff_user)
+    resource_create_data['images'] = [get_test_image_payload(image)]
+    with pytest.raises(InvalidImage):
+        staff_api_client.post(url, data=resource_create_data)
+
+
+@pytest.mark.django_db
+def test_resource_update_optional_fields_to_null(
+    staff_api_client, staff_user,
+    detail_url
+):
+    assign_perm('resources.change_resource', staff_user)
+    url = f'{detail_url[:-1]}/update/'
+    staff_api_client.force_authenticate(user=staff_user)
+
+    optional_fields = {
+        'responsible_contact_info': None,
+        'specific_terms': None,
+        'reservation_confirmed_notification_extra': None,
+        'reservation_requested_notification_extra': None,
+        'reservation_additional_information': None
+    }
+
+    response = staff_api_client.patch(url, data=optional_fields)
+
+    assert response.status_code == 200

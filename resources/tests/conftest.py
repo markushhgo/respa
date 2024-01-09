@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import pytest
 import datetime
+import base64
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.utils import timezone
@@ -14,6 +15,7 @@ from resources.models import ResourceUniversalFormOption, ResourceUniversalField
 from resources.models import ReservationMetadataSet, ReservationMetadataField
 from munigeo.models import Municipality
 from maintenance.models import MaintenanceMessage, MaintenanceMode
+from .utils import get_test_image_data, get_test_image_payload
 
 @pytest.fixture
 def api_client():
@@ -669,3 +671,41 @@ def resource_with_active_reservations(resource_in_unit):
                 for i in range(1,11)
         ])
     return resource_in_unit
+
+
+@pytest.fixture
+def resource_create_data(
+    purpose, test_unit,
+    space_resource_type):
+    image = get_test_image_data()
+    return {
+        "public": True,
+        "purposes": [
+            purpose.id
+        ],
+        "name": {
+            "fi": "Test Resource API",
+            "en": "Test Resource API",
+            "sv": "Test Resource API",
+        },
+        "description": {
+            "fi": "Test Resource created through API",
+            "en": "Test Resource created through API",
+            "sv": "Test Resource created through API"
+        },
+        "reservation_info": {
+            "fi": "Test Resource reservation information",
+            "en": "Test Resource reservation information",
+            "sv": "Test Resource reservation information"
+        },
+        "need_manual_confirmation": False,
+        "min_period": "00:30:00",
+        "max_period": "01:00:00",
+        "slot_size": "00:15:00",
+        "authentication": "strong",
+        "people_capacity": "10",
+        "terms_of_use": [],
+        "unit": test_unit.pk,
+        "type": space_resource_type.pk,
+        "images": [get_test_image_payload(image=image)]
+    }
