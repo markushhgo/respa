@@ -1384,3 +1384,25 @@ def test_resource_create_through_api_invalid_image(
     resource_create_data['images'] = [get_test_image_payload(image)]
     with pytest.raises(InvalidImage):
         staff_api_client.post(url, data=resource_create_data)
+
+
+@pytest.mark.django_db
+def test_resource_update_optional_fields_to_null(
+    staff_api_client, staff_user,
+    detail_url
+):
+    assign_perm('resources.change_resource', staff_user)
+    url = f'{detail_url[:-1]}/update/'
+    staff_api_client.force_authenticate(user=staff_user)
+
+    optional_fields = {
+        'responsible_contact_info': None,
+        'specific_terms': None,
+        'reservation_confirmed_notification_extra': None,
+        'reservation_requested_notification_extra': None,
+        'reservation_additional_information': None
+    }
+
+    response = staff_api_client.patch(url, data=optional_fields)
+
+    assert response.status_code == 200
