@@ -1036,7 +1036,7 @@ class ResourceImage(ModifiableModel):
         save_kwargs = {}
         with Image.open(self.image) as img:
             if img.size > (1920, 1080):
-                img.thumbnail((1920, 1080), Image.ANTIALIAS)
+                img.thumbnail((1920, 1080), Image.LANCZOS)
                 self.cropping = None
                 setattr(self, '_processing_required', True)
             elif img.size < (128, 128):
