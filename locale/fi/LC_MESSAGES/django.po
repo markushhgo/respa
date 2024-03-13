@@ -2266,5 +2266,11 @@ msgstr "Toistuva varaus"
 msgid "Recurring reservations"
 msgstr "Toistuvat varaukset"
 
+msgid "Reservation reminders"
+msgstr "Varausmuistutukset"
+
+msgid "Reminder date"
+msgstr "Muistutuksen päivämäärä"
+
 msgid "Cannot be reserved during cooldown"
 msgstr "Varausta ei voi tehdä varaustauon aikana"
