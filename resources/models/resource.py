@@ -388,6 +388,13 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
         help_text=_('A link to an external feedback system'),
         blank=True
     )
+
+    overnight_reservations = models.BooleanField(verbose_name=_('Overnight reservations'),
+                                                                default=False, blank=False,
+                                                                help_text=_('Allow overnight reservations for this resource'))
+    overnight_start_time = models.TimeField(verbose_name=_('Overnight start time'), null=True, blank=True)
+    overnight_end_time = models.TimeField(verbose_name=_('Overnight end time'), null=True, blank=True)
+
     external_reservation_url = models.URLField(
         verbose_name=_('External reservation URL'),
         help_text=_('A link to an external reservation system if this resource is managed elsewhere'),
@@ -497,13 +504,16 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
         if end_time.hour == 0 and end_time.minute == 0 and end_time.second == 0:
             end = end - datetime.timedelta(seconds=1)
 
-        if begin.date() != end.date():
-            raise ValidationError(_("You cannot make a multi day reservation"))
+        is_multiday_reservation = begin.date() != end.date()
+
+        if is_multiday_reservation and not self.overnight_reservations:
+            raise ValidationError(_("You cannot make a multiday reservation"))
+        
 
         if not self.can_ignore_opening_hours(user):
             opening_hours = self.get_opening_hours(begin.date(), end.date())
             days = opening_hours.get(begin.date(), None)
-            if days is None or not any(day['opens'] and begin >= day['opens'] and end <= day['closes'] for day in days):
+            if not is_multiday_reservation and (days is None or not any(day['opens'] and begin >= day['opens'] and end <= day['closes'] for day in days)):
                 raise ValidationError(_("You must start and end the reservation during opening hours"))
 
         if not self.can_ignore_max_period(user) and (self.max_period and (end - begin) > self.max_period):
@@ -994,6 +1004,12 @@ class Resource(ModifiableModel, AutoIdentifiedModel, ValidatedIdentifier):
             raise ValidationError({
                 'cash_payments_allowed': _('Cash payments are only allowed when reservations need manual confirmation')
             })
+        
+        if self.overnight_reservations:
+            if self.overnight_end_time > self.overnight_start_time:
+                raise ValidationError({
+                    'overnight_reservations': _('Overnight reservation end time cannot be greater than start time')
+                })
 
         if self.timmi_resource and not self.timmi_room_id:
             TimmiManager().get_room_part_id(self)
