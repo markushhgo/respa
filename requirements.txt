@@ -234,7 +234,7 @@ humanize==4.6.0
     #   delorean
 icalendar==5.0.4
     # via -r requirements.in
-idna==3.4
+idna==3.7
     # via
     #   -r requirements.in
     #   requests
