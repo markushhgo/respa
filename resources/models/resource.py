@@ -1315,9 +1315,6 @@ class ResourceUniversalField(ModifiableModel):
     def options(self):
         return ResourceUniversalFormOption.objects.filter(resource_universal_field=self)
 
-    def save(self, *args, **kwargs):
-        return super(ResourceUniversalField, self).save(*args, **kwargs)
-
     def __str__(self):
         return "%s / %s / %s" % (self.name, self.field_type, self.resource)
 
